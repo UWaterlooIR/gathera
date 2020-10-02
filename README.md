@@ -30,7 +30,7 @@ cd ..
 
 ```
 # Build and access the shell from the cal container
-docker-compose -f gathera.yml run cal bash
+docker-compose run cal bash
 root@container-id:/# cd src && make corpus_parser
 # Generate features
 root@container-id:/# ./corpus_parser  --in /data/athome4_sample.tgz --out /data/athome4_sample.bin --para-in /data/athome4_sample_para.tgz --para-out /data/athome4_para_sample.bin
@@ -56,7 +56,7 @@ mv athome4_test para
 cd ..
 
 # We are all set! Lets fire up the containers
-DOC_BIN=/data/athome4_sample.bin PARA_BIN=/data/athome4_para_sample.bin docker-compose -f gathera.yml up -d
+DOC_BIN=/data/athome4_sample.bin PARA_BIN=/data/athome4_para_sample.bin docker-compose up -d
 # Visit localhost:9000
 ```
 
@@ -65,7 +65,7 @@ If you get a `502 Bad Gateway` error, please wait few seconds while the containe
 Port `9001` and `9000` will be used by system. Make sure these ports are not being used by other applications in your machine. If you would like to change these ports, please read the configuration section below.
 
 #### How to run
-Once your docker images are up and running (you can verify by running docker-compose -f gathera.yml ps), 
+Once your docker images are up and running (you can verify by running docker-compose ps), 
 open your browser to [http://localhost:9000/](http://localhost:9000/). 
 You should be able to access system's web interface. 
 If you are still unable to view the web interface, 
