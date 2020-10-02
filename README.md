@@ -19,8 +19,7 @@ cd gathera
 git clone https://github.com/hical/sample-dataset.git
 cd sample-dataset
 python process.py athome4_sample.tgz
-# Create the data directory which will be mounted to the docker containers
-mkdir ../data
+# Move files to the data directory which will be mounted to the docker containers
 cp athome4_sample.tgz athome4_sample_para.tgz ../data/
 cd ..
 ```
@@ -38,11 +37,18 @@ root@container-id:/# ./corpus_parser  --in /data/athome4_sample.tgz --out /data/
 # Exit the shell with Ctrl+D
 ```
 
-We will now generate the document and paragraph files which will be showed to the assessors
+We will now copy the search index and generate the document and paragraph files which will be showed to the assessors
 
 ```
 # Extract the tgz files
 cd data
+# Fetch the anserini index for this collection
+wget https://git.uwaterloo.ca/m2abuals/indexes/-/raw/master/athome_sample_index.tar.gz
+# Double check MD5 checksum is equal to 59830814de4f1a2363e4dc8242049756
+md5 athome_sample_index.tar.gz
+# untar index
+tar xvzf athome_sample_index.tar.gz
+
 tar xvzf athome4_sample.tgz
 mv athome4_test docs
 tar xvzf athome4_sample_para.tgz
