@@ -1,7 +1,8 @@
+from collections import OrderedDict
+from config.settings.base import SEARCH_ENGINE
 from config.utils import never_ever_cache
 import json
 import logging
-from collections import OrderedDict
 
 from braces import views
 from django.contrib import messages
@@ -12,19 +13,17 @@ from django.shortcuts import get_object_or_404
 from django.template import loader
 from django.urls import reverse
 from django.urls import reverse_lazy
+from django.utils.module_loading import import_string
 from django.views import generic
 import requests
 
 from web.core.mixin import RetrievalMethodPermissionMixin
 from web.interfaces.DocumentSnippetEngine import functions as DocEngine
-from config.settings.base import SEARCH_ENGINE
-from django.utils.module_loading import import_string
+from web.interfaces.SearchEngine.base import SearchInterface
 from web.search import helpers
 from web.search.models import Query
 from web.search.models import SearchResult
 from web.search.models import SERPClick
-
-from web.interfaces.SearchEngine.base import SearchInterface
 
 SearchEngine : SearchInterface = import_string(SEARCH_ENGINE)
 logger = logging.getLogger(__name__)
@@ -113,44 +112,6 @@ class SearchSubmitView(views.CsrfExemptMixin,
         return JsonResponse({
             "query_url": self.get_success_url({"query_id": str(query_instance.query_id)})
         })
-
-
-# class SearchListView(views.CsrfExemptMixin, generic.base.View):
-#     template = 'search/search_list.html'
-#
-#     def post(self, request, *args, **kwargs):
-#         template = loader.get_template(self.template)
-#         try:
-#             search_input = request.POST.get("search_input")
-#             numdisplay = request.POST.get("numdisplay", 10)
-#         except KeyError:
-#             rendered_template = template.render({})
-#             return HttpResponse(rendered_template, content_type='text/html')
-#         context = {}
-#         documents_values, document_ids = None, None
-#         try:
-#             documents_values, document_ids, total_time = SearchEngine.get_documents(
-#                                                             search_input,
-#                                                             numdisplay=numdisplay
-#                                                          )
-#         except (TimeoutError, httplib2.HttpLib2Error):
-#             context['error'] = "Error happened. Please check search server."
-#
-#         if document_ids:
-#             # document_ids = helpers.padder(document_ids)
-#             documents_values = helpers.join_judgments(documents_values, document_ids,
-#                                                       self.request.user,
-#                                                       self.request.user.current_session)
-#
-#         context["documents"] = documents_values
-#         context["query"] = search_input
-#         if total_time:
-#             context["total_time"] = "{0:.2f}".format(round(float(total_time), 2))
-#
-#         rendered_template = template.render(context)
-#         return HttpResponse(rendered_template, content_type='text/html')
-
-
 
 class SearchButtonView(views.CsrfExemptMixin,
                        views.LoginRequiredMixin,
