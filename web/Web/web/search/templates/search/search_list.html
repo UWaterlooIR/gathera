@@ -7,71 +7,72 @@
 {% endif %}
 
 
+{% if isQueryPage %}
+  {% if not SERP.hits %}
+  <div class="med card-section">
+    <p style="padding-top:.33em">
+      Your search - <em>{{ query }}</em> - did not match any documents. </p>
+    <p style="margin-top:1em">Suggestions:</p>
+    <ul style="margin-left:1.3em;margin-bottom:2em">
+      <li>Make sure that all words are spelled correctly.</li>
+      <li>Try different keywords.</li>
+      <li>Try more general keywords.</li>
+      <li>Try fewer keywords.</li>
+    </ul>
+  </div>
 
-{% if not  documents %}
-<div class="med card-section">
-  <p style="padding-top:.33em">
-    Your search - <em>{{ query }}</em> - did not match any documents. </p>
-  <p style="margin-top:1em">Suggestions:</p>
-  <ul style="margin-left:1.3em;margin-bottom:2em">
-    <li>Make sure that all words are spelled correctly.</li>
-    <li>Try different keywords.</li>
-    <li>Try more general keywords.</li>
-    <li>Try fewer keywords.</li>
-  </ul>
-</div>
-{% else %}
-<div class="row">
-<div class="col-2">
-  <div class="card border-0">
-    <div class="card-header py-2 text-secondary">
-      Filter
+  {% else %}
+
+  <div class="row">
+    <div class="col-2">
+      <div class="card border-0">
+        <div class="card-header py-2 text-secondary">
+          Filter
+        </div>
+        <div class="card-body">
+          <span></span>
+        </div>
+        <div class="card-header py-2 text-secondary">
+          Labels
+        </div>
+      </div>
     </div>
-    <div class="card-body">
-      <span></span>
+
+    <div class="col-5">
+
+      {% if total_time %}
+      <small class="gray-text ml-3 d-none">{{ total_time }} seconds.</small>
+      {% endif %}
+
+      {% for hit in SERP.hits %}
+      <div class="document d-flex flex-grow-1 searchItemSelector"
+           id="doc_{{hit.docno}}_card"
+           data-rank="{{ hit.rank }}"
+           data-doc-id="{{ hit.docno }}"
+           data-title="{{ hit.title|safe }}"
+           data-toggle="modal" data-target="#documentModal"
+           style="min-height: 5rem;cursor: pointer; cursor: hand; transition: border-color 0.3s ease-in"
+          >
+        <div class="align-self-center align-self-stretch p-2 SERP_indicator" id="doc_{{ hit.docno }}_SERP_indicator"  style="border-color: {% if hit.relevance_judgment == 2 %}#84c273{% elif hit.relevance_judgment == 1 %}#c6fab8{% elif hit.relevance_judgment == 0 %}#a5a5a5{% else %}hsla(50, 50%, 50%, 0.0){% endif %};"></div>
+        <div class="align-self-center py-0">
+          <h6 class="title" style="margin-bottom: 0;">{{ hit.title|safe }}</h6>
+          <div class="url small">doc_id: {{ hit.docno }}</div>
+          <div class="snippet"> {{ hit.snippet|safe }} </div>
+        </div>
+      </div>
+      {% endfor %}
     </div>
-    <div class="card-header py-2 text-secondary">
-      Labels
+
+    <div class="offset-2 col-3">
+      <div class="card border-0">
+        <div class="card-header py-2 text-primary">
+          Similar queries
+        </div>
+        <div class="card-body">
+          <span></span>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-
-<div class="col-5">
-
-{% if total_time %}
-<small class="gray-text ml-3 d-none">{{ total_time }} seconds.</small>
-{% endif %}
-
-
-
-{% for hit in documents %}
-<div class="document d-flex flex-grow-1 searchItemSelector"
-     id="doc_{{hit.docno}}_card"
-     data-rank="{{ hit.rank }}"
-     data-doc-id="{{ hit.docno }}"
-     data-title="{{ hit.title|safe }}"
-     data-toggle="modal" data-target="#documentModal"
-     style="min-height: 5rem;cursor: pointer; cursor: hand; transition: border-color 0.3s ease-in"
-    >
-  <div class="align-self-center align-self-stretch p-2 SERP_indicator" id="doc_{{ hit.docno }}_SERP_indicator"  style="border-color: {% if hit.relevance_judgment == 2 %}#84c273{% elif hit.relevance_judgment == 1 %}#c6fab8{% elif hit.relevance_judgment == 0 %}#a5a5a5{% else %}hsla(50, 50%, 50%, 0.0){% endif %};"></div>
-  <div class="align-self-center py-0">
-    <h6 class="title" style="margin-bottom: 0;">{{ hit.title|safe }}</h6>
-    <div class="url small">doc_id: {{ hit.docno }}</div>
-    <div class="snippet"> {{ hit.snippet|safe }} </div>
-  </div>
-</div>
-{% endfor %}
-</div>
-
-<div class="offset-1 col-3">
-  <div class="card border-0">
-    <div class="card-header py-2 text-primary">
-      Similar queries
-    </div>
-    <div class="card-body">
-      <span></span>
-    </div>
-  </div>
-</div>
-</div>
+  {% endif %}
 {% endif %}

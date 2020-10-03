@@ -6,7 +6,8 @@
 {%block main-class%}col-md-12 pt-4 px-0{%endblock%}
 
 {% block navbar-noncollapse %}
-<form id="search_form" name="search_input" class="input-group mx-auto w-50 d-lg-none order-sm-1 order-md-3 align-self-center search-input text-dark">
+<form id="search_form_sm" name="search_input" class="input-group mx-auto w-50 d-lg-none order-sm-1 order-md-3 align-self-center search-input text-dark search_form" method="post" action="{% url 'search:submit_search' %}">
+    {% csrf_token %}
     <input autocomplete="off" class="form-control search_input-sm py-2 mr-1 pr-5 search-input bg-light text-dark shadow-none rounded-sm" type="search" placeholder="Search" id="search_input-sm" name="search_input">
     <span class="input-group-append">
      <button class="btn rounded-pill border-0 ml-n5 p-0 pl-2" type="submit"
@@ -20,12 +21,11 @@
 {% endblock %}
 
 {% block navbar-center %}
-<form id="search_form" name="search_input" class="input-group mx-auto w-75 search-input text-dark">
+<form id="search_form" name="search_input" class="input-group mx-auto w-75 search-input text-dark search_form" method="post" action="{% url 'search:submit_search' %}">
+  {% csrf_token %}
   <input autocomplete="off" class="form-control py-2 mr-1 pr-5 search-input bg-light text-dark border-0 shadow-none rounded-sm" type="search" placeholder="Search" id="search_input" name="search_input">
   <span class="input-group-append">
-     <button class="btn rounded-pill border-0 ml-n5 p-0 pl-2" type="submit"
-             ic-target="#search_result" ic-include="#search_input" ic-post-to="{% url 'search:get_docs' %}"
-     >
+     <button class="btn rounded-pill border-0 ml-n5 p-0 pl-2" type="submit">
   	  <i class="fas fa-search text-secondary"></i>
      </button>
     </span>
@@ -37,7 +37,15 @@
 </div>
 
 <div class="col-12 pt-2 mr-auto">
+
+  <div id="search-result-spinner" class="text-center m-auto py-5 d-none">
+    <div class="spinner-border text-primary small" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+
   <div id="search_result">
+    {% include 'search/search_list.html' %}
   </div>
 </div>
 
@@ -57,6 +65,12 @@
     <script src="{% static 'js/highlight.js' %}"></script>
 
     <script>
+
+        var context = {
+            "isQueryPage": {{ isQueryPage|yesno:"true,false"}},
+            "queryID": "{{ queryID }}",
+            "query": "{{ query }}"
+        }
 
         var dv = new docView();
         dv.init({
@@ -86,6 +100,38 @@
           }
         });
 
+        function HtmlDecode(s) {
+            var el = document.createElement("div");
+            el.innerHTML = s;
+            return el.innerText || el.textContent;
+        }
+
+        // updates input bar if user already submitted a query.
+        document.getElementById("search_input").value = HtmlDecode(context.query);
+
+        // shows loading spinner once a user reformulates
+        $('#search_bar_form').submit(function() {
+            document.activeElement.blur();
+            $("#search_list").removeClass("d-flex flex-column").addClass("d-none");
+            $("#search-result-spinner").removeClass("d-none");
+        });
+
+        $('.search_form').submit(function(e) {
+            // prevents default behaviour,
+            e.preventDefault();
+            // shows loading spinner once a user reformulates
+            document.activeElement.blur();
+            $("#search_result").addClass("d-none");
+            $("#search-result-spinner").removeClass("d-none");
+            //logQuerySubmit(); # TODO
+            $.post(
+                $(this).attr('action'), // the form's action
+                $(this).serializeArray(), // the form data serialized
+                function(data){
+                    window.location = data['query_url'];
+                }
+            );
+        });
 
         $('#search_button').on('beforeSend.ic',
             function(evt, elt, data, settings, xhr, requestId) {
