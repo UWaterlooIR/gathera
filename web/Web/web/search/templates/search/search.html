@@ -76,6 +76,8 @@
         dv.init({
           singleDocumentMode: true,
           judgingSourceName: "search",
+          queryID: "{{ queryID }}",
+          query: "{{ query }}",
           searchMode: true,
           getDocumentsToJudgeURL: '{% url 'CAL:get_docs' %}',
           getPrevDocumentsJudgedURL: '{% url 'judgment:get_latest' number_of_docs_to_show=50 %}',

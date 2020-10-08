@@ -39,29 +39,40 @@
       </div>
     </div>
 
-    <div class="col-5">
+    <div class="col-7">
 
 
       {% for hit in SERP.hits %}
-      <div class="document d-flex flex-grow-1 searchItemSelector"
-           id="doc_{{hit.docno}}_card"
-           data-rank="{{ hit.rank }}"
-           data-doc-id="{{ hit.docno }}"
-           data-title="{{ hit.title|escape }}"
-           data-toggle="modal" data-target="#documentModal"
-           style="min-height: 5rem;cursor: pointer; cursor: hand; transition: border-color 0.3s ease-in"
-          >
-        <div class="align-self-center align-self-stretch p-2 SERP_indicator" id="doc_{{ hit.docno }}_SERP_indicator"  style="border-color: {% if hit.relevance_judgment == 2 %}#84c273{% elif hit.relevance_judgment == 1 %}#c6fab8{% elif hit.relevance_judgment == 0 %}#a5a5a5{% else %}hsla(50, 50%, 50%, 0.0){% endif %};"></div>
-        <div class="align-self-center py-0">
-          <h6 class="title" style="margin-bottom: 0;">{{ hit.title|escape }}</h6>
-          <div class="url small">doc_id: {{ hit.docno }}</div>
-          <div class="snippet"> {{ hit.snippet|escape }} </div>
+      <div class="d-flex align-items-center">
+        <div class="document d-flex flex-grow-1 searchItemSelector col-8"
+             id="doc_{{hit.docno}}_card"
+             data-rank="{{ hit.rank }}"
+             data-doc-id="{{ hit.docno }}"
+             data-title="{{ hit.title|escape }}"
+             data-snippet="{{ hit.snippet|escape }}"
+             data-toggle="modal" data-target="#documentModal"
+             style="min-height: 5rem;cursor: pointer; cursor: hand; transition: border-color 0.3s ease-in"
+            >
+          <div class="align-self-center align-self-stretch p-2 SERP_indicator" id="doc_{{ hit.docno }}_SERP_indicator"  style="border-color: {% if hit.relevance_judgment == 2 %}#84c273{% elif hit.relevance_judgment == 1 %}#c6fab8{% elif hit.relevance_judgment == 0 %}#a5a5a5{% else %}hsla(50, 50%, 50%, 0.0){% endif %};"></div>
+          <div class="align-self-center py-0">
+            <h6 class="title" style="margin-bottom: 0;">{{ hit.title|escape }}</h6>
+            <div class="url small">doc_id: {{ hit.docno }}</div>
+            <div class="snippet"> {{ hit.snippet|escape }} </div>
+          </div>
+        </div>
+        <div class="mx-auto">
+          <div class="btn-group-vertical" role="group">
+            <a class="btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocNonRelButton" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">Not {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+            <a class="btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocRelButton" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+            <a class="btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocHRelButton" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+          </div>
         </div>
       </div>
+
       {% endfor %}
     </div>
 
-    <div class="offset-2 col-3">
+    <div class="col-3">
       <div class="card border-0">
         <div class="card-header py-2 text-primary">
           Similar queries

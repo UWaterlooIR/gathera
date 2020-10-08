@@ -29,6 +29,10 @@ var docView = function() {
     searchMode: false,
     mainJudgingCriteriaName: "Relevant", // adjective of criteria
 
+    // Specific to search
+    queryID: null,
+    query: null,
+
     // Selectors
     docViewSelector: "#docView",
     documentTabSelector: "#docViewTab",
@@ -136,12 +140,35 @@ docView.prototype = {
       }
     }
 
+    function _linkJudgingButtons(elm, rel_val){
+      if ($(elm).data('is-serp-judging')){
+        $(elm).on("click", function(){sendSERPJudgment($(elm).data("doc-id"), rel_val)});
+      }else{
+        $(elm).on("click", function(){sendJudgment(rel_val, options.searchMode? null : refreshDocumentView)});
+      }
+    }
+
     // start linking selectors and collect info on configurable additional judging criteria
     $(document).ready(function(){
-      $(options.documentHRelButtonSelector).on("click", function(){sendJudgment(2, options.searchMode? null : refreshDocumentView)});
-      $(options.documentRelButtonSelector).on("click", function(){sendJudgment(1, options.searchMode? null : refreshDocumentView)});
-      $(options.documentNonRelButtonSelector).on("click", function(){sendJudgment(0, options.searchMode? null : refreshDocumentView)});
-      $(options.documentCloseButtonSelector).on("click", function(){closePreviouslyReviewedDocument()});
+      const mainJudgingSelectors = [options.documentHRelButtonSelector, options.documentRelButtonSelector, options.documentNonRelButtonSelector];
+      mainJudgingSelectors.forEach(function (selector) {
+          let rel_val = -1;
+          switch (selector) {
+            case options.documentHRelButtonSelector:
+              rel_val = 2
+              $(options.documentHRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
+              break
+            case options.documentRelButtonSelector:
+              rel_val = 1;
+              $(options.documentRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
+              break
+            case options.documentNonRelButtonSelector:
+              rel_val = 0;
+              $(options.documentNonRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
+              break
+          }
+        }
+      );
 
       $('body').on("click", options.searchItemSelector, function(){showDocument($(this).data("doc-id").toString())});
 
@@ -638,6 +665,66 @@ docView.prototype = {
 
     }
 
+    function sendSERPJudgment(docid, rel){
+      parent.previouslyJudgedDocs[docid] = {
+        "relevance": rel,
+        "additional_judging_criteria": {}
+      };
+
+      const docTitle = $(`#doc_${docid}_card`).data("title");
+      const docSnippet = $(`#doc_${docid}_card`).data("snippet");
+
+      const now = + new Date();
+      var data = {
+          'doc_id': docid,
+          'doc_title': docTitle,
+          'doc_CAL_snippet': "",
+          'doc_search_snippet': docSnippet,
+          'relevance': rel,
+          'additional_judging_criteria': {},
+          'source': "SERP",
+          'client_time': now,
+          'search_query': null,
+          'ctrl_f_terms_input': $("#search_content").val(),
+          'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
+          'page_title': document.title,
+
+          // history item
+          'historyItem': {
+            "timestamp": now,
+            "source": "SERP",
+            "queryID": options.queryID,
+            "query": options.query,
+            "judged": true,
+            "relevance": rel,
+            'additional_judging_criteria': {},
+          },
+      };
+
+      $.ajax({
+          url: options.sendDocumentJudgmentURL,
+          method: 'POST',
+          data: JSON.stringify(data),
+          success: function (result) {
+              if(result['is_max_judged_reached']){
+                  showMaxJudgmentReached();
+                  return;
+              }
+              parent.afterDocumentJudge(docid, rel);
+          },
+          error: function (result){
+            console.error("Something went wrong. ", result);
+          },
+          statusCode: {
+              502: function (xhr) {
+                console.log("Something went wrong. Timeout error." +
+                      "Judgment may have not been recorded.", xhr.responseText);
+              }
+          }
+      });
+
+    }
+
     function sendJudgment(rel, callback) {
       if (!(options.singleDocumentMode || options.searchMode)){
         window.scrollTo(0, 0);
@@ -688,9 +775,15 @@ docView.prototype = {
             "source": options.judgingSourceName,
             "judged": true,
             "relevance": rel,
+            "queryID": options.queryID,
+            "query": options.query,
             'additional_judging_criteria': additional_judging_criteria,
           },
       };
+
+      if ($(`#doc_${docid}_card`).length){
+        data["doc_search_snippet"] = $(`#doc_${docid}_card`).data("snippet");
+      }
 
       $.ajax({
           url: options.sendDocumentJudgmentURL,

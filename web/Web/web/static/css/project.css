@@ -683,7 +683,6 @@ a.dropdown-item {
 .document {
   padding: 10px 10px;
   margin: 5px 0px 5px 10px;
-  max-width: 600px;
   min-height: 100px;
 }
 
@@ -935,9 +934,16 @@ mark.current {
 .highlyRelevantColor {
   color: #84c273;
 }
-.relevantColor{
+.relevantColor {
   color: #c6fab8;
 }
-.nonRelevantColor{
+.nonRelevantColor {
   color: #a5a5a5;
+}
+
+.hoverOpacity {
+  opacity: 0.4;
+}
+.hoverOpacity:hover{
+  opacity: 1;
 }
