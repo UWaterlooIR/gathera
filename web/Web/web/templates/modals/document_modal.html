@@ -60,9 +60,9 @@
 
                 <div class="text-left">
                   <div class="btn-group mt-3" role="group">
-                    <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocNonRelButton">Not {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
-                    <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocRelButton">{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
-                    <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocHRelButton">Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+                    <a href="#" data-dismiss="modal" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocNonRelButton">Not {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+                    <a href="#" data-dismiss="modal" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocRelButton">{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+                    <a href="#" data-dismiss="modal" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocHRelButton">Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
                   </div>
 
                   {% if additional_judging_criteria %}

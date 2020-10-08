@@ -138,9 +138,9 @@ docView.prototype = {
 
     // start linking selectors and collect info on configurable additional judging criteria
     $(document).ready(function(){
-      $(options.documentHRelButtonSelector).on("click", function(){sendJudgment(2, options.searchMode? closeDocumentModal : refreshDocumentView)});
-      $(options.documentRelButtonSelector).on("click", function(){sendJudgment(1, options.searchMode? closeDocumentModal : refreshDocumentView)});
-      $(options.documentNonRelButtonSelector).on("click", function(){sendJudgment(0, options.searchMode? closeDocumentModal : refreshDocumentView)});
+      $(options.documentHRelButtonSelector).on("click", function(){sendJudgment(2, options.searchMode? null : refreshDocumentView)});
+      $(options.documentRelButtonSelector).on("click", function(){sendJudgment(1, options.searchMode? null : refreshDocumentView)});
+      $(options.documentNonRelButtonSelector).on("click", function(){sendJudgment(0, options.searchMode? null : refreshDocumentView)});
       $(options.documentCloseButtonSelector).on("click", function(){closePreviouslyReviewedDocument()});
 
       $('body').on("click", options.searchItemSelector, function(){showDocument($(this).data("doc-id").toString())});
