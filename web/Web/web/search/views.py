@@ -4,7 +4,7 @@ from config.settings.base import SEARCH_ENGINE
 from config.utils import never_ever_cache
 import json
 import logging
-
+from django.shortcuts import render
 from braces import views
 from django.contrib import messages
 from django.http import HttpResponse
@@ -45,17 +45,30 @@ class SearchView(views.LoginRequiredMixin,
         return super(SearchView, self).get(self, request, *args, **kwargs)
 
 
-class SearchListView(views.LoginRequiredMixin, generic.TemplateView):
+class SimpleSearchView(views.LoginRequiredMixin,
+                 RetrievalMethodPermissionMixin,
+                 generic.TemplateView):
     template_name = 'search/search.html'
 
-    def get_context_data(self, **kwargs):
-        query_id = kwargs.get('query_id', None)
-        SERPInstance = get_object_or_404(SearchResult, query__query_id=query_id)
-        prev_clicks = SERPClick.objects.filter(username=self.request.user).values_list('docno', flat=True).distinct()
-        prev_clicks = list(prev_clicks)
+    @staticmethod
+    def log_query(request, query, SERP):
+        q = query_instance = Query.objects.create(
+            username=request.user,
+            query=query,
+            session=request.user.current_session,
+        )
 
-        SERP = SERPInstance.SERP
+        sr = SearchResult.objects.create(
+            username=request.user,
+            session=request.user.current_session,
+            query=query_instance,
+            SERP=SERP,
+        )
 
+        return q
+
+
+    def get_params(self, SERP):
         try:
             page_number = int(self.request.GET.get('page_number', 1))
         except ValueError:
@@ -63,80 +76,148 @@ class SearchListView(views.LoginRequiredMixin, generic.TemplateView):
         num_display = 10
         last_page = math.ceil(len(SERP["hits"]) / num_display)
         page_number = page_number if 1 <= page_number <= last_page else 1
-
         offset = (page_number - 1) * num_display
-        hits = SERP["hits"][offset: offset + num_display]
+        return page_number, num_display, offset, last_page
 
-        SERP["hits"] = helpers.join_judgments(hits,
-                                              [hit["docno"] for hit in SERP["hits"]],
-                                              self.request.user,
-                                              self.request.user.current_session)
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get('query', '')
+        if query != '':
+            SERP = SearchEngine.search(query)
+            q = self.log_query(request, query, SERP)
 
-        context = {
-            "isQueryPage": True,
-            "queryID": query_id,
-            "query": SERPInstance.query.query,
-            "prevClickedUrlsDuringSession": prev_clicks,
-            "SERP": SERP,
-            "pagination": {
-                "is_first_page": page_number == 1,
-                "is_last_page": page_number == last_page,
-                "page_number": page_number,
-                "page_range": range(max(1, page_number - 3), min(last_page, page_number + 3) + 1),
-                "last_page": last_page
+            query_id = q.query_id
+
+            prev_clicks = SERPClick.objects.filter(username=self.request.user).values_list('docno', flat=True).distinct()
+            prev_clicks = list(prev_clicks)
+
+            page_number, num_display, offset, last_page = self.get_params(SERP)
+
+            hits = SERP["hits"][offset: offset + num_display]
+
+            SERP["hits"] = helpers.join_judgments(hits,
+                                                  [hit["docno"] for hit in SERP["hits"]],
+                                                  self.request.user,
+                                                  self.request.user.current_session)
+
+            context = {
+                "isQueryPage": True,
+                "queryID": query_id,
+                "query": query,
+                "prevClickedUrlsDuringSession": prev_clicks,
+                "SERP": SERP,
+                "pagination": {
+                    "is_first_page": page_number == 1,
+                    "is_last_page": page_number == last_page,
+                    "page_number": page_number,
+                    "page_range": range(max(1, page_number - 3), min(last_page, page_number + 3) + 1),
+                    "last_page": last_page
+                }
+            }
+        else:
+            context = {
+                "isQueryPage": False,
+                "queryID": "NA",
+                "query": "",
             }
 
-        }
-
-        return context
-
-    @never_ever_cache
-    def get(self, request, *args, **kwargs):
-        return super().get(self, request, *args, **kwargs)
+        return render(request, self.template_name, context)
 
 
-class SearchSubmitView(views.CsrfExemptMixin,
-                       views.LoginRequiredMixin,
-                       generic.base.View):
 
-    def get_success_url(self, params):
-        return reverse('search:query_result', kwargs=params)
 
-    def get_failed_url(self,):
-        return reverse_lazy('failed')
 
-    def post(self, request, *args, **kwargs):
-        context = {}
-
-        try:
-            search_input = request.POST.get("search_input")
-        except KeyError:
-            context['error'] = "Error happened. No search input."
-            messages.add_message(request, messages.ERROR, context)
-            return HttpResponseRedirect(self.get_failed_url())
-
-        # Create a query instance once we receive query
-        query_instance = Query.objects.create(
-            username=request.user,
-            query=search_input,
-            session=request.user.current_session,
-        )
-
-        # Call search API to get search results
-        SERP = SearchEngine.search(search_input)
-
-        # Create search result instance with the result of the search API call.
-        SearchResult.objects.create(
-            username=request.user,
-            session=request.user.current_session,
-            query=query_instance,
-            SERP=SERP,
-        )
-
-        return HttpResponseRedirect(self.get_success_url({
-                "query_id": str(query_instance.query_id)
-            })
-        )
+# class SearchListView(views.LoginRequiredMixin, generic.TemplateView):
+#     template_name = 'search/search.html'
+#
+#     def get_context_data(self, **kwargs):
+#         query_id = kwargs.get('query_id', None)
+#         SERPInstance = get_object_or_404(SearchResult, query__query_id=query_id)
+#         prev_clicks = SERPClick.objects.filter(username=self.request.user).values_list('docno', flat=True).distinct()
+#         prev_clicks = list(prev_clicks)
+#
+#         SERP = SERPInstance.SERP
+#
+#         try:
+#             page_number = int(self.request.GET.get('page_number', 1))
+#         except ValueError:
+#             page_number = 1
+#         num_display = 10
+#         last_page = math.ceil(len(SERP["hits"]) / num_display)
+#         page_number = page_number if 1 <= page_number <= last_page else 1
+#
+#         offset = (page_number - 1) * num_display
+#         hits = SERP["hits"][offset: offset + num_display]
+#
+#         SERP["hits"] = helpers.join_judgments(hits,
+#                                               [hit["docno"] for hit in SERP["hits"]],
+#                                               self.request.user,
+#                                               self.request.user.current_session)
+#
+#         context = {
+#             "isQueryPage": True,
+#             "queryID": query_id,
+#             "query": SERPInstance.query.query,
+#             "prevClickedUrlsDuringSession": prev_clicks,
+#             "SERP": SERP,
+#             "pagination": {
+#                 "is_first_page": page_number == 1,
+#                 "is_last_page": page_number == last_page,
+#                 "page_number": page_number,
+#                 "page_range": range(max(1, page_number - 3), min(last_page, page_number + 3) + 1),
+#                 "last_page": last_page
+#             }
+#
+#         }
+#
+#         return context
+#
+#     @never_ever_cache
+#     def get(self, request, *args, **kwargs):
+#         return super().get(self, request, *args, **kwargs)
+#
+#
+# class SearchSubmitView(views.CsrfExemptMixin,
+#                        views.LoginRequiredMixin,
+#                        generic.base.View):
+#
+#     def get_success_url(self, params):
+#         return reverse('search:query_result', kwargs=params)
+#
+#     def get_failed_url(self,):
+#         return reverse_lazy('failed')
+#
+#     def post(self, request, *args, **kwargs):
+#         context = {}
+#
+#         try:
+#             search_input = request.POST.get("search_input")
+#         except KeyError:
+#             context['error'] = "Error happened. No search input."
+#             messages.add_message(request, messages.ERROR, context)
+#             return HttpResponseRedirect(self.get_failed_url())
+#
+#         # Create a query instance once we receive query
+#         query_instance = Query.objects.create(
+#             username=request.user,
+#             query=search_input,
+#             session=request.user.current_session,
+#         )
+#
+#         # Call search API to get search results
+#         SERP = SearchEngine.search(search_input)
+#
+#         # Create search result instance with the result of the search API call.
+#         SearchResult.objects.create(
+#             username=request.user,
+#             session=request.user.current_session,
+#             query=query_instance,
+#             SERP=SERP,
+#         )
+#
+#         return HttpResponseRedirect(self.get_success_url({
+#                 "query_id": str(query_instance.query_id)
+#             })
+#         )
 
 
 class SearchButtonView(views.CsrfExemptMixin,
