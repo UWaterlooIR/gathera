@@ -133,9 +133,10 @@ class SearchSubmitView(views.CsrfExemptMixin,
             SERP=SERP,
         )
 
-        return JsonResponse({
-            "query_url": self.get_success_url({"query_id": str(query_instance.query_id)})
-        })
+        return HttpResponseRedirect(self.get_success_url({
+                "query_id": str(query_instance.query_id)
+            })
+        )
 
 
 class SearchButtonView(views.CsrfExemptMixin,

@@ -119,7 +119,7 @@
             $("#search-result-spinner").removeClass("d-none");
         });
 
-        $('.search_form').submit(function(e) {
+        $('.search_form').one('submit', function(e) {
             // prevents default behaviour,
             e.preventDefault();
             // shows loading spinner once a user reformulates
@@ -127,13 +127,7 @@
             $("#search_result").addClass("d-none");
             $("#search-result-spinner").removeClass("d-none");
             //logQuerySubmit(); # TODO
-            $.post(
-                $(this).attr('action'), // the form's action
-                $(this).serializeArray(), // the form data serialized
-                function(data){
-                    window.location = data['query_url'];
-                }
-            );
+            $(this).submit();
         });
 
         $('#search_button').on('beforeSend.ic',
