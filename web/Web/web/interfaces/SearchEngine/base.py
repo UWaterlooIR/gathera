@@ -10,7 +10,7 @@ class SearchInterface(ABC):
 
     @staticmethod
     @abstractmethod
-    def search(query: str, size: int) -> dict:
+    def search(query: str, size: int, offset: int) -> dict:
         """Returns a list of a dict of search results for a given query.
         E.g.
         {
