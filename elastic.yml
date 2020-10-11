@@ -32,9 +32,8 @@ services:
 
 
   search_elastic:
-    build: ./search_elastic/
+    image: elasticsearch:7.9.2
     volumes:
-      - ./search_elastic/app:/app
       - ./data/esdata:/usr/share/elasticsearch/data
     environment:
       - discovery.type=single-node
