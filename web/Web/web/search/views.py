@@ -2,18 +2,14 @@ import copy
 import math
 
 from config.settings.base import SEARCH_ENGINE
-from config.utils import never_ever_cache
+
 import json
 import logging
 from django.shortcuts import render
 from braces import views
-from django.contrib import messages
+
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.urls import reverse
-from django.urls import reverse_lazy
+
 from django.utils.module_loading import import_string
 from django.views import generic
 

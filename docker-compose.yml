@@ -52,6 +52,10 @@ services:
     environment:
       - POSTGRES_USER=web
       - POSTGRES_HOST_AUTH_METHOD=trust
+#    ports:
+#      - "8004:5432"
+#    expose:
+#      - "8004"
 
   nginx:
     image: nginx:latest
