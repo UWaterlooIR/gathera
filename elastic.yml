@@ -1,0 +1,77 @@
+version: '2'  
+
+volumes:
+  postgres_data_local: {}
+  postgres_backup_local: {}
+
+services:
+  cal:
+    build: ./CALEngine/
+    container_name: cal
+    command: bash -c "cd /src; make clean; DEBUG=${DEBUG} make bmi_fcgi && /usr/bin/spawn-fcgi -p 8002 -n -- ./bmi_fcgi --doc-features ${DOC_BIN} --para-features ${PARA_BIN} --threads 8"
+    volumes:
+      - ./CALEngine:/src
+      - ./data:/data
+    expose:
+      - "8002"
+
+  web:
+    build:
+      context: ./web/Web
+      dockerfile: ./compose/production/django/Dockerfile
+    depends_on:
+      - postgres
+    volumes:
+      - ./web/Web:/app
+    environment:
+      - POSTGRES_USER=web
+      - USE_DOCKER=yes
+    expose:
+      - "8001"
+    command: /start.sh
+
+
+  search_elastic:
+    build: ./search_elastic/
+    volumes:
+      - ./search_elastic/app:/app
+      - ./data/esdata:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "8003:9200"
+    expose:
+      - "8003"
+    networks:
+      default:
+        aliases:
+          - search
+
+
+  postgres:
+    build:
+      context: ./web/Web
+      dockerfile: ./compose/production/postgres/Dockerfile
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+      - postgres_backup_local:/backups
+    environment:
+      - POSTGRES_USER=web
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    expose:
+      - "9001"
+      - "9000"
+    volumes:
+      - ./config/nginx:/etc/nginx
+      - ./web/Web:/app
+      - ./data:/data
+    depends_on:
+      - web
+      - cal

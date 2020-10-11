@@ -341,12 +341,17 @@ CAL_SERVER_IP = 'nginx'
 CAL_SERVER_PORT = '9001'
 SEARCH_SERVER_IP = 'search'
 SEARCH_SERVER_PORT = '80'
+# SEARCH_SERVER_PORT = '9200'
+INDEX_NAME = 'athome4'
 DOCUMENTS_URL = 'http://nginx:9000/doc'
 PARA_URL = 'http://nginx:9000/para'
 
 
 # SEARCH INTERFACE
 SEARCH_ENGINE = "web.interfaces.SearchEngine.anserini.Anserini"
+# SEARCH_ENGINE = "web.interfaces.SearchEngine.elastic.Elastic"
+
+
 
 
 # JUDGING CRITERIA

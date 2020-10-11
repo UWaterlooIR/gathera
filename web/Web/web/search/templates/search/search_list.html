@@ -48,7 +48,7 @@
              data-rank="{{ hit.rank }}"
              data-doc-id="{{ hit.docno }}"
              data-title="{{ hit.title|escape }}"
-             data-snippet="{{ hit.snippet|escape }}"
+             data-snippet="{{ hit.snippet }}"
              data-toggle="modal" data-target="#documentModal"
              style="min-height: 5rem;cursor: pointer; cursor: hand; transition: border-color 0.3s ease-in"
             >
@@ -56,7 +56,7 @@
           <div class="align-self-center py-0">
             <h6 class="title" style="margin-bottom: 0;">{{ hit.title|escape }}</h6>
             <div class="url small">doc_id: {{ hit.docno }}</div>
-            <div class="snippet"> {{ hit.snippet|escape }} </div>
+            <div class="snippet"> {{ hit.snippet|safe }} </div>
           </div>
         </div>
         <div class="mx-auto">
@@ -105,6 +105,12 @@
 
   </ul>
 </nav>
+
+<style>
+  .document em {
+    font-weight: bold;
+  }
+</style>
   {% endif %}
 
 

@@ -1,3 +1,4 @@
+import copy
 import math
 
 from config.settings.base import SEARCH_ENGINE
@@ -40,11 +41,16 @@ class SimpleSearchView(views.LoginRequiredMixin,
             session=self.request.user.current_session,
         )
 
+        temp = copy.deepcopy(SERP)
+        for hit in temp["hits"]:
+            hit.pop("contents", None)
+            hit.pop("snippet", None)
+
         sr = SearchResult.objects.create(
             username=self.request.user,
             session=self.request.user.current_session,
             query=query_instance,
-            SERP=SERP,
+            SERP=temp,
         )
 
         return query_instance
