@@ -872,6 +872,11 @@ docView.prototype = {
         checkIfDocumentPreviouslyJudged(docid);
       }
 
+      let highlighted_keyword = Cookies.get('highlighted_keyword');
+      if (highlighted_keyword) {
+        $("#search_content").val(highlighted_keyword).trigger('input');
+      }
+
       parent.afterDocumentLoad(docid);
     }
 

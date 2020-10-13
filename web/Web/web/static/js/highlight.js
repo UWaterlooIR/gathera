@@ -179,7 +179,9 @@ $(function() {
    * specified context on input
    */
   $input.on("input", function() {
-  	var searchVal = this.value;
+    var searchVal = this.value;
+    // Store the keyword in Cookie
+    Cookies.set('highlighted_keyword', searchVal);
     $content.unmark({
       className: $className,
       done: function() {
