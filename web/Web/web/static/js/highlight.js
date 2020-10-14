@@ -195,7 +195,7 @@ $(function() {
       done: function() {
         $content.mark(searchVal, {
           className: $className,
-          separateWordSearch: true,
+          separateWordSearch: false,
           exclude: $exclude,
           done: function() {
             updateMatchesDictionaries();
