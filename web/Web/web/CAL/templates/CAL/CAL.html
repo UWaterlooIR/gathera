@@ -208,6 +208,11 @@
           fetchPreviouslyJudgedDocsOnInit: true,
           mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',
           csrfmiddlewaretoken: "{{ csrf_token }}",
+
+          afterDocumentLoad: function (docid) {
+            // Perform keyword search if necessary
+            searchForKeyword();
+          }
         });
 
     </script>

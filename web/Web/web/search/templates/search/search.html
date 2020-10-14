@@ -101,6 +101,11 @@
                 newColor = "#84c273"; break;
             }
             $(`#doc_${docid}_SERP_indicator`).attr('style', `border-color:${newColor}`);
+          },
+
+          afterDocumentLoad: function (docid) {
+            // Perform keyword search if necessary
+            searchForKeyword();
           }
         });
 

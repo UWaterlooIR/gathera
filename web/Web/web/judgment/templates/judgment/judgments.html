@@ -184,6 +184,11 @@
             $(`#doc_${docid}_judgment_badge`).attr('class', `badge ${newColor}`);
             $(`#doc_${docid}_judgment_badge`).text(relText);
             console.log(`badge ${newColor}`);
+          },
+
+          afterDocumentLoad: function (docid) {
+            // Perform keyword search if necessary
+            searchForKeyword();
           }
         });
 
