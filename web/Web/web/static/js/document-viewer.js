@@ -2,14 +2,14 @@
 
 var docView = function() {
 
-	var self = this;
-	this.version = '0.1.0';
+  var self = this;
+  this.version = '0.1.0';
 
-	this.options = {
+  this.options = {
     csrfmiddlewaretoken: null, // required
-	  judgingSourceName: "CAL",
+    judgingSourceName: "CAL",
 
-	  // urls
+    // urls
     getPrevDocumentsJudgedURL: null, // required if showing prev reviewed docs
     getDocumentsToJudgeURL: null, // required if caching enabled
     getDocumentIDsToJudgeURL: null, // required
@@ -1006,53 +1006,53 @@ docView.prototype = {
 
 
   // =========================================================================//
-	// EVENTS CALLBACK															                            //
-	// =========================================================================//
+  // EVENTS CALLBACK                                                          //
+  // =========================================================================//
 
-	/**
-	 * Helper method for triggering event callback
-	 *
-	 * @param  string	eventName       Name of the event to trigger
-	 * @param  array	successArgs     List of argument to pass to the callback
-	 * @param  boolean  skip			Whether to skip the event triggering
-	 * @return mixed	True when the triggering was skipped, false on error, else the callback function
-	 */
-	triggerEvent: function(eventName, successArgs, skip) {
-		"use strict";
+  /**
+   * Helper method for triggering event callback
+   *
+   * @param  string  eventName       Name of the event to trigger
+   * @param  array  successArgs     List of argument to pass to the callback
+   * @param  boolean  skip      Whether to skip the event triggering
+   * @return mixed  True when the triggering was skipped, false on error, else the callback function
+   */
+  triggerEvent: function(eventName, successArgs, skip) {
+    "use strict";
 
-		if ((arguments.length === 3 && skip) || this.options[eventName] === null) {
-			return true;
-		}
+    if ((arguments.length === 3 && skip) || this.options[eventName] === null) {
+      return true;
+    }
 
-		if (typeof this.options[eventName] === "function") {
-			if (typeof successArgs === "function") {
-				successArgs = successArgs();
-			}
-			return this.options[eventName].apply(this, successArgs);
-		} else {
-			console.log("Provided callback for " + eventName + " is not a function.");
-			return false;
-		}
-	},
+    if (typeof this.options[eventName] === "function") {
+      if (typeof successArgs === "function") {
+        successArgs = successArgs();
+      }
+      return this.options[eventName].apply(this, successArgs);
+    } else {
+      console.log("Provided callback for " + eventName + " is not a function.");
+      return false;
+    }
+  },
 
   beforeDocumentLoad: function(docid) {
-		"use strict";
-		return this.triggerEvent("beforeDocumentLoad", [docid]);
-	},
+    "use strict";
+    return this.triggerEvent("beforeDocumentLoad", [docid]);
+  },
 
   afterDocumentLoad: function(docid) {
-		"use strict";
-		return this.triggerEvent("afterDocumentLoad", [docid]);
-	},
+    "use strict";
+    return this.triggerEvent("afterDocumentLoad", [docid]);
+  },
 
   afterDocumentJudge: function(docid, rel) {
-		"use strict";
-		return this.triggerEvent("afterDocumentJudge", [docid, rel]);
-	},
+    "use strict";
+    return this.triggerEvent("afterDocumentJudge", [docid, rel]);
+  },
 
   afterErrorShown: function () {
     "use strict";
-		return this.triggerEvent("afterErrorShown");
+    return this.triggerEvent("afterErrorShown");
   }
 };
 
@@ -1060,37 +1060,37 @@ docView.prototype = {
  * #source http://stackoverflow.com/a/383245/805649
  */
 function mergeRecursive(obj1, obj2) {
-	"use strict";
+  "use strict";
 
-	/*jshint forin:false */
-	for (var p in obj2) {
-		try {
-			// Property in destination object set; update its value.
-			if (obj2[p].constructor === Object) {
-				obj1[p] = mergeRecursive(obj1[p], obj2[p]);
-			} else {
-				obj1[p] = obj2[p];
-			}
-		} catch(e) {
-			// Property in destination object not set; create it and set its value.
-			obj1[p] = obj2[p];
-		}
-	}
+  /*jshint forin:false */
+  for (var p in obj2) {
+    try {
+      // Property in destination object set; update its value.
+      if (obj2[p].constructor === Object) {
+        obj1[p] = mergeRecursive(obj1[p], obj2[p]);
+      } else {
+        obj1[p] = obj2[p];
+      }
+    } catch(e) {
+      // Property in destination object not set; create it and set its value.
+      obj1[p] = obj2[p];
+    }
+  }
 
-	return obj1;
+  return obj1;
 }
 
 /**
  * Loader
  */
 if (typeof define === "function" && define.amd) {
-	define([], function() {
-		"use strict";
+  define([], function() {
+    "use strict";
 
-		return docView;
-	});
+    return docView;
+  });
 } else if (typeof module === "object" && module.exports) {
-	module.exports = docView;
+  module.exports = docView;
 } else {
-	window.docView = docView;
+  window.docView = docView;
 }
