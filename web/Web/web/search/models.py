@@ -1,10 +1,12 @@
 import uuid
 
 from config.settings.base import AUTH_USER_MODEL as User
+from config.settings.base import DEFAULT_NUM_DISPLAY
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-
+from django.core.validators import MaxValueValidator, MinValueValidator
 from web.core.models import Session
+
 
 
 class Query(models.Model):
@@ -35,6 +37,9 @@ class SearchResult(models.Model):
     created_at = models.DateTimeField(auto_now_add=True,
                                       editable=False)
     updated_at = models.DateTimeField(auto_now=True)
+
+    page_number = models.PositiveSmallIntegerField(default=1, validators=[MinValueValidator(1)])
+    num_display = models.PositiveSmallIntegerField(default=DEFAULT_NUM_DISPLAY, validators=[MinValueValidator(1)])
 
     def __unicode__(self):
         return "{} - {}: {}".format(self.session, self.username, self.query.query)

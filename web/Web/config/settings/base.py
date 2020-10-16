@@ -345,7 +345,7 @@ SEARCH_SERVER_PORT = '80'
 INDEX_NAME = 'athome4'
 DOCUMENTS_URL = 'http://nginx:9000/doc'
 PARA_URL = 'http://nginx:9000/para'
-
+DEFAULT_NUM_DISPLAY = 10
 
 # SEARCH INTERFACE
 SEARCH_ENGINE = "web.interfaces.SearchEngine.anserini.Anserini"

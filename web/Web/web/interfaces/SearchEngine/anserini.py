@@ -1,6 +1,7 @@
 import requests
 from config.settings.base import SEARCH_SERVER_IP
 from config.settings.base import SEARCH_SERVER_PORT
+from config.settings.base import DEFAULT_NUM_DISPLAY
 from web.interfaces.SearchEngine.base import SearchInterface
 from collections import OrderedDict
 
@@ -8,7 +9,7 @@ from collections import OrderedDict
 class Anserini(SearchInterface):
 
     @staticmethod
-    def search(query: str, size: int =10, offset: int = 0):
+    def search(query: str, size: int =DEFAULT_NUM_DISPLAY, offset: int = 0):
         response = requests.get(
             f"http://{SEARCH_SERVER_IP}:{SEARCH_SERVER_PORT}/search",
             params={

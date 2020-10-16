@@ -47,8 +47,8 @@ services:
       context: ./web/Web
       dockerfile: ./compose/production/postgres/Dockerfile
     volumes:
-      - postgres_data_local:/var/lib/postgresql/data
-      - postgres_backup_local:/backups
+      - ./postgres_data_local:/var/lib/postgresql/data
+      - ./postgres_backup_local:/backups
     environment:
       - POSTGRES_USER=web
       - POSTGRES_HOST_AUTH_METHOD=trust

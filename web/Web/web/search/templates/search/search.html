@@ -21,7 +21,7 @@
 
 {% block navbar-center %}
 <form id="search_form" name="search_input" class="input-group mx-auto w-75 search-input text-dark search_form" method="get" action="{% url 'search:main' %}">
-  <input autocomplete="off" class="form-control py-2 mr-1 pr-5 search-input bg-light text-dark border-0 shadow-none rounded-sm" type="search" placeholder="Search" id="search_input" name="query">
+  <input autocomplete="off" class="form-control py-2 mr-1 pr-5 search-input bg-light text-dark border-0 shadow-none rounded-sm" type="search" placeholder="Search" id="search_input" name="query" value="{{query}}">
   <span class="input-group-append">
      <button class="btn rounded-pill border-0 ml-n5 p-0 pl-2" type="submit">
   	  <i class="fas fa-search text-secondary"></i>

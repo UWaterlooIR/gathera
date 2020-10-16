@@ -2,6 +2,7 @@ import copy
 import math
 
 from config.settings.base import SEARCH_ENGINE
+from config.settings.base import DEFAULT_NUM_DISPLAY
 
 import json
 import logging
@@ -30,33 +31,33 @@ class SimpleSearchView(views.LoginRequiredMixin,
                        generic.TemplateView):
     template_name = 'search/search.html'
 
-    def log_query(self, query, SERP):
-        query_instance = Query.objects.create(
+    def log_query(self, query, SERP, page_number, num_display):
+        query_instance, q_was_created = Query.objects.get_or_create(
             username=self.request.user,
             query=query,
             session=self.request.user.current_session,
         )
 
-        temp = copy.deepcopy(SERP)
-        for hit in temp["hits"]:
-            hit.pop("contents", None)
-            hit.pop("snippet", None)
 
-        sr = SearchResult.objects.create(
+        sr, sr_was_created = SearchResult.objects.get_or_create(
             username=self.request.user,
             session=self.request.user.current_session,
             query=query_instance,
-            SERP=temp,
+            page_number=page_number,
+            num_display=num_display,
+            defaults={
+                "SERP":SERP
+            },
         )
 
-        return query_instance
+        return query_instance, sr
 
     def get_params(self):
         try:
             page_number = int(self.request.GET.get('page_number', 1))
         except ValueError:
             page_number = 1
-        num_display = 10
+        num_display = DEFAULT_NUM_DISPLAY
         page_number = max(page_number, 1)
         offset = (page_number - 1) * num_display
         return page_number, num_display, offset
@@ -66,9 +67,10 @@ class SimpleSearchView(views.LoginRequiredMixin,
         if query != '':
             page_number, num_display, offset = self.get_params()
             SERP = SearchEngine.search(query, offset=offset, size=num_display)
-            q = self.log_query(query, SERP)
+            q, sr = self.log_query(query, SERP, page_number, num_display)
 
             query_id = q.query_id
+            serp_id = sr.id
 
             prev_clicks = SERPClick.objects.filter(username=self.request.user).values_list('docno', flat=True).distinct()
             prev_clicks = list(prev_clicks)
@@ -83,6 +85,7 @@ class SimpleSearchView(views.LoginRequiredMixin,
             context = {
                 "isQueryPage": True,
                 "queryID": query_id,
+                "serpID": serp_id,
                 "query": query,
                 "prevClickedUrlsDuringSession": prev_clicks,
                 "SERP": SERP,
