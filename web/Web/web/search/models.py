@@ -8,7 +8,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from web.core.models import Session
 
 
-
 class Query(models.Model):
     username = models.ForeignKey(User, on_delete=models.CASCADE)
     session = models.ForeignKey(Session, on_delete=models.CASCADE)

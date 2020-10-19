@@ -63,8 +63,8 @@ class SimpleSearchView(views.LoginRequiredMixin,
         return page_number, num_display, offset
 
     def get(self, request, *args, **kwargs):
-        query = request.GET.get('query', '')
-        if query != '':
+        query = request.GET.get('query', None)
+        if query:
             page_number, num_display, offset = self.get_params()
             SERP = SearchEngine.search(query, offset=offset, size=num_display)
             q, sr = self.log_query(query, SERP, page_number, num_display)
