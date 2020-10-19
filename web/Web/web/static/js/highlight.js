@@ -182,6 +182,59 @@ $(function() {
     marked_matches_counter = {};
   }
 
+  /** This function processes the entered keyword to support both
+   * phrase search (using double quotes) and seperate word search (seperated by space)
+   * It takes advantage of the synonyms functionality in mark.js package
+   * Sample input:
+   *        phrase search + seperate word search: '"vitamin d" coronavirus cure'
+   * Output:
+   *        {"processed_keywords": ['vitamin d', 'coronavirus', 'cure'],
+   *         "separateWordSearch": false,
+   *         "synonyms": {
+   *                       "vitamin d coronavirus cure": "vitamin d | coronavirus | cure"
+   *                      }
+   *        }
+   * By setting synonyms like this, when the original input is: "vitamin d" coronavirus cure,
+   * vitamin d, coronavirus, and cure would also be highlighted seperatly since they are considered synonyms.
+  */
+  function processKeyword(keywords) {
+    // default return values
+    let separateWordSearch = true;
+    let synonyms = {};
+
+    if (keywords == null || keywords == undefined) {
+      return {
+        "processed_keywords": keywords,
+        "separateWordSearch": separateWordSearch,
+        "synonyms": synonyms
+      }
+    }
+
+    // Split keywords by space but not those in quotes
+    let keywordsList = keywords.match(/[^\s"]+|"[^"]+"/gi);
+
+    if (keywordsList != null) {
+      // Remove double quotes in the list
+      keywordsList = keywordsList.map(e => e.replace(/"(.+)"/, "$1"));
+      console.log(keywordsList)
+
+      if (keywords.includes("\"")) {
+        // The original keywords have at least one phrase 
+        separateWordSearch = false;
+        synonyms[keywordsList.join(' ')] = keywordsList.join('|');
+      }
+    } else {
+      // RegExp match returns NULL.
+      keywordsList = keywords
+    }
+
+    return {
+      "processed_keywords": keywordsList,
+      "separateWordSearch": separateWordSearch,
+      "synonyms": synonyms
+    }
+  }
+
   /**
    * Searches for the entered keyword in the
    * specified context on input
@@ -190,12 +243,16 @@ $(function() {
     var searchVal = this.value;
     // Store the keyword in Cookie
     Cookies.set('highlighted_keyword', searchVal);
+
+    let processed_keywords = processKeyword(searchVal);
+
     $content.unmark({
       className: $className,
       done: function() {
-        $content.mark(searchVal, {
+        $content.mark(processed_keywords["processed_keywords"], {
           className: $className,
-          separateWordSearch: true,
+          separateWordSearch: processed_keywords["separateWordSearch"],
+          synonyms: processed_keywords["synonyms"],
           exclude: $exclude,
           done: function() {
             updateMatchesDictionaries();
