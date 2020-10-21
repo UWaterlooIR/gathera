@@ -182,7 +182,8 @@ $(function() {
     marked_matches_counter = {};
   }
 
-  /** This function processes the entered keyword to support both
+  /** 
+   * This function processes the entered keyword to support both
    * phrase search (using double quotes) and seperate word search (seperated by space)
    * It takes advantage of the synonyms functionality in mark.js package
    * Sample input:
