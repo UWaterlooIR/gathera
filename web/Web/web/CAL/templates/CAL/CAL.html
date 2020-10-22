@@ -40,7 +40,7 @@
 <div class="mb-4">
 
   <div class="row">
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-8">
 
       <nav class="nav nav-pills">
         <div class="d-flex px-3 py-2">
@@ -58,7 +58,7 @@
             <div id="docViewDocIndicator" class="align-self-center align-self-stretch p-2" style="border-width: 0.25rem!important; border-style: none none none solid; border-color: #DEE2E6;"></div>
             <div class="align-self-center py-2">
               <h2 class="document-title-font-family" id="docViewDocTitle" style="margin-bottom: 0;"></h2>
-              <code id="docViewDocMeta" class="text-muted smallDocumentIndicatorSelector"></code>
+              <small id="docViewDocMeta" class="text-muted text-monospace small smallDocumentIndicatorSelector"></small>
             </div>
             <button id="docViewDocCloseButton" type="button" class="align-self-center close ml-auto d-none" style="font-size: medium;min-width: 4rem;" aria-label="Close Document">
               <span aria-hidden="true">Close ×</span>
@@ -67,7 +67,7 @@
 
           <span id="docViewDocMessage" class="docView-default-font-family p-4 my-3 highlight-exclude"></span>
 
-          <ul class="nav nav-tabs mt-4 home-nav text-uppercase small d-none docViewTab" id="docViewTab" role="tablist">
+          <ul class="nav nav-tabs mt-4 home-nav text-uppercase small d-none docViewTab" id="docViewTab_" role="tablist">
             <li class="nav-item pl-1">
               <a class="nav-link px-3 active font-weight-bold" id="doc-extracted-text-tab" data-toggle="tab" href="#extracted-text-tab-content" role="tab"><i class="fas fa-align-left pr-1"></i> Extracted text</a>
             </li>
@@ -100,8 +100,8 @@
                   </div>
                 {% endif %}
 
-                <div class="card mt-2 border-0">
-                  <div class="card-body">
+                <div class="card border-0">
+                  <div class="card-body py-0">
                     <div class="d-flex w-50 justify-content-between font-sans text-primary mb-3 border-bottom highlight-exclude unselectable" unselectable="on">
                       <small class="highlight-exclude">Document content</small>
                     </div>
@@ -125,10 +125,10 @@
       </div>
     </div>
 
-    <div class="col-3 d-none d-sm-block">
+    <div class="col-2 d-none d-sm-block">
       <div class="sticky-top card border-0 mr-2" style="top:75px; z-index: 0;">
         <div class="card-body p-0 mt-3">
-          <h5 class="card-title text-secondary mb-0 unselectable" unselectable="on">Judge Document</h5>
+          <h6 class="card-title text-secondary mb-0 unselectable" unselectable="on">Judge Document</h6>
           <div class="small"><code id="docno_text">Docid: </code><code id="docViewDocID"></code></div>
 
           <div class="text-left">
@@ -139,14 +139,14 @@
             </div>
 
             {% if additional_judging_criteria %}
-            <h5 class="card-title text-secondary mt-4 mb-1 unselectable" unselectable="on">Additional Criteria <a class="badge badge-secondary float-right shadow-none small" data-toggle="modal" data-target="#additionalJudgingCriteriaModal" href="#"><i class="fas fa-info-circle"></i> Learn more</a></h5>
+            <h6 class="card-title text-secondary mt-4 mb-1 unselectable" unselectable="on">Additional Criteria <a class="badge badge-secondary float-right shadow-none small" data-toggle="modal" data-target="#additionalJudgingCriteriaModal" href="#"><i class="fas fa-info-circle"></i></a></h6>
             {% include 'cards/configurable_criteria_card.html' %}
             {% endif %}
 
           </div>
 
           <div id="highlighted_words">
-            <h5 class="card-title text-secondary mt-4 unselectable" unselectable="on">Highlighted terms <span class="badge badge-secondary float-right">Beta</span></h5>
+            <h6 class="card-title text-secondary mt-4 unselectable" unselectable="on">Highlighted terms <span class="badge badge-secondary float-right">Beta</span></h6>
             <ul class="list-group" id="highlighted_terms_list"></ul>
           </div>
 
@@ -154,11 +154,11 @@
       </div>
     </div>
 
-    <div class="col-3 d-none d-sm-block">
+    <div class="col-2 d-none d-sm-block">
       <div class="sticky-top card border-0 mr-2" style="top:75px; z-index: 0;">
         <div class="card-body p-0 mt-3">
           <div id="latest_judged">
-            <h5 class="card-title text-secondary unselectable" unselectable="on">Previously Reviewed Documents</h5>
+            <h6 class="card-title text-secondary unselectable" unselectable="on">Reviewed Documents</h6>
             <div class="card border-0">
               <div class="card-body px-0 py-2 d-flex" style="min-height: 18rem; max-height: 38rem;">
                 <!-- loader -->
