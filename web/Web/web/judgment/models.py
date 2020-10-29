@@ -16,8 +16,8 @@ class Judgment(models.Model):
 
     doc_id = models.CharField(null=False, blank=False, max_length=512)
     doc_title = models.TextField(null=False, blank=False)
-    doc_CAL_snippet = models.TextField(null=False, blank=False)
-    doc_search_snippet = models.TextField(null=False, blank=False)
+    doc_CAL_snippet = models.TextField(null=True, blank=True)
+    doc_search_snippet = models.TextField(null=True, blank=True)
     query = models.TextField(null=True, blank=True)
 
     # 2 indicates high level,

@@ -154,6 +154,7 @@
 
         var dv = new docView();
         dv.init({
+          username: '{{ request.user }}',
           singleDocumentMode: true,
           judgingSourceName: "judgmentsPage",
           searchMode: true,

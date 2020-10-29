@@ -9,6 +9,8 @@ var docView = function() {
     csrfmiddlewaretoken: null, // required
     judgingSourceName: "CAL",
 
+    username: null,
+
     // urls
     getPrevDocumentsJudgedURL: null, // required if showing prev reviewed docs
     getDocumentsToJudgeURL: null, // required if caching enabled
@@ -634,6 +636,7 @@ docView.prototype = {
 
           // history item
           'historyItem': {
+            "username": options.username,
             "timestamp": now,
             "source": options.judgingSourceName,
             "judged": false,
@@ -696,6 +699,7 @@ docView.prototype = {
 
           // history item
           'historyItem': {
+            "username": options.username,
             "timestamp": now,
             "source": "SERP",
             "queryID": options.queryID,
@@ -775,6 +779,7 @@ docView.prototype = {
 
           // history item
           'historyItem': {
+            "username": options.username,
             "timestamp": now,
             "source": options.judgingSourceName,
             "judged": true,
