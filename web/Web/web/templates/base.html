@@ -57,14 +57,15 @@
         <div class="navbar-nav order-2 order-md-1 align-self-md-center">
           {% if activated_shared_session and activated_shared_session.disallow_search %}
           {% else %}
-          <a class="nav-item nav-link" href="{% url 'search:main' %}">Search</a>
+          <a class="nav-item nav-link {% if 'search' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'search:main' %}">Search</a>
           {% endif %}
 
           {% if activated_shared_session and activated_shared_session.disallow_CAL %}
           {% else %}
-          <a class="nav-item nav-link" href="{% url 'CAL:main' %}">Discovery</a>
+          <a class="nav-item nav-link {% if 'CAL' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'CAL:main' %}">Discovery</a>
           {% endif %}
-          <a class="nav-item nav-link" href="#">Review</a>
+
+          <a class="nav-item nav-link {% if 'Review' in request.resolver_match.app_names %}text-primary{% endif %}" href="#">Review</a>
         </div>
         {% endif %}
         <ul class="nav navbar-nav flex-fill justify-content-center align-self-center center-text pl-5 pr-5 order-2 {%block navbar-hidesmall %}d-none d-sm-block{%endblock%}">
