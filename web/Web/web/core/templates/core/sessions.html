@@ -4,7 +4,7 @@
 
 {% block home-main %}
   <div class="row">
-    {% if sessions %}
+    {% if sessions or shared_sessions %}
     <div class="col-sm-12">
       <div class="card border-0">
         <div class="card-block">
@@ -27,7 +27,11 @@
 
           <div class="tab-content">
             <div class="tab-pane show active" id="pills-created-sessions" role="tabpanel">
+              {% if sessions %}
               {% include 'cards/sessions/list_sessions_table.html' %}
+              {% else %}
+                <p class="text-muted mt-4">You have no created sessions.</p>
+              {% endif %}
             </div>
             <div class="tab-pane" id="pills-shared-sessions" role="tabpanel">
               {% if shared_sessions %}

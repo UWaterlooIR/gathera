@@ -123,8 +123,6 @@
           </li>
 
 
-
-
           {% if request.user.is_authenticated %}
           <li class="nav-item dropdown align-self-center">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown">
@@ -172,7 +170,7 @@
     {% endif %}
     {% endif %}
 
-    {% if request.user.is_authenticated and request.user.current_session  %}
+    {% if request.user.is_authenticated %}
     <!-- Session details modal -->
     {% include 'modals/session_details_modal.html' %}
     {% endif %}
@@ -270,7 +268,7 @@
     </script>
     {% endif %}
 
-    {% if request.user.is_authenticated and request.user.current_session %}
+    {% if request.user.is_authenticated %}
     <script>
         function templateSharedToUser(shared_by, shared_with, shared_on, shared_session_uuid){
           let filledTemplate = `
