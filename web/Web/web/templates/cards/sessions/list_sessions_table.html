@@ -1,0 +1,38 @@
+<div class="mt-3 table-responsive judgment_table">
+  <table class="table judgment_table table-borderless table-hover small m-0">
+    <thead>
+    <tr>
+      <th>Date</th>
+      <th>Title</th>
+      <th>Desc.</th>
+      <th>Strategy</th>
+      <th class="text-center">Judged</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for session_item in sessions %}
+
+    {% if user.current_session == session_item.session_obj %}<thead class="bg-light border-y">{% endif %}
+    <tr class="session-details"
+        id="session_{{session_item.session_obj.uuid}}_row"
+        data-toggle="modal" data-target="#sessionModal"
+        data-is-shared-session="false"
+        data-session-id="{{ session_item.session_obj.uuid }}"
+        data-session-title="{{ session_item.session_obj.topic.title }}"
+        style="cursor: pointer;"
+    >
+      <td class="align-middle">
+        <span class="text-monospace text-primary small pr-2">{{ session_item.session_obj.created_at|date:"SHORT_DATE_FORMAT" }}</span>
+      </td>
+      <td class="align-middle">{{ session_item.session_obj.topic.title }}</td>
+      <td class="align-middle">{{ session_item.session_obj.topic.description }}</td>
+      <td class="align-middle">{{ session_item.session_obj.get_strategy_display }}</td>
+      <td class="text-center align-middle">{{ session_item.session_obj.get_judgments|length }}</td>
+    </tr>
+    {% if user.current_session == session_item.session_obj %}</thead>{% endif %}
+    </tbody>
+
+    {% endfor %}
+    </tbody>
+  </table>
+</div>

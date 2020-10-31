@@ -17,6 +17,13 @@
               <li class="nav-item align-self-center" id="sharedWithTab">
                 <a class="nav-link" data-toggle="pill" href="#pills-shared-with" role="tab">Shared with</a>
               </li>
+              <li class="nav-item align-self-center" id="actionsTab">
+                <form action="" method="POST">
+                  {% csrf_token %}
+                  <div id="sessionActionsTab">
+                  </div>
+                </form>
+              </li>
             </ul>
           </div>
 
@@ -36,7 +43,6 @@
         </div>
 
         <div id="sessionModalDetails" class="sessionModalDetails d-none">
-
           <div class="tab-content">
             <div class="tab-pane show active" id="pills-details" role="tabpanel">
               <p class="mb-1">
@@ -63,7 +69,6 @@
                 </div>
               </div>
             </div>
-
             <div class="tab-pane" id="pills-shared-with" role="tabpanel">
               <h5 class="text-secondary">This session has been shared with the following users</h5>
               <hr>
@@ -74,9 +79,7 @@
               </div>
               </form>
             </div>
-
           </div>
-
         </div>
 
       </div>

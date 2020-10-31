@@ -6,6 +6,7 @@ from django.db import models
 from web.CAL.exceptions import CALError
 from web.interfaces.CAL import functions as CALFunctions
 from web.topic.models import Topic
+from django.apps import apps
 
 
 class Session(models.Model):
@@ -54,6 +55,9 @@ class Session(models.Model):
 
     def is_summary(self):
         return "para" in self.strategy
+
+    def get_judgments(self):
+        return apps.get_model('judgment.Judgment').objects.filter(session__uuid=self.uuid)
 
     def __unicode__(self):
         return "<User:{}, Num:{}>".format(self.username, self.topic.number)

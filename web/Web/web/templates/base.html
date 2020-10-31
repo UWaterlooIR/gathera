@@ -291,8 +291,56 @@
           `
           return filledTemplate;
         }
+        function templateSessionActions(sessionid, title, isActive, owner){
+            let disable_val = ""
+            if (isActive){
+              disable_val = "disabled"
+            }
 
+            if (!owner){
+              return `
+                  <input type="hidden" name="is_shared_session" value="true">
+                  <button type="submit" data-session-id="${sessionid}"
+                          data-session-title="${title}"
+                          name="activate_sessionid"
+                          data-is-shared-session="${!owner}"
+                          value="${sessionid}"
+                          class="btn btn-block mx-1 btn-outline-secondary" ${disable_val}>Activate
+                  </button>
+              `
+            }
 
+            let filledTemplate = `
+              <div class="btn-group-vertical">
+                <div class="btn-group">
+                  <button data-session-id="${sessionid}"
+                          data-session-title="${title}"
+                          name="activate_sessionid"
+                          data-is-shared-session="${!owner}"
+                          value="${sessionid}"
+                          class="btn btn-sm btn-outline-secondary" ${disable_val}>Activate
+                  </button>
+                  <button href="#" data-toggle="modal" data-target="#shareSessionModal"
+                       data-dismiss="modal"
+                       data-session-id="${sessionid}"
+                       data-session-title="${title}"
+                       data-is-shared-session="false"
+                       class="btn btn-sm btn-outline-secondary share-modal">Share
+                  </button>
+                </div>
+                <button href="#" data-toggle="modal" data-target="#deleteSessionModal"
+                   data-dismiss="modal"
+                   data-session-id="${sessionid}"
+                   data-session-title="${title}"
+                   data-is-shared-session="false"
+                   class="btn btn-sm btn-outline-danger delete-modal">Delete
+                </button>
+              </div>
+            `;
+            return filledTemplate;
+        }
+
+        var myPieChart = null;
         $(document).on("click", ".session-details", function () {
              var session_title = $(this).data('session-title');
              var session_id = $(this).data('session-id');
@@ -301,9 +349,10 @@
              $("#sessionModalTitle").html( session_title );
 
              $("#sessionModalSpinner").removeClass("d-none");
-             $(".sessionModalDetails").addClass("d-none");
+             $("#sessionModalDetails").addClass("d-none");
              $("#sessionModalError").addClass("d-none");
              $("#sessionDetailsTabs").addClass("d-none");
+             $("#sharedWithTab").addClass("d-none");
 
              // fetch session details
               $.ajax({
@@ -312,6 +361,7 @@
                 success: function (result) {
 
                   let session = result
+                  let is_active_session = session["is_active_session"]
                   // session["total_highlyRelevant"]
                   // session["total_nonrelevant"]
                   // session["total_relevant"]
@@ -327,9 +377,9 @@
                   }
 
                   if (!owner){
-                    $("#sessionDetailsTabs").addClass("d-none");
+                    $("#sharedWithTab").addClass("d-none");
                   }else{
-                    $("#sessionDetailsTabs").removeClass("d-none");
+                    $("#sharedWithTab").removeClass("d-none");
                     // Update shared with list
                     $("#sessionSharedWithList").html("");
                     for (let i = 0; i < shared_with_obj.length; i++){
@@ -343,6 +393,9 @@
                     }
                   }
 
+                  $("#sessionDetailsTabs").removeClass("d-none");
+
+                  $("#sessionActionsTab").html(templateSessionActions(session_id, title, is_active_session, owner))
 
                   $("#session_created_at").html(session['created_at']);
                   $("#session_description").html(session['topic_description']);
@@ -351,9 +404,8 @@
                   $("#session_strategy").html(session['strategy']);
                   $("#session_effort").html(effort);
 
-
                   // Update piechart
-                  var ctx = document.getElementById("piechart");
+                  var ctx = $("#piechart");
                   var data = {
                           labels: [
                               "Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}",
@@ -378,20 +430,25 @@
                                   ]
                               }]
                       };
-                  var myPieChart = new Chart(ctx, {
-                          type: 'pie',
-                          data: data,
-                          options: {
-                              legend: {
-                                  display: true,
-                                  position: 'right'
-                              }
-                          }
-                      });
 
+                  // Remove prev initilized pie chart
+                  if(myPieChart !== null){
+                    myPieChart.destroy();
+                  }
+
+                  myPieChart = new Chart(ctx, {
+                      type: 'pie',
+                      data: data,
+                      options: {
+                          legend: {
+                              display: true,
+                              position: 'right'
+                          }
+                      }
+                  });
 
                   $("#sessionModalSpinner").addClass("d-none");
-                  $(".sessionModalDetails").removeClass("d-none");
+                  $("#sessionModalDetails").removeClass("d-none");
 
                 },
                 error: function (result) {
@@ -402,7 +459,27 @@
                 }
               });
 
+             return false;
+        });
 
+        $('#sessionModal').on('hidden.bs.modal', function (e) {
+          // reset active tab once modal is closed.
+          $('#detailsTab').tab('show')
+        })
+
+        $(document).on("click", ".delete-modal", function () {
+             var session_title = $(this).data('session-title');
+             var session_id = $(this).data('session-id');
+             $("#deleteSessionModalTitle").html( session_title );
+             $("#deleteSessionModalDeleteButton").val( session_id );
+             return false;
+        });
+
+        $(document).on("click", ".share-modal", function () {
+             var session_title = $(this).data('session-title');
+             var session_id = $(this).data('session-id');
+             $("#shareSessionModalTitle").html( session_title );
+             $("#shareSessionModalShareButton").val( session_id );
              return false;
         });
 

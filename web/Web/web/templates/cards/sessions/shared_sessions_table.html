@@ -1,0 +1,37 @@
+<div class="mt-3 table-responsive judgment_table">
+  <table class="table judgment_table table-borderless table-hover small m-0">
+    <thead>
+    <tr>
+      <th>Date</th>
+      <th>Title</th>
+      <th>Desc.</th>
+      <th>Strategy</th>
+      <th>User</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for session_item in shared_sessions %}
+    {% if user.current_session == session_item.shared_session_obj.refers_to %}<thead class="bg-light border-y">{% endif %}
+    <tr class="session-details"
+        id="session_{{session_item.shared_session_obj.uuid}}_row"
+        data-toggle="modal" data-target="#sessionModal"
+        data-is-shared-session="true"
+        data-session-id="{{ session_item.shared_session_obj.uuid }}"
+        data-session-title="{{ session_item.shared_session_obj.refers_to.topic.title }}"
+        style="cursor: pointer;"
+    >
+      <td class="align-middle">
+        <span class="text-monospace text-primary small ">{{ session_item.shared_session_obj.refers_to.created_at|date:"SHORT_DATE_FORMAT" }}</span>
+      </td>
+      <td class="align-middle">{{ session_item.shared_session_obj.refers_to.topic.title }}</td>
+      <td class="align-middle">{{ session_item.shared_session_obj.refers_to.topic.description }}</td>
+      <td class="align-middle">{{ session_item.shared_session_obj.refers_to.get_strategy_display }}</td>
+      <td class="align-middle">{{ session_item.shared_session_obj.refers_to.username }}</td>
+
+    </tr>
+    {% if user.current_session == session_item.shared_session_obj.refers_to %}</thead>{% endif %}
+
+    {% endfor %}
+    </tbody>
+  </table>
+</div>

@@ -67,7 +67,7 @@ def activate_session_submit_form(request):
             session = Session.objects.get(username=request.user,
                                           uuid=session_id)
     except (SharedSession.DoesNotExist, Session.DoesNotExist):
-        message = 'Ops! your session cant be found.'
+        message = 'Ops! your session can not be found.'
         messages.add_message(request,
                              messages.ERROR,
                              message)
@@ -122,7 +122,7 @@ def share_session_submit_form(request):
                              message)
         return
     except User.DoesNotExist:
-        message = 'Ops! something wrong happened. User cant be found.'
+        message = 'Ops! something wrong happened. User can not be found.'
         messages.add_message(request,
                              messages.ERROR,
                              message)

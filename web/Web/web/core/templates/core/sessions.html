@@ -5,26 +5,44 @@
 {% block home-main %}
   <div class="row">
     {% if sessions %}
-    <div class="col-sm-12 {% if shared_sessions %}col-md-7{% else %}col-md-12{% endif %}">
+    <div class="col-sm-12">
       <div class="card border-0">
         <div class="card-block">
-          {% include 'cards/sessions/list_sessions_card.html' %}
+          <div class="d-flex flex-grow-1 mt-2">
+            <div class="d-flex flex-column flex-grow-1">
+              <h2 class="text-dark">Sessions</h2>
+            </div>
+
+            <div class="d-flex align-items-center flex-grow-1 ">
+              <ul class="nav nav-pills nav-justified flex-column flex-md-row" role="tablist">
+                <li class="nav-item align-self-center">
+                  <a class="nav-link active" data-toggle="pill" href="#pills-created-sessions" role="tab">Created sessions</a>
+                </li>
+                <li class="nav-item align-self-center">
+                  <a class="nav-link" data-toggle="pill" href="#pills-shared-sessions" role="tab">Shared sessions</a>
+                </li>
+              </ul>
+            </div>
+        </div>
+
+          <div class="tab-content">
+            <div class="tab-pane show active" id="pills-created-sessions" role="tabpanel">
+              {% include 'cards/sessions/list_sessions_table.html' %}
+            </div>
+            <div class="tab-pane" id="pills-shared-sessions" role="tabpanel">
+              {% if shared_sessions %}
+                {% include 'cards/sessions/shared_sessions_table.html' %}
+              {% else %}
+                <p class="text-muted mt-4">You have no shared sessions.</p>
+              {% endif %}
+            </div>
+          </div>
+
         </div>
         <!-- Share session modal is included in base /-->
       </div>
     </div>
     {% endif %}
-
-    {% if shared_sessions %}
-    <div class="col-sm-12 {% if sessions %}col-md-5{% else %}col-md-12{% endif %}">
-      <div class="card border-0">
-        <div class="card-block">
-          {% include 'cards/sessions/shared_sessions_list.html' %}
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
 
     {% if not sessions and not shared_sessions %}
     <div class="col-md-12">
@@ -43,169 +61,5 @@
   {% include 'modals/delete_session_modal.html' %}
   {% endif %}
 
-
-
 {% endblock %}
 
-
-{% block extra_scripts %}
-
-<script>
-$(document).on("click", ".delete-modal", function () {
-     var session_title = $(this).data('session-title');
-     var session_id = $(this).data('session-id');
-     $("#deleteSessionModalTitle").html( session_title );
-     $("#deleteSessionModalDeleteButton").val( session_id );
-
-     return false;
-});
-
-$(document).on("click", ".share-modal", function () {
-     var session_title = $(this).data('session-title');
-     var session_id = $(this).data('session-id');
-     $("#shareSessionModalTitle").html( session_title );
-     $("#shareSessionModalShareButton").val( session_id );
-
-     return false;
-});
-
-function templateSharedToUser(shared_by, shared_with, shared_on, shared_session_uuid){
-  let filledTemplate = `
-  <div class="row mb-4 flex-row">
-    <div class="col-6 border-0">
-      <h6 class="text-truncate text-secondary">${shared_with}</h6>
-      <p class="text-muted m-0" style="font-size: 65%;">Shared by ${shared_by} on ${shared_on}</p>
-    </div>
-    <div class="col align-self-center text-right">
-      <button type="submit"
-              data-session-id="${shared_session_uuid}"
-              name="revoke_sessionid"
-              value="${shared_session_uuid}"
-              class="btn btn-sm btn-outline-danger">Revoke
-      </button>
-    </div>
-  </div>
-  `
-  return filledTemplate;
-}
-
-$(document).on("click", ".session-details", function () {
-     var session_title = $(this).data('session-title');
-     var session_id = $(this).data('session-id');
-     var is_shared_session = $(this).data('is-shared-session')
-
-     $("#sessionModalTitle").html( session_title );
-
-     $("#sessionModalSpinner").removeClass("d-none");
-     $(".sessionModalDetails").addClass("d-none");
-     $("#sessionModalError").addClass("d-none");
-     $("#sessionDetailsTabs").addClass("d-none");
-
-     // fetch session details
-      $.ajax({
-        url: '{% url 'core:get_session_details' %}?uuid=' +session_id +'&is_shared_session=' + is_shared_session,
-        method: 'GET',
-        success: function (result) {
-
-          let session = result
-          // session["total_highlyRelevant"]
-          // session["total_nonrelevant"]
-          // session["total_relevant"]
-          // session["total_judged"]
-          let owner = session['owner']
-          let shared_with_obj = session['shared_with']
-          let title = session['topic_title']
-          let number = session['topic_number']
-          let show_full_document_content = session['show_full_document_content']
-          let effort = session['effort']
-          if (effort <= 0){
-            effort = "No max";
-          }
-
-          if (!owner){
-            $("#sessionDetailsTabs").addClass("d-none");
-          }else{
-            $("#sessionDetailsTabs").removeClass("d-none");
-            // Update shared with list
-            $("#sessionSharedWithList").html("");
-            for (let i = 0; i < shared_with_obj.length; i++){
-              const shared_with_obj_i = shared_with_obj[i];
-              $("#sessionSharedWithList").append(templateSharedToUser(
-                      shared_with_obj_i["shared_by"],
-                      shared_with_obj_i["shared_with"],
-                      shared_with_obj_i["shared_on"],
-                      shared_with_obj_i["uuid"],
-              ))
-            }
-          }
-
-
-          $("#session_created_at").html(session['created_at']);
-          $("#session_description").html(session['topic_description']);
-          $("#session_narrative").html(session['topic_narrative']);
-          $("#session_seed_query").html(session['topic_seed_query']);
-          $("#session_strategy").html(session['strategy']);
-          $("#session_effort").html(effort);
-
-
-          // Update piechart
-          var ctx = document.getElementById("piechart");
-          var data = {
-                  labels: [
-                      "Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}",
-                      "{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}",
-                      "Non {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}"
-                  ],
-                  datasets: [
-                      {
-                          data: [
-                              session["total_highlyRelevant"],
-                              session["total_relevant"],
-                              session["total_nonrelevant"]],
-                          backgroundColor: [
-                              "#84c273",
-                              "#c6fab8",
-                              "#a5a5a5"
-                          ],
-                          hoverBackgroundColor: [
-                              "#5cb85c",
-                              "#c6fab8",
-                              "#a5a5a5"
-                          ]
-                      }]
-              };
-          var myPieChart = new Chart(ctx, {
-                  type: 'pie',
-                  data: data,
-                  options: {
-                      legend: {
-                          display: true,
-                          position: 'right'
-                      }
-                  }
-              });
-
-
-          $("#sessionModalSpinner").addClass("d-none");
-          $(".sessionModalDetails").removeClass("d-none");
-
-        },
-        error: function (result) {
-            let message = result["responseJSON"]["message"]
-            $("#sessionModalError").removeClass("d-none");
-            $("#sessionModalError").html(message);
-            $("#sessionModalSpinner").addClass("d-none");
-        }
-      });
-
-
-     return false;
-});
-
-$('#sessionModal').on('hidden.bs.modal', function (e) {
-  // reset active tab once modal is closed.
-  $('#detailsTab').tab('show')
-})
-
-</script>
-{% endblock %}
