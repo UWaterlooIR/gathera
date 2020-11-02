@@ -23,8 +23,6 @@ from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
 
 import pytz
-from web.core.forms import SessionForm
-from web.core.forms import SessionPredefinedTopicForm
 from web.core.forms import ShareSessionForm
 from web.core.mixin import RetrievalMethodPermissionMixin
 from web.core.models import Session
