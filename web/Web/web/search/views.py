@@ -1,7 +1,7 @@
 import copy
 import math
 
-from config.settings.base import SEARCH_ENGINE
+from config.settings.base import SEARCH_ENGINE_INTERFACE
 from config.settings.base import DEFAULT_NUM_DISPLAY
 
 import json
@@ -22,7 +22,7 @@ from web.search.models import SearchResult
 from web.search.models import SERPClick
 from web.search import helpers
 
-SearchEngine: SearchInterface = import_string(SEARCH_ENGINE)
+SearchEngine: SearchInterface = import_string(SEARCH_ENGINE_INTERFACE)
 logger = logging.getLogger(__name__)
 
 

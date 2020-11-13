@@ -26,21 +26,11 @@ services:
     environment:
       - POSTGRES_USER=web
       - USE_DOCKER=yes
+      - SEARCH_API_KEY=${SEARCH_API_KEY}
     expose:
       - "8001"
     command: /start.sh
 
-  search:
-    build: ./search/
-    environment:
-      - ANSERINI_INDEXI_PATH=/data/lucene-index.athome.pos+docvectors+raw+content/
-    volumes:
-      - ./search/app:/app
-      - ./data:/data
-    ports:
-      - "8003:80"
-    expose:
-      - "8003"
 
   postgres:
     build:

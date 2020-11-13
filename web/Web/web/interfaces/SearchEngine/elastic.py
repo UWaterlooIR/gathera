@@ -5,17 +5,24 @@ from config.settings.base import DEFAULT_NUM_DISPLAY
 from config.settings.base import INDEX_NAME
 from config.settings.base import SEARCH_SERVER_IP
 from config.settings.base import SEARCH_SERVER_PORT
+from config.settings.base import SEARCH_API_KEY
 from web.interfaces.SearchEngine.base import SearchInterface
 
 
 class Elastic(SearchInterface):
-    headers = {'Accept': 'application/json', 'Content-type': 'application/json'}
-    url = f"http://{SEARCH_SERVER_IP}:{SEARCH_SERVER_PORT}/{INDEX_NAME}"
+    headers = {
+        'Accept': 'application/json',
+        'Content-type': 'application/json',
+        'Authorization': 'Apikey ' + SEARCH_API_KEY
+    }
+    url = f"{SEARCH_SERVER_IP}:{SEARCH_SERVER_PORT}/{INDEX_NAME}"
 
     @staticmethod
     def search(query: str, size: int = DEFAULT_NUM_DISPLAY, offset: int = 0):
         response = requests.get(
             f"{Elastic.url}/_search",
+            headers=Elastic.headers,
+            verify=False,
             data=json.dumps({
                 "query": {
                     "match": {
@@ -29,8 +36,7 @@ class Elastic(SearchInterface):
                         "contents": {}
                     }
                 }
-            }),
-            headers=Elastic.headers
+            })
         )
 
         response.raise_for_status()
