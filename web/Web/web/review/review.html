@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load static %}
+{% block pagetitle %}Review{% endblock %}
+{% block extra_head %}
+<link href="{% static 'css/loadawesome.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block navbar-form %}
+<form id="searchContentForm" class="form-inline my-2 my-lg-0 order-sm-1 order-md-3 align-self-center align-self-stretch">
+	<div class="input-group">
+		<input id="search_content" autocomplete="off" type="search" class="form-control search-input bg-light text-dark no-border shadow-none" placeholder="Highlight">
+
+		<div class="input-group-append">
+			<button class="btn btn-sm btn-light" data-search="next" id="searchNext"
+		       type="button">&darr;</button>
+			<button class="btn btn-sm btn-light" data-search="prev" type="button">&uarr;</button>
+			<!--<button class="btn btn-sm btn-light" data-search="clear" type="button">&times;</button>-->
+		</div>
+	</div>
+</form>
+{% endblock %}
+
+
+{% block navbar-center %}
+<div class=" nav navbar-nav mx-auto justify-content-center center-text pl-2 pr-2">
+  <form class="form-inline">
+    <div class="btn-group" role="group">
+        <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocNonRelButton">Not {% if main_judging_criteria_name %}{{ main_judging_criteria_name|truncatechars:3 }}{% else %}Rel{% endif %}</a>
+        <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocRelButton">{% if main_judging_criteria_name %}{{ main_judging_criteria_name|truncatechars:3 }}{% else %}Rel{% endif %}</a>
+        <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocHRelButton">Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name|truncatechars:3 }}{% else %}Rel{% endif %}</a>
+     </div>
+  </form>
+</div>
+{% endblock %}
+
+
+{% block main %}
+
+
+<div class="mb-4">
+
+  <div class="row">
+    <div class="col-12 col-md-8">
+
+      <nav class="nav nav-pills">
+        <div class="d-flex px-3 py-2">
+          <span class="pr-2 py-1 align-self-end small align-self-center text-muted border-right unselectable" unselectable="on">Document viewer settings</span>
+          <a class="nav-link small ml-2 px-2 py-1 align-self-end active" href="#"><i class="fas fa-highlighter"></i></a>
+          <a class="nav-link small ml-2 px-2 py-1"  data-toggle="modal" data-target="#keyboardShortcutsModal" href="#"><i class="fas fa-keyboard"></i></a>
+          <a class="nav-link small ml-2 px-2 py-1 disabled" href="#" tabindex="-1"><i class="fas fa-tag"></i></a>
+        </div>
+      </nav>
+
+      <div class="card border-0">
+        <div class="card-block highlight-include" id="docView" data-doc-id="">
+
+          <div class="document-header highlight-include d-flex" style="min-height: 5rem;">
+            <div id="docViewDocIndicator" class="align-self-center align-self-stretch p-2" style="border-width: 0.25rem!important; border-style: none none none solid; border-color: #DEE2E6;"></div>
+            <div class="align-self-center py-2">
+              <h2 class="document-title-font-family" id="docViewDocTitle" style="margin-bottom: 0;"></h2>
+              <small id="docViewDocMeta" class="text-muted text-monospace small smallDocumentIndicatorSelector"></small>
+            </div>
+            <button id="docViewDocCloseButton" type="button" class="align-self-center close ml-auto d-none" style="font-size: medium;min-width: 4rem;" aria-label="Close Document">
+              <span aria-hidden="true">Close ×</span>
+            </button>
+          </div>
+
+          <span id="docViewDocMessage" class="docView-default-font-family p-4 my-3 highlight-exclude"></span>
+
+          <ul class="nav nav-tabs mt-4 home-nav text-uppercase small d-none docViewTab" id="docViewTab_" role="tablist">
+            <li class="nav-item pl-1">
+              <a class="nav-link px-3 active font-weight-bold" id="doc-extracted-text-tab" data-toggle="tab" href="#extracted-text-tab-content" role="tab"><i class="fas fa-align-left pr-1"></i> Extracted text</a>
+            </li>
+            <li class="nav-item px-1">
+              <a class="nav-link px-3 rounded-0" id="doc-preview-tab" data-toggle="tab" href="#doc-preview-tab-content" role="tab"><i class="fas fa-eye pr-1"></i> Preview</a>
+            </li>
+            <li class="nav-item px-1">
+              <a class="nav-link px-3 rounded-0" id="doc-details-tab" data-toggle="tab" href="#doc-details-tab-content" role="tab"><i class="fas fa-info-circle pr-1"></i> Details</a>
+            </li>
+          </ul>
+          <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="extracted-text-tab-content" role="tabpanel">
+              <div class="document-body mt-2" id="docViewDocWrapper">
+                <div class="card border-0 {% if not request.user.current_session.is_summary %}d-none{% endif %}">
+                  <div class="card-body">
+                    <div class="d-flex w-50 justify-content-between font-sans text-primary mb-3 border-bottom highlight-exclude unselectable" unselectable="on">
+                      <small class="highlight-exclude">Summary</small>
+                    </div>
+                    <div id="docViewDocSnippet"></div>
+                  </div>
+                </div>
+
+                {% if request.user.current_session.show_full_document_content and request.user.current_session.strategy != 'doc' %}
+                  <div class="row mt-3">
+                    <div class="col-12">
+                      <a id="docViewDocShowFullDocumentButton"
+                         class="btn btn-sm btn-block btn-outline-secondary font-sans highlight-exclude" href="#"
+                         onclick="return show_full_doc();">Show full document</a>
+                    </div>
+                  </div>
+                {% endif %}
+
+                <div class="card border-0">
+                  <div class="card-body py-0">
+                    <div class="d-flex w-50 justify-content-between font-sans text-primary mb-3 border-bottom highlight-exclude unselectable" unselectable="on">
+                      <small class="highlight-exclude">Document content</small>
+                    </div>
+                    <div id="docViewDocBody"></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="doc-preview-tab-content" role="tabpanel">
+              <!-- Document Preview Tab -->
+            </div>
+
+            <div class="tab-pane fade" id="doc-details-tab-content" role="tabpanel">
+              <!-- Document Details Tab -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-2 d-none d-sm-block">
+      <div class="sticky-top card border-0 mr-2" style="top:75px; z-index: 0;">
+        <div class="card-body p-0 mt-3">
+          <h6 class="card-title text-secondary mb-0 unselectable" unselectable="on">Judge Document</h6>
+          <div class="small"><code id="docno_text">Docid: </code><code id="docViewDocID"></code></div>
+
+          <div class="text-left">
+            <div class="btn-group mt-3" role="group">
+              <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocNonRelButton">Not {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+              <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocRelButton">{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+              <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocHRelButton">Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+            </div>
+
+            {% if additional_judging_criteria %}
+            <h6 class="card-title text-secondary mt-4 mb-1 unselectable" unselectable="on">Additional Criteria <a class="badge badge-secondary float-right shadow-none small" data-toggle="modal" data-target="#additionalJudgingCriteriaModal" href="#"><i class="fas fa-info-circle"></i></a></h6>
+            {% include 'cards/configurable_criteria_card.html' %}
+            {% endif %}
+
+          </div>
+
+          <div id="highlighted_words">
+            <h6 class="card-title text-secondary mt-4 unselectable" unselectable="on">Highlighted terms <span class="badge badge-secondary float-right">Beta</span></h6>
+            <ul class="list-group" id="highlighted_terms_list"></ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-2 d-none d-sm-block">
+      <div class="sticky-top card border-0 mr-2" style="top:75px; z-index: 0;">
+        <div class="card-body p-0 mt-3">
+          <div id="latest_judged">
+            <h6 class="card-title text-secondary unselectable" unselectable="on">Reviewed Documents</h6>
+            <div class="card border-0">
+              <div class="card-body px-0 py-2 d-flex" style="min-height: 18rem; max-height: 38rem;">
+                <!-- loader -->
+                <div class="mx-auto previouslyReviewedListSpinner mt-5">
+                  <div class="la-ball-circus text-secondary"><div></div><div></div><div></div><div></div><div></div></div>
+                </div>
+                <!-- end loader -->
+                <div id="previouslyReviewedList" class="overflow-auto small previouslyReviewedList" style="min-width: 0">
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Judging criteria modal -->
+{% include 'modals/additional_judging_criteria_modal.html' %}
+<!-- Keyboard shortcuts modal -->
+{% include 'modals/keyboard_shortcuts_modal.html' %}
+
+
+{% endblock %}
+
+
+
+{% block extra_scripts %}
+    <script src="{% static 'js/moment.min.js' %}"></script>
+    <script src="https://unpkg.com/runtime-memcache@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+    <script src="{% static 'js/document-viewer.js' %}"></script>
+    <script src="{% static 'js/highlight.js' %}"></script>
+
+    <script>
+        var dv = new docView();
+        dv.init({
+          username: '{{ request.user }}',
+          getDocumentsToJudgeURL: '{% url 'CAL:get_docs' %}',
+          getPrevDocumentsJudgedURL: '{% url 'judgment:get_latest' number_of_docs_to_show=50 %}',
+          getDocumentIDsToJudgeURL: '{% url 'CAL:get_docs_ids' %}',
+          sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
+          getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
+          fetchPreviouslyJudgedDocsOnInit: true,
+          mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',
+          csrfmiddlewaretoken: "{{ csrf_token }}",
+
+          afterDocumentLoad: function (docid) {
+            // Perform keyword search if necessary
+            searchForKeyword();
+          }
+        });
+
+    </script>
+
+{% endblock %}
