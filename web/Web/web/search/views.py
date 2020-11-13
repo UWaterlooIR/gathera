@@ -1,26 +1,25 @@
-import copy
-import math
-
-from config.settings.base import SEARCH_ENGINE
 from config.settings.base import DEFAULT_NUM_DISPLAY
-
+from config.settings.base import SEARCH_ENGINE
+import copy
 import json
 import logging
-from django.shortcuts import render
+import math
+
 from braces import views
-
 from django.http import HttpResponse
-
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse_lazy
 from django.utils.module_loading import import_string
 from django.views import generic
 
 from web.core.mixin import RetrievalMethodPermissionMixin
 from web.interfaces.DocumentSnippetEngine import functions as DocEngine
 from web.interfaces.SearchEngine.base import SearchInterface
+from web.search import helpers
 from web.search.models import Query
 from web.search.models import SearchResult
 from web.search.models import SERPClick
-from web.search import helpers
 
 SearchEngine: SearchInterface = import_string(SEARCH_ENGINE)
 logger = logging.getLogger(__name__)
@@ -63,6 +62,9 @@ class SimpleSearchView(views.LoginRequiredMixin,
         return page_number, num_display, offset
 
     def get(self, request, *args, **kwargs):
+        if not self.request.user.current_session:
+            return HttpResponseRedirect(reverse_lazy('core:home'))
+
         query = request.GET.get('query', None)
         if query:
             page_number, num_display, offset = self.get_params()

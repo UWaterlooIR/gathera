@@ -3,7 +3,9 @@ import logging
 
 from braces import views
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.http import JsonResponse
+from django.urls import reverse_lazy
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
 
@@ -20,6 +22,8 @@ class CALHomePageView(views.LoginRequiredMixin,
     template_name = 'CAL/CAL.html'
 
     def get(self, request, *args, **kwargs):
+        if not self.request.user.current_session:
+            return HttpResponseRedirect(reverse_lazy('core:home'))
         return super(CALHomePageView, self).get(self, request, *args, **kwargs)
 
 

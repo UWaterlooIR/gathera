@@ -237,7 +237,7 @@ class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                 self.request.user.save()
 
                 message = 'You have judged >={} (max number of judgment you have ' \
-                          'specified for this task) documents.'.format(max_judged)
+                          'specified for this session) documents.'.format(max_judged)
                 messages.add_message(request,
                                      messages.SUCCESS,
                                      message)

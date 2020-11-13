@@ -383,11 +383,16 @@ docView.prototype = {
 
     function showMaxJudgmentReached() {
       updateDocumentIndicator("",options.otherColor);
-      updateTitle("No more documents", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
-      updateMessage("There are no more documents to judge. Please wait or try refreshing the page.");
+      updateTitle("Max number of judgments reached", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
+      updateMessage("You have reached the max number of judgments for this session. You will be redirected to the home page shortly.");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
+
+      window.setTimeout(function(){
+        location.reload();
+      }, 5000);
+
     }
 
 
