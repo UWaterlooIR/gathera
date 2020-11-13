@@ -231,7 +231,7 @@ class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
             # Exit task only if number of judgments reached max (and maxjudged is enabled)
             if len(judgements) >= max_judged > 0 and (
                 'scal' not in self.request.user.current_session.strategy or
-                (is_from_cal and current_docview_stack_size <= 0)
+                (is_from_cal and current_docview_stack_size is not None and current_docview_stack_size <= 0)
             ):
                 self.request.user.current_session = None
                 self.request.user.save()
