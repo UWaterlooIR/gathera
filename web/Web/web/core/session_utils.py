@@ -25,6 +25,8 @@ def submit_new_predefined_topic_session_form(request):
         messages.add_message(request,
                              messages.SUCCESS,
                              success_message)
+    else:
+        messages.add_message(request, messages.ERROR, f'Ops! {form.errors}')
 
 
 def submit_new_session_form(request):

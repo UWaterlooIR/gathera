@@ -56,6 +56,7 @@ class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
             found_ctrl_f_terms_in_title = self.request_json.get(u"found_ctrl_f_terms_in_title", None)
             found_ctrl_f_terms_in_summary = self.request_json.get(u"found_ctrl_f_terms_in_summary", None)
             found_ctrl_f_terms_in_full_doc = self.request_json.get(u"found_ctrl_f_terms_in_full_doc", None)
+            current_docview_stack_size = self.request_json.get(u"current_docview_stack_size", None)
         except KeyError:
             error_dict = {u"message": u"POST input missing important fields"}
 
@@ -228,12 +229,15 @@ class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                 relevance__isnull=False)
             max_judged = self.request.user.current_session.max_number_of_judgments
             # Exit task only if number of judgments reached max (and maxjudged is enabled)
-            if len(judgements) >= max_judged > 0:
+            if len(judgements) >= max_judged > 0 and (
+                'scal' not in self.request.user.current_session.strategy or
+                (is_from_cal and current_docview_stack_size is not None and current_docview_stack_size <= 0)
+            ):
                 self.request.user.current_session = None
                 self.request.user.save()
 
                 message = 'You have judged >={} (max number of judgment you have ' \
-                          'specified for this task) documents.'.format(max_judged)
+                          'specified for this session) documents.'.format(max_judged)
                 messages.add_message(request,
                                      messages.SUCCESS,
                                      message)
