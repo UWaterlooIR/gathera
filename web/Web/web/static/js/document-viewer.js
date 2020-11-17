@@ -199,7 +199,6 @@ docView.prototype = {
     }
 
 
-
     /**
      * Validate that a queryString is valid
      *
@@ -256,7 +255,6 @@ docView.prototype = {
       // Show document
       showDocument(docid);
       $(options.docViewSelector).trigger("updated");
-      getScalInfo()
     }
 
     /**
@@ -562,28 +560,6 @@ docView.prototype = {
           }
       });
     }
-
-      function getScalInfo(callback) {
-        const url = options.getScalInfoURL;
-        $.ajax({
-          url: url,
-          method: 'GET',
-          success: function (result) {
-            if (result) {
-              let temp = [result['stratum_number'], result['stratum_size'], result['sample_size'], (parent.viewStack.length + 1).toString()]
-              Array.from(document.getElementById('scal-info').getElementsByTagName('small')).forEach((span, i) => {
-                span.innerHTML = temp[i]
-              })
-            }
-            if (typeof callback === "function") {
-              callback();
-            }
-          },
-          error: function (err_msg) {
-            showError(JSON.stringify(err_msg));
-          }
-        });
-      }
 
     function populatePrevReviewedDocuments(callback) {
       const url = options.getPrevDocumentsJudgedURL;

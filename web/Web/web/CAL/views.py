@@ -116,40 +116,6 @@ class DocAJAXView(views.CsrfExemptMixin,
             return JsonResponse({"message": "Ops! CALError."}, status=404)
 
 
-class ScalInfoView(views.CsrfExemptMixin,
-                  RetrievalMethodPermissionMixin,
-                  views.LoginRequiredMixin,
-                  views.JsonRequestResponseMixin,
-                  views.AjaxResponseMixin, generic.View):
-    """
-    View to get scal info from CAL
-    """
-    require_json = False
-
-    def render_timeout_request_response(self, error_dict=None):
-        if error_dict is None:
-            error_dict = self.error_response_dict
-        json_context = json.dumps(
-            error_dict,
-            cls=self.json_encoder_class,
-            **self.get_json_dumps_kwargs()
-        ).encode('utf-8')
-        return HttpResponse(
-            json_context, content_type=self.get_content_type(), status=502)
-
-    def get_ajax(self, request, *args, **kwargs):
-        session = self.request.user.current_session.uuid
-        seed_query = self.request.user.current_session.topic.seed_query
-        try:
-            info = CALFunctions.get_scal_info(str(session))
-
-            return self.render_json_response(info)
-        except TimeoutError:
-            error_dict = {u"message": u"Timeout error. Please check status of servers."}
-            return self.render_timeout_request_response(error_dict)
-        except CALError as e:
-            return JsonResponse({"message": "Oops! CALError."}, status=404)
-
 class DocIDsAJAXView(views.CsrfExemptMixin,
                      RetrievalMethodPermissionMixin,
                      views.LoginRequiredMixin,

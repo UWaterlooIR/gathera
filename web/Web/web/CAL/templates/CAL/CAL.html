@@ -157,51 +157,22 @@
     <div class="col-2 d-none d-sm-block">
       <div class="sticky-top card border-0 mr-2" style="top:75px; z-index: 0;">
         <div class="card-body p-0 mt-3">
-          <nav class="nav nav-pills small flex-row flex-sm-row unselectable" unselectable="on">
-            <a class="flex-sm-fill text-sm-center nav-link active" data-toggle="pill" href="#reviewed-documents-tab" role="tab">Reviewed Documents</a>
-            {% if "scal" in request.user.current_session.strategy %}<a class="flex-sm-fill text-sm-center nav-link" data-toggle="pill" href="#information-tab" role="tab">Information</a>{% endif %}
-          </nav>
-
-          <div class="tab-content">
-            <div class="tab-pane fade show active" id="reviewed-documents-tab" role="tabpanel">
-              <div class="mt-3" id="latest_judged">
-                <div class="card border-0">
-                  <div class="card-body px-0 py-2 d-flex" style="min-height: 18rem; max-height: 38rem;">
-                    <!-- loader -->
-                    <div class="mx-auto previouslyReviewedListSpinner mt-5">
-                      <div class="la-ball-circus text-secondary"><div></div><div></div><div></div><div></div><div></div></div>
-                    </div>
-                    <!-- end loader -->
-                    <div id="previouslyReviewedList" class="overflow-auto small previouslyReviewedList" style="min-width: 0">
-                    </div>
-                  </div>
+          <div id="latest_judged">
+            <h6 class="card-title text-secondary unselectable" unselectable="on">Reviewed Documents</h6>
+            <div class="card border-0">
+              <div class="card-body px-0 py-2 d-flex" style="min-height: 18rem; max-height: 38rem;">
+                <!-- loader -->
+                <div class="mx-auto previouslyReviewedListSpinner mt-5">
+                  <div class="la-ball-circus text-secondary"><div></div><div></div><div></div><div></div><div></div></div>
                 </div>
+                <!-- end loader -->
+                <div id="previouslyReviewedList" class="overflow-auto small previouslyReviewedList" style="min-width: 0">
+                </div>
+
               </div>
             </div>
 
-            {% if "scal" in request.user.current_session.strategy %}
-            <div class="tab-pane fade" id="information-tab" role="tabpanel">
-              <ul class="list-group mt-3 text-secondary small" id="scal-info">
-                <li class="list-group-item d-flex justify-content-between align-items-center p-0 border-0">
-                  <span class="text-truncate">Stratum number</span> <small class="px-2">..</small>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center p-0 border-0">
-                  <span class="text-truncate">Stratum size</span> <small class="px-2">..</small>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center p-0 border-0">
-                  <span class="text-truncate">Next sample size</span> <small class="px-2">..</small>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center p-0 border-0">
-                  <span class="text-truncate">Judgments left</span> <small class="px-2">..</small>
-                </li>
-
-              </ul>
-            </div>
-            {% endif %}
           </div>
-
-
-
 
         </div>
       </div>
@@ -233,7 +204,6 @@
           getDocumentsToJudgeURL: '{% url 'CAL:get_docs' %}',
           getPrevDocumentsJudgedURL: '{% url 'judgment:get_latest' number_of_docs_to_show=50 %}',
           getDocumentIDsToJudgeURL: '{% url 'CAL:get_docs_ids' %}',
-          getScalInfoURL: '{% url 'CAL:get_scal_info' %}',
           sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
           getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
           fetchPreviouslyJudgedDocsOnInit: true,
