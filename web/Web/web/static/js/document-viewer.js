@@ -17,6 +17,7 @@ var docView = function() {
     getDocumentIDsToJudgeURL: null, // required
     sendDocumentJudgmentURL: null, // required
     getDocumentURL: null, // required
+    getSCALInfoURL: null, // required for discovery page
 
     // options
     hideFullDocument: false,
@@ -256,7 +257,10 @@ docView.prototype = {
       // Show document
       showDocument(docid);
       $(options.docViewSelector).trigger("updated");
-      getScalInfo()
+      if (options.getSCALInfoURL !== null){
+          getSCALInfo()
+      }
+
     }
 
     /**
@@ -413,6 +417,15 @@ docView.prototype = {
       updateStyles(elm, styles);
     }
 
+      function updateSCALInfo(result) {
+        if (result) {
+          let temp = [result['stratum_number'], result['stratum_size'], result['sample_size'], (parent.viewStack.length + 1).toString()]
+          Array.from(document.getElementById('scal-info').getElementsByTagName('small')).forEach((span, i) => {
+            span.innerHTML = temp[i]
+          })
+        }
+      }
+
     function updateMeta(content) {
       const elm = $(options.documentMetaSelector);
       elm.html(content);
@@ -563,24 +576,23 @@ docView.prototype = {
       });
     }
 
-      function getScalInfo(callback) {
-        const url = options.getScalInfoURL;
+      function getSCALInfo(callback) {
+        const url = options.getSCALInfoURL;
         $.ajax({
           url: url,
           method: 'GET',
           success: function (result) {
-            if (result) {
-              let temp = [result['stratum_number'], result['stratum_size'], result['sample_size'], (parent.viewStack.length + 1).toString()]
-              Array.from(document.getElementById('scal-info').getElementsByTagName('small')).forEach((span, i) => {
-                span.innerHTML = temp[i]
-              })
-            }
+            updateSCALInfo(result)
             if (typeof callback === "function") {
               callback();
             }
           },
-          error: function (err_msg) {
-            showError(JSON.stringify(err_msg));
+          error: function (_) {
+            updateSCALInfo({
+              "stratum_number": "NA",
+              "sample_size": "NA",
+              "stratum_size": "NA",
+            });
           }
         });
       }

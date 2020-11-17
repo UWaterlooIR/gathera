@@ -116,13 +116,13 @@ class DocAJAXView(views.CsrfExemptMixin,
             return JsonResponse({"message": "Ops! CALError."}, status=404)
 
 
-class ScalInfoView(views.CsrfExemptMixin,
+class SCALInfoView(views.CsrfExemptMixin,
                   RetrievalMethodPermissionMixin,
                   views.LoginRequiredMixin,
                   views.JsonRequestResponseMixin,
                   views.AjaxResponseMixin, generic.View):
     """
-    View to get scal info from CAL
+    View to get stratum information from the CAL engine
     """
     require_json = False
 
@@ -139,7 +139,6 @@ class ScalInfoView(views.CsrfExemptMixin,
 
     def get_ajax(self, request, *args, **kwargs):
         session = self.request.user.current_session.uuid
-        seed_query = self.request.user.current_session.topic.seed_query
         try:
             info = CALFunctions.get_scal_info(str(session))
 
