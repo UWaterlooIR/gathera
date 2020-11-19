@@ -5,11 +5,11 @@ from web.review import views
 app_name = "review"
 
 urlpatterns = [
-    path('', views.CALHomePageView.as_view(),
+    path('', views.ReviewHomePageView.as_view(),
          name='main'),
 
     # Ajax views
-    path('post_log/', views.CALMessageAJAXView.as_view(),
+    path('post_log/', views.ReviewMessageAJAXView.as_view(),
          name='post_log_msg'),
     path('get_docs/', views.DocAJAXView.as_view(),
          name='get_docs'),

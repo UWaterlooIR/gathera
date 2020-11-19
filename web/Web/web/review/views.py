@@ -9,14 +9,14 @@ from django.urls import reverse_lazy
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
 
-from web.CAL.exceptions import CALError
+from web.CAL.exceptions import ReviewError
 from web.core.mixin import RetrievalMethodPermissionMixin
-from web.interfaces.CAL import functions as CALFunctions
+from web.interfaces.CAL import functions as ReviewFunctions
 
 logger = logging.getLogger(__name__)
 
 
-class CALHomePageView(views.LoginRequiredMixin,
+class ReviewHomePageView(views.LoginRequiredMixin,
                       RetrievalMethodPermissionMixin,
                       generic.TemplateView):
     template_name = 'review/review.html'
@@ -24,10 +24,10 @@ class CALHomePageView(views.LoginRequiredMixin,
     def get(self, request, *args, **kwargs):
         if not self.request.user.current_session:
             return HttpResponseRedirect(reverse_lazy('core:home'))
-        return super(CALHomePageView, self).get(self, request, *args, **kwargs)
+        return super(ReviewHomePageView, self).get(self, request, *args, **kwargs)
 
 
-class CALMessageAJAXView(views.CsrfExemptMixin,
+class ReviewMessageAJAXView(views.CsrfExemptMixin,
                          views.LoginRequiredMixin,
                          RetrievalMethodPermissionMixin,
                          views.JsonRequestResponseMixin,
@@ -43,7 +43,7 @@ class CALMessageAJAXView(views.CsrfExemptMixin,
             message = self.request_json.get(u"message")
             action = self.request_json.get(u"action")
             page_title = self.request_json.get(u"page_title")
-            doc_CAL_snippet = self.request_json.get(u'doc_CAL_snippet')
+            doc_Review_snippet = self.request_json.get(u'doc_CAL_snippet')
             doc_id = self.request_json.get(u'doc_id')
             extra_context = self.request_json.get(u'extra_context')
         except KeyError:
@@ -62,7 +62,7 @@ class DocAJAXView(views.CsrfExemptMixin,
                   views.JsonRequestResponseMixin,
                   views.AjaxResponseMixin, generic.View):
     """
-    View to get a list of documents (with their content) to judge from CAL
+    View to get a list of documents (with their content) to judge from Review
     """
     require_json = False
 
@@ -81,7 +81,7 @@ class DocAJAXView(views.CsrfExemptMixin,
         session = self.request.user.current_session.uuid
         seed_query = self.request.user.current_session.topic.seed_query
         try:
-            docids_to_judge, top_terms = CALFunctions.get_documents(str(session), 10)
+            docids_to_judge, top_terms = ReviewFunctions.get_documents(str(session), 10)
             if not docids_to_judge:
                 return self.render_json_response([])
 
@@ -112,8 +112,8 @@ class DocAJAXView(views.CsrfExemptMixin,
         except TimeoutError:
             error_dict = {u"message": u"Timeout error. Please check status of servers."}
             return self.render_timeout_request_response(error_dict)
-        except CALError as e:
-            return JsonResponse({"message": "Ops! CALError."}, status=404)
+        except ReviewError as e:
+            return JsonResponse({"message": "Ops! ReviewError."}, status=404)
 
 
 class DocIDsAJAXView(views.CsrfExemptMixin,
@@ -122,7 +122,7 @@ class DocIDsAJAXView(views.CsrfExemptMixin,
                      views.JsonRequestResponseMixin,
                      views.AjaxResponseMixin, generic.View):
     """
-    View to get ids of documents to judge from CAL
+    View to get ids of documents to judge from Review
     """
     require_json = False
 
@@ -141,11 +141,11 @@ class DocIDsAJAXView(views.CsrfExemptMixin,
         session = self.request.user.current_session.uuid
         seed_query = self.request.user.current_session.topic.seed_query
         try:
-            docs_ids_to_judge = CALFunctions.get_documents(str(session), 10)
+            docs_ids_to_judge = ReviewFunctions.get_documents(str(session), 10)
             return self.render_json_response(docs_ids_to_judge)
         except TimeoutError:
             error_dict = {u"message": u"Timeout error. Please check status of servers."}
             return self.render_timeout_request_response(error_dict)
-        except CALError as e:
-            # TODO: add proper http response for CAL errors
-            return JsonResponse({"message": "Ops! CALError."}, status=404)
+        except ReviewError as e:
+            # TODO: add proper http response for Review errors
+            return JsonResponse({"message": "Ops! ReviewError."}, status=404)
