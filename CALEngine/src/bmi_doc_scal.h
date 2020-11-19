@@ -39,5 +39,7 @@ using namespace std;
         ret = "{ \"stratums\": " + ret + "}";
         return ret;
     }
+
+    virtual unique_ptr<StratumInfo> get_stratum_info() override;
 };
 #endif // BMI_DOC_SCAL_H

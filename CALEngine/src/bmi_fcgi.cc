@@ -240,6 +240,18 @@ string get_docs(string session_id, int max_count, int num_top_terms = 10){
     return "{\"session-id\": \"" + session_id + "\", \"docs\": " + doc_json + ",\"top-terms\": " + top_terms_json + "}";
 }
 
+string get_stratum_info(string session_id){
+    auto &bmi = SESSIONS[session_id];
+    auto stratum_info = bmi->get_stratum_info();
+    if (stratum_info == nullptr){
+        return "{}";
+    }
+    string stratum_info_string = "{\"stratum_number\": " + to_string(stratum_info->stratum_number) + 
+        ",\"sample_size\": " + to_string(stratum_info->sample_size) + 
+        ",\"stratum_size\": " + to_string(stratum_info->stratum_size) + "}";
+    return "{\"session-id\": \"" + session_id + "\", \"info\": " + stratum_info_string + "}";
+}
+
 // Handler for /delete_session
 void delete_session_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
     string session_id;
@@ -284,6 +296,29 @@ void get_docs_view(const FCGX_Request & request, const vector<pair<string, strin
     }
 
     write_response(request, 200, "application/json", get_docs(session_id, max_count));
+}
+
+// Handler for /get_stratum_info
+void get_stratum_info_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
+    string session_id;
+
+    for(auto kv: params){
+        if(kv.first == "session_id"){
+            session_id = kv.second;
+        }
+    }
+
+    if(session_id.size() == 0){
+        write_response(request, 400, "application/json", "{\"error\": \"Non empty session_id required\"}");
+        return;
+    }
+
+    if(SESSIONS.find(session_id) == SESSIONS.end()){
+        write_response(request, 404, "application/json", "{\"error\": \"session not found\"}");
+        return;
+    }
+
+    write_response(request, 200, "application/json", get_stratum_info(session_id));
 }
 
 // Handler for /get_ranklist
@@ -436,6 +471,10 @@ void process_request(const FCGX_Request & request) {
         if(method == "GET"){
             get_docs_view(request, params);
         }
+    }else if(action == "get_stratum_info"){
+        if(method == "GET"){
+            get_stratum_info_view(request, params);
+    }
     }else if(action == "docid_exists"){
         if(method == "GET"){
             docid_exists_view(request, params);

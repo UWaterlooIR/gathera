@@ -88,6 +88,27 @@ def get_docs(session_id, max_count=1):
     return resp['docs']
 
 
+def get_stratum_info(session_id):
+    """ Get 
+
+    Args:
+        session_id (str): unique session id
+
+    Returns:
+
+    Throws:
+        SessionNotFoundException
+    """
+    data = '&'.join([
+        'session_id=%s' % str(session_id),
+    ])
+    resp = requests.get(URL+'/get_stratum_info?'+data).json()
+
+    if resp.get('error', '') == 'session not found':
+        raise SessionNotFoundException('Session %s not found' % session_id)
+
+    return resp
+
 def judge(session_id, doc_id, rel):
     """ Judge a document
     Args:
