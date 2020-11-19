@@ -71,6 +71,7 @@ LOCAL_APPS = [
     'web.topic',
     'web.judgment',
     'web.search',
+    'web.review',
 
 ]
 

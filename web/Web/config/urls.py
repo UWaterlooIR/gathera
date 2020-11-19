@@ -24,11 +24,10 @@ urlpatterns = [
 
     # Custom urls includes go here
     path('discovery/', include('web.CAL.urls', namespace='CAL')),
-    path('review/', include('web.review.urls', namespace='review')),
     path('search/', include('web.search.urls', namespace='search')),
     path('topic/', include('web.topic.urls', namespace='topic')),
     path('judgment/', include('web.judgment.urls', namespace='judgment')),
-
+    path('review/', include('web.review.urls', namespace='review')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

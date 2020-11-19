@@ -3,24 +3,28 @@ import logging
 
 from braces import views
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.http import JsonResponse
+from django.urls import reverse_lazy
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
 
-from web.review.exceptions import CALError
+from web.CAL.exceptions import CALError
 from web.core.mixin import RetrievalMethodPermissionMixin
 from web.interfaces.CAL import functions as CALFunctions
 
 logger = logging.getLogger(__name__)
 
 
-class ReviewHomePageView(views.LoginRequiredMixin,
+class CALHomePageView(views.LoginRequiredMixin,
                       RetrievalMethodPermissionMixin,
                       generic.TemplateView):
     template_name = 'review/review.html'
 
     def get(self, request, *args, **kwargs):
-        return super(ReviewHomePageView, self).get(self, request, *args, **kwargs)
+        if not self.request.user.current_session:
+            return HttpResponseRedirect(reverse_lazy('core:home'))
+        return super(CALHomePageView, self).get(self, request, *args, **kwargs)
 
 
 class CALMessageAJAXView(views.CsrfExemptMixin,
