@@ -168,12 +168,15 @@ class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                                                                      top_terms)
                 context[u"next_docs"] = documents
             except TimeoutError:
+                context["CALFailedToRecieveJudgment"] = True
                 error_dict = {u"message": u"Timeout error. "
                                           u"Please check status of servers."}
                 return self.render_timeout_request_response(error_dict)
             except CALError as e:
+                context["CALFailedToRecieveJudgment"] = True
                 error_message = "CAL Exception: {}".format(str(e))
             except Exception as e:
+                context["CALFailedToRecieveJudgment"] = True
                 error_message = str(e)
 
         else:
@@ -181,15 +184,19 @@ class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                 CALFunctions.send_judgment(self.request.user.current_session.uuid,
                                            doc_id,
                                            rel_CAL)
+
             except TimeoutError:
+                context["CALFailedToRecieveJudgment"] = True
                 traceback.print_exc()
                 error_dict = {u"message": u"Timeout error. "
                                           u"Please check status of servers."}
                 return self.render_timeout_request_response(error_dict)
             except CALError as e:
+                context["CALFailedToRecieveJudgment"] = True
                 traceback.print_exc()
                 error_message = "CAL Exception: {}".format(str(e))
             except Exception as e:
+                context["CALFailedToRecieveJudgment"] = True
                 traceback.print_exc()
                 error_message = str(e)
 

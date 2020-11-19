@@ -15,6 +15,7 @@
       <!-- Other -->
       <link href="{% static 'css/pace.css' %}" rel="stylesheet">
       <link href="{% static 'css/font-awesome-all.css' %}" rel="stylesheet">
+      <link href="{% static 'css/loadawesome.css' %}" rel="stylesheet">
       {% include "raven-config.html" %}
       <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
       <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
@@ -37,6 +38,8 @@
           document.write(`<img alt="${input}" title="${input}" width=${width} height=${height} class="${css}" src="data:image/svg+xml;base64, ${svg} ">`);
         }
       </script>
+
+
       {% block extra_head %}{% endblock %}
 
   </head>
@@ -202,6 +205,8 @@
     <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
 
     <script>
+        // initilize toasts
+        $('.toast').toast()
 
         // Adds border-bottom to navbar when scroll
         $(window).scroll(function () {

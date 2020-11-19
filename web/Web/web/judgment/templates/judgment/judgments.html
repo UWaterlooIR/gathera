@@ -138,6 +138,8 @@
   {% include 'modals/document_modal.html' %}
   <!-- Judging criteria modal -->
   {% include 'modals/additional_judging_criteria_modal.html' %}
+  <!-- Discovery failed to recieve judgment toast -->
+  {% include 'toasts/discovery_failed_to_recieve_judgment.html' %}
 
 </div>
 
@@ -190,6 +192,18 @@
           afterDocumentLoad: function (docid) {
             // Perform keyword search if necessary
             searchForKeyword();
+          },
+
+          afterCALFailedToRecieveJudgment: function(docid, rel) {
+            $('#toast_CALFailedToRecieveJudgment').toast('dispose');
+            $(".CALFailedToRecieveJudgmentSpinner").removeClass("d-none");
+            $("#CALFailedToRecieveJudgment_toast_body").addClass("d-none");
+            $("#toast_CALFailedToRecieveJudgment_docid").html(docid);
+            setInterval(function(){
+              $("#CALFailedToRecieveJudgment_toast_body").removeClass("d-none");
+              $(".CALFailedToRecieveJudgmentSpinner").addClass("d-none");
+            },500);
+            $('#toast_CALFailedToRecieveJudgment').toast('show');
           }
         });
 
