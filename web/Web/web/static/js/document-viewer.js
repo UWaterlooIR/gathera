@@ -731,7 +731,7 @@ docView.prototype = {
           'doc_CAL_snippet': "",
           'doc_search_snippet': docSnippet,
           'relevance': rel,
-          'source': "SERP",
+          'source': "search_SERP",
           'client_time': now,
           'search_query': null,
           'ctrl_f_terms_input': $("#search_content").val(),
@@ -742,7 +742,7 @@ docView.prototype = {
           'historyItem': {
             "username": options.username,
             "timestamp": now,
-            "source": "SERP",
+            "source": "search_SERP",
             "queryID": options.queryID,
             "query": options.query,
             "judged": true,
