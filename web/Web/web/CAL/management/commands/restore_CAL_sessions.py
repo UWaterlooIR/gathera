@@ -31,19 +31,16 @@ class Command(BaseCommand):
 
         max_tries = 2
         for _ in range(max_tries):
-            self.stdout.write(self.style.SUCCESS("Waiting for CALEngine "
-                                                 "server to come online"))
+            self.stdout.write(self.style.SUCCESS("Waiting for CALEngine server to come online."))
             try:
                 requests.get(url, timeout=1)
                 break
             except requests.Timeout:
                 max_tries -= 1
                 if max_tries == 0:
-                    self.stdout.write(self.style.ERROR("Unable to connect to CALEngine "
-                                                       "server. "))
+                    self.stdout.write(self.style.ERROR("Unable to connect to CALEngine server."))
                     return
-                self.stdout.write(self.style.ERROR("CALEngine server is offline. "
-                                                   "Trying again in 5 seconds..."))
+                self.stdout.write(self.style.ERROR("CALEngine server is offline. Trying again in 5 seconds..."))
                 time.sleep(5)
 
         for session_id, seed_query, session_strategy in judgments:
