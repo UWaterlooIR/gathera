@@ -29,25 +29,32 @@ class Command(BaseCommand):
 
             judgments[(session_id, seed_query, session_strategy)].append((row.doc_id, -1 if row.relevance <= 0 else 1))
 
-        while True:
-            print("Waiting for cal server to come online")
+        max_tries = 2
+        for _ in range(max_tries):
+            self.stdout.write(self.style.SUCCESS("Waiting for CALEngine "
+                                                 "server to come online"))
             try:
                 requests.get(url, timeout=1)
                 break
             except requests.Timeout:
+                max_tries -= 1
+                if max_tries == 0:
+                    self.stdout.write(self.style.ERROR("Unable to connect to CALEngine "
+                                                       "server. "))
+                    return
+                self.stdout.write(self.style.ERROR("CALEngine server is offline. "
+                                                   "Trying again in 5 seconds..."))
                 time.sleep(5)
 
         for session_id, seed_query, session_strategy in judgments:
-            print("Restoring {}: '{}'...".format(session_id, seed_query))
+            self.stdout.write(self.style.SUCCESS("Restoring {}: '{}'...".format(session_id, seed_query)))
             seed_docs = ','.join([doc_id + ':' + str(rel) for doc_id, rel in judgments[(session_id, seed_query, session_strategy)]])
 
             data = 'session_id={}&seed_query={}&seed_judgments={}&mode={}'.format(
                 session_id, seed_query, seed_docs, session_strategy)
-            # print(data)
             resp = requests.post(url, data=data)
 
             # if resp.status != '200':
             #     print("Session {}-'{}' already exists".format(session_id, seed_query))
 
-        self.stdout.write(self.style.SUCCESS(
-            'Requests for all sessions are completed.'))
+        self.stdout.write(self.style.SUCCESS('Requests for all sessions are completed.'))

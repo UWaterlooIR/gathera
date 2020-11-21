@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 
 from web.topic.models import Topic
 
-topic_path = "../../fixtures/topics.txt"
+topic_path = "/app/web/topic/fixtures/topics.xml"
 
 
 class Command(BaseCommand):
