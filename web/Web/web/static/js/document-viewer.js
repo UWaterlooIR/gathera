@@ -30,6 +30,7 @@ var docView = function() {
     fetchPreviouslyJudgedDocsOnInit: false,
     singleDocumentMode: false,
     searchMode: false,
+    reviewMode: false,
     mainJudgingCriteriaName: "Relevant", // adjective of criteria
 
     // Specific to search
@@ -51,6 +52,7 @@ var docView = function() {
     documentCloseButtonSelector: "#docViewDocCloseButton",
     documentHRelButtonSelector: ".docViewDocHRelButton",
     documentRelButtonSelector: ".docViewDocRelButton",
+    docViewNextDocButtonSelector: ".docViewNextDocButton",
     documentNonRelButtonSelector: ".docViewDocNonRelButton",
     documentAdditionalJudgingCriterionSelector: ".additionalJudgingCriterion",
     previouslyReviewedListSelector: ".previouslyReviewedList",
@@ -147,13 +149,17 @@ docView.prototype = {
       if ($(elm).data('is-serp-judging')){
         $(elm).on("click", function(){sendSERPJudgment($(elm).data("doc-id"), rel_val)});
       }else{
-        $(elm).on("click", function(){sendJudgment(rel_val, options.searchMode? null : refreshDocumentView)});
+        $(elm).on("click", function(){sendJudgment(rel_val, (options.searchMode || options.reviewMode)? null : refreshDocumentView)});
       }
+    }
+
+    function _linkNextDocButtons(elm) {
+      $(elm).on("click", function () { clearDocumentView(); refreshDocumentView() });
     }
 
     // start linking selectors and collect info on configurable additional judging criteria
     $(document).ready(function(){
-      const mainJudgingSelectors = [options.documentHRelButtonSelector, options.documentRelButtonSelector, options.documentNonRelButtonSelector];
+      const mainJudgingSelectors = [options.documentHRelButtonSelector, options.documentRelButtonSelector, options.documentNonRelButtonSelector, options.docViewNextDocButtonSelector];
       mainJudgingSelectors.forEach(function (selector) {
           let rel_val = -1;
           switch (selector) {
@@ -168,6 +174,9 @@ docView.prototype = {
             case options.documentNonRelButtonSelector:
               rel_val = 0;
               $(options.documentNonRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
+              break
+            case options.docViewNextDocButtonSelector:
+              $(options.docViewNextDocButtonSelector).each(function () { _linkNextDocButtons(this) });
               break
           }
         }
@@ -300,7 +309,7 @@ docView.prototype = {
       let color = null;
       if (docid in parent.previouslyJudgedDocs){
         color = relToColor(parent.previouslyJudgedDocs[docid]["relevance"]);
-        if (!(options.singleDocumentMode || options.searchMode)){
+        if (!(options.singleDocumentMode || options.searchMode || options.reviewMode)){
           showCloseButton();
         }
       } else{
@@ -793,7 +802,7 @@ docView.prototype = {
       const currentSnippet = getCurrentDocSnippet();
       updateOrCreatePreviouslyReviewedListItem(docid, currentTitle, rel);
 
-      if (!options.singleDocumentMode && !options.searchMode){
+      if (!options.singleDocumentMode && !options.searchMode && !options.reviewMode){
         clearDocumentView();
       }else{
         updateDocumentIndicator(relToTitle(rel), relToColor(rel));
@@ -842,7 +851,10 @@ docView.prototype = {
           method: 'POST',
           data: JSON.stringify(data),
           success: function (result) {
-              if (!options.singleDocumentMode && !options.searchMode){
+              console.log("send judgement")
+              console.log(result)
+              if (!options.singleDocumentMode && !options.searchMode && !options.reviewMode) {
+                console.log("Send judgement, update view stack")  
                 updateViewStack(result["next_docs"]);
               }
               if(result['is_max_judged_reached']){
@@ -953,17 +965,21 @@ docView.prototype = {
      */
     function updateViewStack(result) {
       let docids = [];
+      console.log("Reviewstack input length")
+      console.log(result.length)
       for (let i = 0; i < result.length; i++){
         const doc = result[i];
         if (options.allowDocumentCaching){
           parent.documentCacheStore.set(doc.doc_id, doc);
         }
         // make sure stack doesn't include previously judged documents or current doc
-        if ( (!(doc.doc_id in parent.previouslyJudgedDocs) || (parent.previouslyJudgedDocs[doc.doc_id]["relevance"]  === null)) &&  doc.doc_id !== parent.currentDocID ){
-          docids.push(doc.doc_id);
-        }
+        docids.push(doc.doc_id);
+        // if ( (!(doc.doc_id in parent.previouslyJudgedDocs) || (parent.previouslyJudgedDocs[doc.doc_id]["relevance"]  === null)) &&  doc.doc_id !== parent.currentDocID ){
+        //   docids.push(doc.doc_id);
+        // }
       }
       parent.viewStack = docids;
+      console.log(docids.length)
     }
 
     function generate_prev_reviewed_doc_div_elm(docid, title, rel) {

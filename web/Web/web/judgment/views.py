@@ -313,7 +313,7 @@ class GetLatestAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                     source="CAL"
                  ).filter(
                     relevance__isnull=False
-                ).order_by('-updated_at')[:number_of_docs_to_show]
+                ).order_by('-relevance')[:number_of_docs_to_show]
         result = []
         for judgment in latest:
             result.append(
