@@ -155,7 +155,7 @@ class SearchGetDocAJAXView(views.CsrfExemptMixin,
         if not docid:
             return self.render_json_response([])
         try:
-            document = DocEngine.get_documents([docid])
+            document = DocEngine.get_documents([(docid, 'search')])
         except TimeoutError:
             error_dict = {u"message": u"Timeout error. Please check status of servers."}
             return self.render_timeout_request_response(error_dict)

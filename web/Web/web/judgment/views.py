@@ -57,7 +57,8 @@ class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
             found_ctrl_f_terms_in_summary = self.request_json.get(u"found_ctrl_f_terms_in_summary", None)
             found_ctrl_f_terms_in_full_doc = self.request_json.get(u"found_ctrl_f_terms_in_full_doc", None)
             current_docview_stack_size = self.request_json.get(u"current_docview_stack_size", None)
-        except KeyError:
+        except KeyError as e:
+            print(e)
             error_dict = {u"message": u"POST input missing important fields"}
 
             return self.render_bad_request_response(error_dict)
@@ -309,8 +310,7 @@ class GetLatestAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
             return self.render_json_response([])
         latest = Judgment.objects.filter(
                     user=self.request.user,
-                    session=self.request.user.current_session,
-                    source="CAL"
+                    session=self.request.user.current_session
                  ).filter(
                     relevance__isnull=False
                 ).order_by('-relevance')[:number_of_docs_to_show]
@@ -324,7 +324,8 @@ class GetLatestAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                     "doc_CAL_snippet": judgment.doc_CAL_snippet,
                     "doc_content": "",
                     "relevance": judgment.relevance,
-                    "additional_judging_criteria": judgment.additional_judging_criteria
+                    "additional_judging_criteria": judgment.additional_judging_criteria,
+                    "source": judgment.source
                 }
             )
 

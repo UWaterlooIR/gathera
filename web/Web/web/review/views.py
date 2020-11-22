@@ -89,17 +89,17 @@ class DocAJAXView(views.CsrfExemptMixin,
                 session=self.request.user.current_session,
             ).filter(
                 relevance__isnull=False
-            ).order_by('-relevance')[:50]
+            ).order_by('-relevance')
 
             documents = []
 
             next_patch_ids = []
             for judgment in latest:
-                next_patch_ids.append(judgment.doc_id)
+                next_patch_ids.append((judgment.doc_id, judgment.source))
 
             doc_ids_hack = []
-            for doc_id in next_patch_ids:
-                doc = {'doc_id': doc_id}
+            for doc_id, doc_source in next_patch_ids:
+                doc = {'doc_id': doc_id, 'doc_source': doc_source}
                 if '.' in doc_id:
                     doc['doc_id'], doc['para_id'] = doc_id.split('.')
                 doc_ids_hack.append(doc)
@@ -118,71 +118,3 @@ class DocAJAXView(views.CsrfExemptMixin,
         except CALError as e:
             return JsonResponse({"message": "Ops! CALError."}, status=404)
 
-
-class SCALInfoView(views.CsrfExemptMixin,
-                   RetrievalMethodPermissionMixin,
-                   views.LoginRequiredMixin,
-                   views.JsonRequestResponseMixin,
-                   views.AjaxResponseMixin, generic.View):
-    """
-    View to get stratum information from the CAL engine
-    """
-    require_json = False
-
-    def render_timeout_request_response(self, error_dict=None):
-        if error_dict is None:
-            error_dict = self.error_response_dict
-        json_context = json.dumps(
-            error_dict,
-            cls=self.json_encoder_class,
-            **self.get_json_dumps_kwargs()
-        ).encode('utf-8')
-        return HttpResponse(
-            json_context, content_type=self.get_content_type(), status=502)
-
-    def get_ajax(self, request, *args, **kwargs):
-        session = self.request.user.current_session.uuid
-        try:
-            info = CALFunctions.get_scal_info(str(session))
-
-            return self.render_json_response(info)
-        except TimeoutError:
-            error_dict = {u"message": u"Timeout error. Please check status of servers."}
-            return self.render_timeout_request_response(error_dict)
-        except CALError as e:
-            return JsonResponse({"message": "Oops! CALError."}, status=404)
-
-
-class DocIDsAJAXView(views.CsrfExemptMixin,
-                     RetrievalMethodPermissionMixin,
-                     views.LoginRequiredMixin,
-                     views.JsonRequestResponseMixin,
-                     views.AjaxResponseMixin, generic.View):
-    """
-    View to get ids of documents to judge from CAL
-    """
-    require_json = False
-
-    def render_timeout_request_response(self, error_dict=None):
-        if error_dict is None:
-            error_dict = self.error_response_dict
-        json_context = json.dumps(
-            error_dict,
-            cls=self.json_encoder_class,
-            **self.get_json_dumps_kwargs()
-        ).encode('utf-8')
-        return HttpResponse(
-            json_context, content_type=self.get_content_type(), status=502)
-
-    def get_ajax(self, request, *args, **kwargs):
-        session = self.request.user.current_session.uuid
-        seed_query = self.request.user.current_session.topic.seed_query
-        try:
-            docs_ids_to_judge = CALFunctions.get_documents(str(session), 10)
-            return self.render_json_response(docs_ids_to_judge)
-        except TimeoutError:
-            error_dict = {u"message": u"Timeout error. Please check status of servers."}
-            return self.render_timeout_request_response(error_dict)
-        except CALError as e:
-            # TODO: add proper http response for CAL errors
-            return JsonResponse({"message": "Ops! CALError."}, status=404)
