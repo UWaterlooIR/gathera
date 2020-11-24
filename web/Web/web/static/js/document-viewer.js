@@ -17,6 +17,7 @@ var docView = function() {
     getDocumentIDsToJudgeURL: null, // required
     sendDocumentJudgmentURL: null, // required
     getDocumentURL: null, // required
+    getSCALInfoURL: null, // required for discovery page
 
     // options
     hideFullDocument: false,
@@ -73,6 +74,13 @@ var docView = function() {
 
     // others
     prevReviewedDocumentItemClass: "prev-reviewed-doc-item",
+
+    // event callbacks
+    beforeDocumentLoad: null,
+    afterDocumentLoad: null,
+    afterDocumentJudge: null,
+    afterErrorShown: null,
+    afterCALFailedToReceiveJudgment: null
   };
 
   /*************
@@ -134,7 +142,7 @@ docView.prototype = {
     validateSelector(options.documentTabSelector, true, "documentTabSelector");
 
     // Don't touch these settings
-    var s = ["beforeDocumentLoad", "afterDocumentLoad", "afterDocumentJudge", "afterErrorShown"];
+    var s = ["beforeDocumentLoad", "afterDocumentLoad", "afterDocumentJudge", "afterErrorShown", "afterCALFailedToReceiveJudgment"];
 
     for (var k in s) {
       if (settings.hasOwnProperty(s[k])) {
@@ -199,6 +207,7 @@ docView.prototype = {
     }
 
 
+
     /**
      * Validate that a queryString is valid
      *
@@ -255,6 +264,10 @@ docView.prototype = {
       // Show document
       showDocument(docid);
       $(options.docViewSelector).trigger("updated");
+      if (options.getSCALInfoURL !== null){
+          getSCALInfo()
+      }
+
     }
 
     /**
@@ -383,11 +396,16 @@ docView.prototype = {
 
     function showMaxJudgmentReached() {
       updateDocumentIndicator("",options.otherColor);
-      updateTitle("No more documents", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
-      updateMessage("There are no more documents to judge. Please wait or try refreshing the page.");
+      updateTitle("Max number of judgments reached", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
+      updateMessage("You have reached the max number of judgments for this session. You will be redirected to the home page shortly.");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
+
+      window.setTimeout(function(){
+        location.reload();
+      }, 5000);
+
     }
 
 
@@ -406,8 +424,17 @@ docView.prototype = {
       updateStyles(elm, styles);
     }
 
+      function updateSCALInfo(result) {
+        if (result) {
+          let temp = [result['stratum_number'], result['stratum_size'], result['sample_size'], (parent.viewStack.length + 1).toString()]
+          Array.from(document.getElementById('scal-info').getElementsByTagName('small')).forEach((span, i) => {
+            span.innerHTML = temp[i]
+          })
+        }
+      }
+
     function updateMeta(content) {
-      if (validURL(content) === true){
+      if (checkURL(content) === true){
         content = content.link(content)
       }
       const elm = $(options.documentMetaSelector);
@@ -559,6 +586,27 @@ docView.prototype = {
       });
     }
 
+      function getSCALInfo(callback) {
+        const url = options.getSCALInfoURL;
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function (result) {
+            updateSCALInfo(result)
+            if (typeof callback === "function") {
+              callback();
+            }
+          },
+          error: function (_) {
+            updateSCALInfo({
+              "stratum_number": "NA",
+              "sample_size": "NA",
+              "stratum_size": "NA",
+            });
+          }
+        });
+      }
+
     function populatePrevReviewedDocuments(callback) {
       const url = options.getPrevDocumentsJudgedURL;
       $.ajax({
@@ -693,7 +741,7 @@ docView.prototype = {
           'doc_CAL_snippet': "",
           'doc_search_snippet': docSnippet,
           'relevance': rel,
-          'source': "SERP",
+          'source': "search_SERP",
           'client_time': now,
           'search_query': null,
           'ctrl_f_terms_input': $("#search_content").val(),
@@ -704,7 +752,7 @@ docView.prototype = {
           'historyItem': {
             "username": options.username,
             "timestamp": now,
-            "source": "SERP",
+            "source": "search_SERP",
             "queryID": options.queryID,
             "query": options.query,
             "judged": true,
@@ -721,6 +769,11 @@ docView.prototype = {
                   showMaxJudgmentReached();
                   return;
               }
+
+              if(result["CALFailedToReceiveJudgment"]){
+                parent.afterCALFailedToReceiveJudgment(docid, rel);
+              }
+
               parent.afterDocumentJudge(docid, rel);
           },
           error: function (result){
@@ -737,6 +790,7 @@ docView.prototype = {
     }
 
     function sendJudgment(rel, callback) {
+      var current_docview_stack_size = parent.viewStack.length;
       if (!(options.singleDocumentMode || options.searchMode)){
         window.scrollTo(0, 0);
       }
@@ -779,6 +833,7 @@ docView.prototype = {
           'ctrl_f_terms_input': $("#search_content").val(),
           'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
           'page_title': document.title,
+          'current_docview_stack_size': current_docview_stack_size,
 
           // history item
           'historyItem': {
@@ -809,6 +864,10 @@ docView.prototype = {
                   showMaxJudgmentReached();
                   //disableJudgments();
                   return;
+              }
+
+              if(result["CALFailedToReceiveJudgment"]){
+                parent.afterCALFailedToReceiveJudgment(docid, rel);
               }
 
               if (parent.currentDocID === null){
@@ -1008,8 +1067,7 @@ docView.prototype = {
       return "";
     }
 
-    //check if string has pattern of URL; returns True if yes
-    function validURL(str) {
+    function checkURL(str) {
       var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
         '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
         '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
@@ -1023,7 +1081,6 @@ docView.prototype = {
     return this._init();
   },
 
-    
 
   // =========================================================================//
   // EVENTS CALLBACK                                                          //
@@ -1069,6 +1126,12 @@ docView.prototype = {
     "use strict";
     return this.triggerEvent("afterDocumentJudge", [docid, rel]);
   },
+
+  afterCALFailedToReceiveJudgment: function(docid, rel) {
+    "use strict";
+    return this.triggerEvent("afterCALFailedToReceiveJudgment", [docid, rel]);
+  },
+
 
   afterErrorShown: function () {
     "use strict";
