@@ -573,14 +573,14 @@ docView.prototype = {
         });
       }
       // link on click
-      div_elm.on("click", function () { viewPreviouslyJudgedDocument($(this).data("doc-id").toString()) });
+      div_elm.on("click", function () {viewPreviouslyJudgedDocument($(this).data("doc-id").toString())});
 
       if (!options.reviewMode || stack_index == -1) {
         // add to top of the list view/stack
         $(options.previouslyReviewedListSelector).prepend(div_elm);
         parent.previouslyJudgedDocsStack.push(docid);
       } else {
-        //////
+        //update the list item.
       }
     }
 
@@ -658,8 +658,6 @@ docView.prototype = {
           url: url,
           method: 'GET',
           success: function (result) {
-            console.log("populateprevReviwedDocs...")
-            console.log(result.length)
             $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
             parent.previouslyJudgedDocsStack = [];
             if (options.reviewMode) {
@@ -693,8 +691,7 @@ docView.prototype = {
             url: getDocumentURL(docid),
             type: 'GET',
             dataType: 'json', // added data type
-            success: function (res) {
-              console.log("fetching document")
+            success: function(res) {
               // AFTER SUCCESSFUL RETRIEVAL OF DOCUMENT INFO
               callback(docid, res[0]);
         }
@@ -913,7 +910,6 @@ docView.prototype = {
           method: 'POST',
           data: JSON.stringify(data),
           success: function (result) {
-              console.log("send judgement")
               if (!options.singleDocumentMode && !options.searchMode && !options.reviewMode) { 
                 updateViewStack(result["next_docs"]);
               }
@@ -1040,7 +1036,6 @@ docView.prototype = {
         }
       }
       parent.viewStack = docids;
-      console.log(docids.length)
     }
 
     function generate_prev_reviewed_doc_div_elm(docid, title, rel) {
