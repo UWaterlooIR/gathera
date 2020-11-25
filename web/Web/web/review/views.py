@@ -95,11 +95,11 @@ class DocAJAXView(views.CsrfExemptMixin,
 
             next_patch_ids = []
             for judgment in latest:
-                next_patch_ids.append((judgment.doc_id, judgment.source))
+                next_patch_ids.append(judgment.doc_id)
 
             doc_ids_hack = []
-            for doc_id, doc_source in next_patch_ids:
-                doc = {'doc_id': doc_id, 'doc_source': doc_source}
+            for doc_id in next_patch_ids:
+                doc = {'doc_id': doc_id}
                 if '.' in doc_id:
                     doc['doc_id'], doc['para_id'] = doc_id.split('.')
                 doc_ids_hack.append(doc)
@@ -110,6 +110,7 @@ class DocAJAXView(views.CsrfExemptMixin,
             else:
                 documents = DocEngine.get_documents_with_snippet(doc_ids_hack,
                                                                  seed_query)
+
             return self.render_json_response(documents)
     
         except TimeoutError:

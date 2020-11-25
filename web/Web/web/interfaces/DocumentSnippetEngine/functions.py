@@ -35,12 +35,7 @@ def get_documents(doc_ids, query=None, top_terms=None, orig_para_id=None):
     """
     result = []
     h = httplib2.Http()
-    for idx, doc_info in enumerate(doc_ids):
-        if len(doc_info) == 2:
-            doc_id, doc_source = doc_info
-        else:
-            doc_id, doc_source = doc_info, ""
-
+    for idx, doc_id in enumerate(doc_ids):
         url = '{}/{}'.format(DOCUMENTS_URL, doc_id)
         resp, content = h.request(url,
                                   method="GET")
@@ -57,7 +52,6 @@ def get_documents(doc_ids, query=None, top_terms=None, orig_para_id=None):
 
         document = {
             'doc_id': doc_id,
-            'doc_source': doc_source,
             'title': title,
             'content': content.replace("\n", "<br/>"),
             'date': date,
@@ -80,7 +74,7 @@ def get_documents_with_snippet(doc_ids, query=None, top_terms=None):
 
     doc_ids = doc_ids_unique
 
-    result = get_documents([(doc['doc_id'], doc['doc_source']) for doc in doc_ids], query, top_terms, [doc['para_id'] for doc in doc_ids if 'para_id' in doc])
+    result = get_documents([(doc['doc_id']) for doc in doc_ids], query, top_terms, [doc['para_id'] for doc in doc_ids if 'para_id' in doc])
     for doc_para_id, doc in zip(doc_ids, result):
         if 'para_id' not in doc_para_id:
             doc['snippet'] = u''
