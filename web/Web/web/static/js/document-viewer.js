@@ -49,6 +49,7 @@ var docView = function() {
     documentShowFullDocumentButtonSelector: "#docViewDocShowFullDocumentButton",
     documentBodySelector: "#docViewDocBody",
     documentCloseButtonSelector: "#docViewDocCloseButton",
+    documentJudgingCriteriaButtonGroupSelector: ".judging-criteria-btn-group",
     documentHRelButtonSelector: ".docViewDocHRelButton",
     documentRelButtonSelector: ".docViewDocRelButton",
     documentNonRelButtonSelector: ".docViewDocNonRelButton",
@@ -134,6 +135,7 @@ docView.prototype = {
     validateSelector(options.previouslyReviewedListSpinnerSelector, true, "previouslyReviewedListSpinnerSelector");
     validateSelector(options.documentSnippetSelector, true, "documentSnippetSelector");
     validateSelector(options.documentShowFullDocumentButtonSelector, true, "documentShowFullDocumentButtonSelector");
+    validateSelector(options.documentJudgingCriteriaButtonGroupSelector, true, "documentJudgingCriteriaButtonGroupSelector");
     validateSelector(options.documentBodySelector, false, "documentIDSelector");
     validateSelector(options.documentCloseButtonSelector, true, "documentCloseButtonSelector");
     validateSelector(options.searchItemSelector, true, "searchItemSelector");
@@ -453,6 +455,18 @@ docView.prototype = {
       updateStyles(elm, styles);
     }
 
+    function updateActiveJudgingButton(docid, rel) {
+      const btn_group = $(options.documentJudgingCriteriaButtonGroupSelector + `[data-doc-id='${docid}']`);
+      btn_group.children().removeClass("active");
+      if (rel === 2){
+        btn_group.find(options.documentHRelButtonSelector).addClass("active");
+      }else if (rel === 1){
+        btn_group.find(options.documentRelButtonSelector).addClass("active");
+      }else if (rel === 0){
+        btn_group.find(options.documentNonRelButtonSelector).addClass("active");
+      }
+    }
+
     function updateDocumentIndicator(title, color) {
       if (color !== null){
         $(options.documentIndicatorSelector).css("border-color", color);
@@ -477,6 +491,13 @@ docView.prototype = {
         elm.html("");
         $(options.docViewSelector).data('doc-id', '');
       }
+      updateButtonGroupDocidAssociation(docid);
+    }
+
+    function updateButtonGroupDocidAssociation(docid) {
+      const btn_group = $(options.documentJudgingCriteriaButtonGroupSelector + ":not('.SERP')");
+      btn_group.attr("data-doc-id", docid);
+      btn_group.children().removeClass("active");
     }
 
     function clearAdditionalJudgingCriteria() {
@@ -765,6 +786,8 @@ docView.prototype = {
           method: 'POST',
           data: JSON.stringify(data),
           success: function (result) {
+              updateActiveJudgingButton(docid, rel);
+
               if(result['is_max_judged_reached']){
                   showMaxJudgmentReached();
                   return;
@@ -934,6 +957,7 @@ docView.prototype = {
         const color = relToColor(data.rel);
         checkIfDocumentPreviouslyJudged(docid);
         updateDocumentIndicator(relToTitle(data.rel), color);
+        updateActiveJudgingButton(docid, data.rel);
         updateAdditionalJudgingCriteriaValues(data.additional_judging_criteria);
       }else{
         checkIfDocumentPreviouslyJudged(docid);
