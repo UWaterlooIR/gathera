@@ -324,8 +324,6 @@ docView.prototype = {
         updateAdditionalJudgingCriteriaValues(prevJudgedDocObj["additional_judging_criteria"]);
       }
       updateDocumentIndicator(relToTitle(prevJudgedDocRel), color);
-
-
     }
 
     function updateAdditionalJudgingCriteriaValues(criteria_value_map) {
@@ -882,10 +880,11 @@ docView.prototype = {
           success: function (result) {
               if (!options.singleDocumentMode && !options.searchMode){
                 updateViewStack(result["next_docs"]);
+              }else{
+                updateActiveJudgingButton(docid, rel);
               }
               if(result['is_max_judged_reached']){
                   showMaxJudgmentReached();
-                  //disableJudgments();
                   return;
               }
 
