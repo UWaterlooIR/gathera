@@ -332,6 +332,7 @@ class GetLatestAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                     "doc_content": "",
                     "relevance": judgment.relevance,
                     "additional_judging_criteria": judgment.additional_judging_criteria,
+                    "source": judgment.source
                 }
             )
 

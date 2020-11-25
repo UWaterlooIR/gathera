@@ -74,7 +74,7 @@ def get_documents_with_snippet(doc_ids, query=None, top_terms=None):
 
     doc_ids = doc_ids_unique
 
-    result = get_documents([(doc['doc_id']) for doc in doc_ids], query, top_terms, [doc['para_id'] for doc in doc_ids if 'para_id' in doc])
+    result = get_documents([doc['doc_id'] for doc in doc_ids], query, top_terms, [doc['para_id'] for doc in doc_ids if 'para_id' in doc])
     for doc_para_id, doc in zip(doc_ids, result):
         if 'para_id' not in doc_para_id:
             doc['snippet'] = u''
