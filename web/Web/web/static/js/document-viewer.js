@@ -312,6 +312,7 @@ docView.prototype = {
         if (!(options.singleDocumentMode || options.searchMode)){
           showCloseButton();
         }
+        updateActiveJudgingButton(docid, parent.previouslyJudgedDocs[docid]["relevance"]);
       } else{
         hideCloseButton();
         color = options.otherColor;
