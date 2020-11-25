@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
 {% block pagetitle %}Discovery{% endblock %}
-{% block extra_head %}
-<link href="{% static 'css/loadawesome.css' %}" rel="stylesheet">
-{% endblock %}
 
 {% block navbar-form %}
 <form id="searchContentForm" class="form-inline my-2 my-lg-0 order-sm-1 order-md-3 align-self-center align-self-stretch">
@@ -209,6 +206,8 @@
   </div>
 </div>
 
+<!-- Discovery failed to receive judgment toast -->
+{% include 'toasts/discovery_failed_to_receive_judgment.html' %}
 <!-- Judging criteria modal -->
 {% include 'modals/additional_judging_criteria_modal.html' %}
 <!-- Keyboard shortcuts modal -->
@@ -243,7 +242,20 @@
           afterDocumentLoad: function (docid) {
             // Perform keyword search if necessary
             searchForKeyword();
+          },
+
+          afterCALFailedToReceiveJudgment: function(docid, rel) {
+            $('#toast_CALFailedToReceiveJudgment').toast('dispose');
+            $(".CALFailedToReceiveJudgmentSpinner").removeClass("d-none");
+            $("#CALFailedToReceiveJudgment_toast_body").addClass("d-none");
+            $("#toast_CALFailedToReceiveJudgment_docid").html(docid);
+            setInterval(function(){
+              $("#CALFailedToReceiveJudgment_toast_body").removeClass("d-none");
+              $(".CALFailedToReceiveJudgmentSpinner").addClass("d-none");
+            },500);
+            $('#toast_CALFailedToReceiveJudgment').toast('show');
           }
+
         });
 
     </script>

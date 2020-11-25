@@ -362,7 +362,7 @@ ADDITIONAL_JUDGING_CRITERIA = [
     {
         "name": "Credibility",
         "stored_as": "credibility",
-        "description": "Additional information on the criteria itself",
+        "description": "Whether the document is considered credible (relaible sources, trustworthy, etc).",
         "options": [
             "Credible",
             "Non-credible"
@@ -371,7 +371,7 @@ ADDITIONAL_JUDGING_CRITERIA = [
     {
         "name": "Definitive Answer",
         "stored_as": "definitive_answer",
-        "description": "Additional information on the criteria itself",
+        "description": " Does the document answer the question in your information need?",
         "options": [
             "Unclear",
             "Yes",

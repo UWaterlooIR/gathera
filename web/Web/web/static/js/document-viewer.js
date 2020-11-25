@@ -77,6 +77,13 @@ var docView = function() {
 
     // others
     prevReviewedDocumentItemClass: "prev-reviewed-doc-item",
+
+    // event callbacks
+    beforeDocumentLoad: null,
+    afterDocumentLoad: null,
+    afterDocumentJudge: null,
+    afterErrorShown: null,
+    afterCALFailedToReceiveJudgment: null
   };
 
   /*************
@@ -139,7 +146,7 @@ docView.prototype = {
     validateSelector(options.documentTabSelector, true, "documentTabSelector");
 
     // Don't touch these settings
-    var s = ["beforeDocumentLoad", "afterDocumentLoad", "afterDocumentJudge", "afterErrorShown"];
+    var s = ["beforeDocumentLoad", "afterDocumentLoad", "afterDocumentJudge", "afterErrorShown", "afterCALFailedToReceiveJudgment"];
 
     for (var k in s) {
       if (settings.hasOwnProperty(s[k])) {
@@ -815,6 +822,11 @@ docView.prototype = {
                   showMaxJudgmentReached();
                   return;
               }
+
+              if(result["CALFailedToReceiveJudgment"]){
+                parent.afterCALFailedToReceiveJudgment(docid, rel);
+              }
+
               parent.afterDocumentJudge(docid, rel);
           },
           error: function (result){
@@ -909,6 +921,10 @@ docView.prototype = {
                   showMaxJudgmentReached();
                   //disableJudgments();
                   return;
+              }
+
+              if(result["CALFailedToReceiveJudgment"]){
+                parent.afterCALFailedToReceiveJudgment(docid, rel);
               }
 
               if (parent.currentDocID === null){
@@ -1158,6 +1174,12 @@ docView.prototype = {
     "use strict";
     return this.triggerEvent("afterDocumentJudge", [docid, rel]);
   },
+
+  afterCALFailedToReceiveJudgment: function(docid, rel) {
+    "use strict";
+    return this.triggerEvent("afterCALFailedToReceiveJudgment", [docid, rel]);
+  },
+
 
   afterErrorShown: function () {
     "use strict";

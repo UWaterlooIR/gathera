@@ -131,7 +131,6 @@ $(function() {
     update_in_location(document_title_mark_instances, marked_matches_in_document_title);
     update_in_location(document_snippet_mark_instances, marked_matches_in_document_snippet);
     update_in_location(document_content_mark_instances, marked_matches_in_document_content);
-    console.log(marked_matches_counter);
     update_highlighted_terms_view();
   }
 
@@ -182,7 +181,7 @@ $(function() {
     marked_matches_counter = {};
   }
 
-  /** 
+  /**
    * This function processes the entered keyword to support both
    * phrase search (using double quotes) and seperate word search (seperated by space)
    * It takes advantage of the synonyms functionality in mark.js package
@@ -217,10 +216,9 @@ $(function() {
     if (keywordsList != null) {
       // Remove double quotes in the list
       keywordsList = keywordsList.map(e => e.replace(/"(.+)"/, "$1"));
-      console.log(keywordsList)
 
       if (keywords.includes("\"")) {
-        // The original keywords have at least one phrase 
+        // The original keywords have at least one phrase
         separateWordSearch = false;
         synonyms[keywordsList.join(' ')] = keywordsList.join('|');
       }
@@ -268,12 +266,10 @@ $(function() {
 
    $content.on("updated", function() {
        var searchVal = $input.val();
-       console.log(searchVal);
        if(searchVal !== undefined){
            $content.unmark({
               className: $className,
               done: function() {
-                console.log("Marking", searchVal);
                 $content.mark(searchVal, {
                   className: $className,
                   separateWordSearch: true,
