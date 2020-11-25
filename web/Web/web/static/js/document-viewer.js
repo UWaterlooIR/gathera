@@ -434,7 +434,7 @@ docView.prototype = {
       }
 
     function updateMeta(content) {
-      if (checkURL(content) === true){
+      if (isURL(content) === true){
         content = content.link(content)
       }
       const elm = $(options.documentMetaSelector);
