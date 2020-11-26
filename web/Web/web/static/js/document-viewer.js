@@ -265,16 +265,14 @@ docView.prototype = {
     function gotoNextDocument() {
       let currentDocIndex = parent.currentDocIndex
       if (currentDocIndex < parent.viewStack.length - 1) {
-        clearDocumentView();
-        refreshDocumentView(currentDocIndex + 1);
+        viewPreviouslyJudgedDocument(parent.viewStack[currentDocIndex + 1]);
       }
     }
 
     function gotoPreviousDocument() {
       let currentDocIndex = parent.currentDocIndex
       if (currentDocIndex > 0) {
-        clearDocumentView();
-        refreshDocumentView(currentDocIndex - 1);
+        viewPreviouslyJudgedDocument(parent.viewStack[currentDocIndex - 1]);
       }
     }
 
@@ -330,6 +328,14 @@ docView.prototype = {
         parent.viewStack.unshift(docid);
         refreshDocumentView();
       } else {
+        $("." + options.prevReviewedDocumentItemClass).each(function () {
+          if ($(this).data("doc-id").toString() === docid) {
+            $(this).addClass("bold");
+          } else if ($(this).data("doc-id").toString() === currentDocid) {
+            $(this).removeClass("bold");
+          }
+        });
+
         refreshDocumentView(parent.viewStack.indexOf(docid));
       }
     }
@@ -506,7 +512,7 @@ docView.prototype = {
       updateStyles(elm, styles);
     }
 
-    function updateDocID(docid){
+    function updateDocID(docid) {
       parent.currentDocID = docid;
       if (options.reviewMode) {  
         parent.currentDocIndex = parent.viewStack.indexOf(docid);
@@ -580,7 +586,11 @@ docView.prototype = {
         $(options.previouslyReviewedListSelector).prepend(div_elm);
         parent.previouslyJudgedDocsStack.push(docid);
       } else {
-        //update the list item.
+        $("." + options.prevReviewedDocumentItemClass).each(function () {
+          if ($(this).data("doc-id").toString() === docid) {
+            $(this).replaceWith(div_elm);
+          }
+        });
       }
     }
 
