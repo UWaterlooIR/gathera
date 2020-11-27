@@ -11,6 +11,4 @@ urlpatterns = [
     # Ajax views
     path('get_docs/', views.DocAJAXView.as_view(),
          name='get_docs'),
-    path('get_docs_ids/', views.DocAJAXView.as_view(),
-         name='get_docs_ids'),
 ]

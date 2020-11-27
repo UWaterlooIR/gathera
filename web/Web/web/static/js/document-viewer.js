@@ -179,7 +179,7 @@ docView.prototype = {
 
     // start linking selectors and collect info on configurable additional judging criteria
     $(document).ready(function(){
-      const mainJudgingSelectors = [options.documentHRelButtonSelector, options.documentRelButtonSelector, options.documentNonRelButtonSelector, options.docViewNextDocButtonSelector, options.docViewPreviousDocButtonSelector, options.sortReviewedDocumentsSelector];
+      const mainJudgingSelectors = [options.documentHRelButtonSelector, options.documentRelButtonSelector, options.documentNonRelButtonSelector];
       mainJudgingSelectors.forEach(function (selector) {
           let rel_val = -1;
           switch (selector) {
@@ -195,14 +195,6 @@ docView.prototype = {
               rel_val = 0;
               $(options.documentNonRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
               break
-            case options.docViewNextDocButtonSelector:
-              $(options.docViewNextDocButtonSelector).each(function () {_linkNextDocButton(this)});
-              break
-            case options.docViewPreviousDocButtonSelector:
-              $(options.docViewPreviousDocButtonSelector).each(function () {_linkPreviousDocButton(this)});
-              break
-            case options.sortReviewedDocumentsSelector:
-              $(options.sortReviewedDocumentsSelector).each(function () {_linkSortByRelevanceButton(this)});
           }
         }
       );
@@ -217,8 +209,10 @@ docView.prototype = {
         });
       });
 
-      $(options.documentCloseButtonSelector).on("click", function(){closePreviouslyReviewedDocument()});
-
+      $(options.documentCloseButtonSelector).on("click", function () { closePreviouslyReviewedDocument() });
+      _linkNextDocButton($(options.docViewNextDocButtonSelector));
+      _linkPreviousDocButton($(options.docViewPreviousDocButtonSelector));
+      _linkSortByRelevanceButton($(options.sortReviewedDocumentsSelector));
     });
 
     if (!options.singleDocumentMode && !options.searchMode){
@@ -272,14 +266,14 @@ docView.prototype = {
     }
 
     function gotoNextDocument() {
-      let currentDocIndex = parent.currentDocIndex
+      let currentDocIndex = parent.currentDocIndex;
       if (currentDocIndex < parent.viewStack.length - 1) {
         viewPreviouslyJudgedDocument(parent.viewStack[currentDocIndex + 1]);
       }
     }
 
     function gotoPreviousDocument() {
-      let currentDocIndex = parent.currentDocIndex
+      let currentDocIndex = parent.currentDocIndex;
       if (currentDocIndex > 0) {
         viewPreviouslyJudgedDocument(parent.viewStack[currentDocIndex - 1]);
       }
@@ -612,11 +606,8 @@ docView.prototype = {
         parent.previouslyJudgedDocsStack.push(docid);
       } else {
         // update indicator
-        $("." + options.prevReviewedDocumentItemClass).each(function () {
-          if ($(this).data("doc-id").toString() === docid) {
-            $(this).children().eq(0).css('border-color', relToColor(rel));
-          }
-        });
+        const current = $("." + options.prevReviewedDocumentItemClass + `[data-doc-id='${docid}']`);
+        current.children().eq(0).css('border-color', relToColor(rel));
       }
     }
 
@@ -702,8 +693,7 @@ docView.prototype = {
               let item = result[result.length - 1 - i];
               parent.previouslyJudgedDocs[item["doc_id"]] = {
                 "relevance": item["relevance"],
-                "additional_judging_criteria": item["additional_judging_criteria"],
-                "source": item["source"]
+                "additional_judging_criteria": item["additional_judging_criteria"]
               };
               updateOrCreatePreviouslyReviewedListItem(item["doc_id"], item["doc_title"], item["relevance"]);
             }
@@ -751,8 +741,7 @@ docView.prototype = {
       }else{
         parent.previouslyJudgedDocs[docid] = {
           "relevance": null,
-          "additional_judging_criteria": additional_judging_criteria,
-          "source": options.judgingSourceName
+          "additional_judging_criteria": additional_judging_criteria
         };
       }
 
@@ -763,7 +752,7 @@ docView.prototype = {
           'doc_search_snippet': "",
           'relevance': null,
           'additional_judging_criteria': additional_judging_criteria,
-          'source': parent.previouslyJudgedDocs[docid]["source"],
+          'source': options.judgingSourceName,
           'client_time': now,
           'search_query': null,
           'ctrl_f_terms_input': $("#search_content").val(),
@@ -774,7 +763,7 @@ docView.prototype = {
           'historyItem': {
             "username": options.username,
             "timestamp": now,
-            "source": parent.previouslyJudgedDocs[docid]["source"],
+            "source": options.judgingSourceName,
             "judged": false,
             "relevance": null,
             'additional_judging_criteria': additional_judging_criteria,
@@ -887,12 +876,9 @@ docView.prototype = {
       }
 
       const additional_judging_criteria = collectAdditionalJudgingCriteria();
-      const source = (docid in parent.previouslyJudgedDocs) ? parent.previouslyJudgedDocs[docid]["source"] : options.judgingSourceName
-  
       parent.previouslyJudgedDocs[docid] = {
         "relevance": rel,
-        "additional_judging_criteria": additional_judging_criteria,
-        "source": source
+        "additional_judging_criteria": additional_judging_criteria
       };
       const currentTitle = getCurrentDocTitle();
       const currentSnippet = getCurrentDocSnippet();
@@ -917,7 +903,7 @@ docView.prototype = {
           'doc_search_snippet': "",
           'relevance': rel,
           'additional_judging_criteria': additional_judging_criteria,
-          'source': source,
+          'source': options.judgingSourceName,
           'client_time': now,
           'search_query': null,
           'ctrl_f_terms_input': $("#search_content").val(),
@@ -929,7 +915,7 @@ docView.prototype = {
           'historyItem': {
             "username": options.username,
             "timestamp": now,
-            "source": source,
+            "source": options.judgingSourceName,
             "judged": true,
             "relevance": rel,
             "queryID": options.queryID,
@@ -1021,18 +1007,15 @@ docView.prototype = {
         }
       }
 
-      if (options.reviewMode) {
-        const previous = $("." + options.prevReviewedDocumentItemClass + `[data-is-current='true']`);
-        previous.removeClass("bold");
-        previous.attr("data-is-current", "false");
+      // unbold the previous document
+      const previous = $("." + options.prevReviewedDocumentItemClass + `[data-is-current='true']`);
+      previous.removeClass("bold");
+      previous.attr("data-is-current", "false");
 
-        $("." + options.prevReviewedDocumentItemClass).each(function () {
-          if ($(this).data("doc-id").toString() === docid) {
-            $(this).addClass("bold");
-            $(this).attr("data-is-current", "true");
-          }
-        });
-      }
+      //bold the current document
+      const current = $("." + options.prevReviewedDocumentItemClass + `[data-doc-id='${docid}']`);
+      current.addClass("bold");
+      current.attr("data-is-current", "true");
 
       if (data.rel !== undefined && typeof data.rel === "number"){
         const color = relToColor(data.rel);

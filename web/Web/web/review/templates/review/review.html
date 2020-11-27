@@ -53,13 +53,11 @@
                     <a class="nav-link small ml-2 px-2 py-1 disabled" href="#" tabindex="-1"><i
                             class="fas fa-tag"></i></a>
                 </div>
-                <div>
+                <div class="btn-group" role="group" aria-label="Navigate">
                     <button type="button"
-                            class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewPreviousDocButton">Prev</button>
-                </div>
-                <div>
+                        class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewPreviousDocButton">Prev</button>
                     <button type="button"
-                            class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewNextDocButton">Next</button>
+                        class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewNextDocButton">Next</button>
                 </div>
             </nav>
 
@@ -221,29 +219,6 @@
                             </div>
                         </div>
 
-                        {% if "scal" in request.user.current_session.strategy %}
-                        <div class="tab-pane fade" id="information-tab" role="tabpanel">
-                            <ul class="list-group mt-3 text-secondary small" id="scal-info">
-                                <li
-                                    class="list-group-item d-flex justify-content-between align-items-center p-0 border-0">
-                                    <span class="text-truncate">Stratum number</span> <small class="px-2">..</small>
-                                </li>
-                                <li
-                                    class="list-group-item d-flex justify-content-between align-items-center p-0 border-0">
-                                    <span class="text-truncate">Stratum size</span> <small class="px-2">..</small>
-                                </li>
-                                <li
-                                    class="list-group-item d-flex justify-content-between align-items-center p-0 border-0">
-                                    <span class="text-truncate">Next sample size</span> <small class="px-2">..</small>
-                                </li>
-                                <li
-                                    class="list-group-item d-flex justify-content-between align-items-center p-0 border-0">
-                                    <span class="text-truncate">Judgments left</span> <small class="px-2">..</small>
-                                </li>
-
-                            </ul>
-                        </div>
-                        {% endif %}
                     </div>
 
                 </div>
@@ -274,9 +249,10 @@
     dv.init({
         username: '{{ request.user }}',
         reviewMode: true,
+        judgingSourceName: "review",
         getDocumentsToJudgeURL: '{% url 'review:get_docs' %}',
         getPrevDocumentsJudgedURL: '{% url 'judgment:get_all' %}',
-        getDocumentIDsToJudgeURL: '{% url 'review:get_docs_ids' %}',
+        getDocumentIDsToJudgeURL: '{% url 'review:get_docs' %}',
         sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
         getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
         fetchPreviouslyJudgedDocsOnInit: true,

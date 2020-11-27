@@ -361,8 +361,7 @@ class GetAllAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                     "doc_CAL_snippet": judgment.doc_CAL_snippet,
                     "doc_content": "",
                     "relevance": judgment.relevance,
-                    "additional_judging_criteria": judgment.additional_judging_criteria,
-                    "source": judgment.source
+                    "additional_judging_criteria": judgment.additional_judging_criteria
                 }
             )
 
