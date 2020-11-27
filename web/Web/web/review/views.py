@@ -8,11 +8,7 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
-
-from web.CAL.exceptions import CALError
 from web.core.mixin import RetrievalMethodPermissionMixin
-from web.interfaces.CAL import functions as CALFunctions
-
 from web.judgment.models import Judgment
 
 logger = logging.getLogger(__name__)
@@ -87,5 +83,4 @@ class DocAJAXView(views.CsrfExemptMixin,
         except TimeoutError:
             error_dict = {u"message": u"Timeout error. Please check status of servers."}
             return self.render_timeout_request_response(error_dict)
-        except CALError as e:
-            return JsonResponse({"message": "Ops! CALError."}, status=404)
+
