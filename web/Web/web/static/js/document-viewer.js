@@ -50,6 +50,7 @@ var docView = function() {
     documentShowFullDocumentButtonSelector: "#docViewDocShowFullDocumentButton",
     documentBodySelector: "#docViewDocBody",
     documentCloseButtonSelector: "#docViewDocCloseButton",
+    documentJudgingCriteriaButtonGroupSelector: ".judging-criteria-btn-group",
     documentHRelButtonSelector: ".docViewDocHRelButton",
     documentRelButtonSelector: ".docViewDocRelButton",
     docViewNextDocButtonSelector: ".docViewNextDocButton",
@@ -139,6 +140,7 @@ docView.prototype = {
     validateSelector(options.previouslyReviewedListSpinnerSelector, true, "previouslyReviewedListSpinnerSelector");
     validateSelector(options.documentSnippetSelector, true, "documentSnippetSelector");
     validateSelector(options.documentShowFullDocumentButtonSelector, true, "documentShowFullDocumentButtonSelector");
+    validateSelector(options.documentJudgingCriteriaButtonGroupSelector, true, "documentJudgingCriteriaButtonGroupSelector");
     validateSelector(options.documentBodySelector, false, "documentIDSelector");
     validateSelector(options.documentCloseButtonSelector, true, "documentCloseButtonSelector");
     validateSelector(options.searchItemSelector, true, "searchItemSelector");
@@ -355,6 +357,7 @@ docView.prototype = {
         if (!(options.singleDocumentMode || options.searchMode || options.reviewMode)){
           showCloseButton();
         }
+        updateActiveJudgingButton(docid, parent.previouslyJudgedDocs[docid]["relevance"]);
       } else{
         hideCloseButton();
         color = options.otherColor;
@@ -367,8 +370,6 @@ docView.prototype = {
         updateAdditionalJudgingCriteriaValues(prevJudgedDocObj["additional_judging_criteria"]);
       }
       updateDocumentIndicator(relToTitle(prevJudgedDocRel), color);
-
-
     }
 
     function updateAdditionalJudgingCriteriaValues(criteria_value_map) {
@@ -415,6 +416,7 @@ docView.prototype = {
       updateTitle("Loading...", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       //updateMessage("");
       updateDocID(null);
+      updateMeta("");
       updateSnippet("Loading...", {"font": options.secondaryTitleFont, "color": options.secondaryColor});
       updateBody("Loading...", {"font": options.secondaryTitleFont, "color": options.secondaryColor});
       hideCloseButton();
@@ -425,6 +427,7 @@ docView.prototype = {
       updateDocumentIndicator("",options.otherColor);
       updateTitle("Please select a document to show", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       updateMessage("No document has been selected. Please click on a document to view its content.");
+      updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
@@ -434,6 +437,7 @@ docView.prototype = {
       updateDocumentIndicator("",options.otherColor);
       updateTitle("Please wait..", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       updateMessage("There are no more documents to judge. Please wait or try refreshing the page.");
+      updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
@@ -443,6 +447,7 @@ docView.prototype = {
       updateDocumentIndicator("",options.otherColor);
       updateTitle("Max number of judgments reached", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       updateMessage("You have reached the max number of judgments for this session. You will be redirected to the home page shortly.");
+      updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
@@ -458,6 +463,7 @@ docView.prototype = {
       updateDocumentIndicator("",options.dangerColor);
       updateTitle("Error...", {"font": options.secondaryTitleFont, "color": options.dangerColor});
       updateMessage(err_msg, {"font": options.secondaryTitleFont, "color": options.dangerColor});
+      updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
@@ -479,6 +485,9 @@ docView.prototype = {
       }
 
     function updateMeta(content) {
+      if (isURL(content) === true){
+        content = content.link(content)
+      }
       const elm = $(options.documentMetaSelector);
       elm.html(content);
     }
@@ -493,6 +502,18 @@ docView.prototype = {
       const elm = $(options.documentSnippetSelector);
       elm.html(content).removeClass();
       updateStyles(elm, styles);
+    }
+
+    function updateActiveJudgingButton(docid, rel) {
+      const btn_group = $(options.documentJudgingCriteriaButtonGroupSelector + `[data-doc-id='${docid}']`);
+      btn_group.children().removeClass("active");
+      if (rel === 2){
+        btn_group.find(options.documentHRelButtonSelector).addClass("active");
+      }else if (rel === 1){
+        btn_group.find(options.documentRelButtonSelector).addClass("active");
+      }else if (rel === 0){
+        btn_group.find(options.documentNonRelButtonSelector).addClass("active");
+      }
     }
 
     function updateDocumentIndicator(title, color) {
@@ -523,6 +544,13 @@ docView.prototype = {
         elm.html("");
         $(options.docViewSelector).data('doc-id', '');
       }
+      updateButtonGroupDocidAssociation(docid);
+    }
+
+    function updateButtonGroupDocidAssociation(docid) {
+      const btn_group = $(options.documentJudgingCriteriaButtonGroupSelector + ":not('.SERP')");
+      btn_group.attr("data-doc-id", docid);
+      btn_group.children().removeClass("active");
     }
 
     function clearAdditionalJudgingCriteria() {
@@ -822,6 +850,8 @@ docView.prototype = {
           method: 'POST',
           data: JSON.stringify(data),
           success: function (result) {
+              updateActiveJudgingButton(docid, rel);
+
               if(result['is_max_judged_reached']){
                   showMaxJudgmentReached();
                   return;
@@ -919,10 +949,11 @@ docView.prototype = {
           success: function (result) {
               if (!options.singleDocumentMode && !options.searchMode && !options.reviewMode) { 
                 updateViewStack(result["next_docs"]);
+              }else{
+                updateActiveJudgingButton(docid, rel);
               }
               if(result['is_max_judged_reached']){
                   showMaxJudgmentReached();
-                  //disableJudgments();
                   return;
               }
 
@@ -1007,6 +1038,7 @@ docView.prototype = {
         const color = relToColor(data.rel);
         checkIfDocumentPreviouslyJudged(docid);
         updateDocumentIndicator(relToTitle(data.rel), color);
+        updateActiveJudgingButton(docid, data.rel);
         updateAdditionalJudgingCriteriaValues(data.additional_judging_criteria);
       }else{
         checkIfDocumentPreviouslyJudged(docid);
@@ -1138,6 +1170,16 @@ docView.prototype = {
         return `Non${options.mainJudgingCriteriaName}`;
       }
       return "";
+    }
+
+    function isURL(str) {
+      var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+        '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+      return !!pattern.test(str);
     }
 
 

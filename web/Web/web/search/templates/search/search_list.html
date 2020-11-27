@@ -63,10 +63,10 @@
           </div>
         </div>
         <div class="mx-auto">
-          <div class="d-flex flex-row flex-md-column" role="group">
-            <a class="btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocHRelButton rounded-0" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
-            <a class="btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocRelButton rounded-0 mx-1 mx-md-0 my-0 my-md-1" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
-            <a class="btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocNonRelButton rounded-0" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">Not {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+          <div class="d-flex flex-row flex-md-column judging-criteria-btn-group SERP" role="group" data-doc-id="{{ hit.docno }}">
+            <a class="{% if hit.relevance_judgment == 2 %}active{% endif %} btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocHRelButton rounded-0" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+            <a class="{% if hit.relevance_judgment == 1 %}active{% endif %} btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocRelButton rounded-0 mx-1 mx-md-0 my-0 my-md-1" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
+            <a class="{% if hit.relevance_judgment == 0 %}active{% endif %} btn btn-sm center-text hoverOpacity btn-outline-secondary docViewDocNonRelButton rounded-0" data-doc-id="{{ hit.docno }}" data-is-serp-judging="true">Not {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
           </div>
         </div>
       </div>

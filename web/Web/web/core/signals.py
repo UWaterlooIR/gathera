@@ -41,4 +41,5 @@ def post_save_shared_session(sender, instance, **kwargs):
     notify.send(sender=shared_by_user,
                 recipient=shared_with_user,
                 verb='shared',
+                description=f'{shared_by_user} shared a new session "{instance.refers_to.topic.title}" with you.',
                 action_object=instance)

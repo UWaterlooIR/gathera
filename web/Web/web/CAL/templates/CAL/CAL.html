@@ -129,7 +129,7 @@
           <div class="small"><code id="docno_text">Docid: </code><code id="docViewDocID"></code></div>
 
           <div class="text-left">
-            <div class="btn-group mt-3" role="group">
+            <div class="btn-group mt-3 judging-criteria-btn-group" role="group" data-doc-id="">
               <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocNonRelButton">Not {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
               <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocRelButton">{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
               <a href="#" class="btn btn-sm btn-outline-secondary d-flex align-items-center docViewDocHRelButton">Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}</a>
@@ -197,9 +197,6 @@
             {% endif %}
           </div>
 
-
-
-
         </div>
       </div>
     </div>
@@ -232,7 +229,7 @@
           getDocumentsToJudgeURL: '{% url 'CAL:get_docs' %}',
           getPrevDocumentsJudgedURL: '{% url 'judgment:get_latest' number_of_docs_to_show=50 %}',
           getDocumentIDsToJudgeURL: '{% url 'CAL:get_docs_ids' %}',
-          getSCALInfoURL: '{% url 'CAL:get_scal_info' %}',
+          {% if "scal" in request.user.current_session.strategy %}getSCALInfoURL: '{% url 'CAL:get_scal_info' %}',{% endif %}
           sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
           getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
           fetchPreviouslyJudgedDocsOnInit: true,
