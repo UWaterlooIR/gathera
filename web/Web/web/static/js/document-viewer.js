@@ -60,6 +60,7 @@ var docView = function() {
     previouslyReviewedListSpinnerSelector: ".previouslyReviewedListSpinner",
     searchItemSelector: ".searchItemSelector",
     documentModalSelector: "#documentModal",
+    sortReviewedDocumentsSelector: ".sort_by_relevance",
 
     // Colors
     highlyRelevantColor: "#84c273",
@@ -162,17 +163,21 @@ docView.prototype = {
       }
     }
 
-    function _linkNextDocButtons(elm) {
+    function _linkNextDocButton(elm) {
       $(elm).on("click", function () { gotoNextDocument() });
     }
 
-    function _linkPreviousDocButtons(elm) {
+    function _linkPreviousDocButton(elm) {
       $(elm).on("click", function () { gotoPreviousDocument() });
+    }
+
+    function _linkSortByRelevanceButton(elm) {
+      $(elm).on("click", function () { getDocumentsToJudge(refreshDocumentView); populatePrevReviewedDocuments() });
     }
 
     // start linking selectors and collect info on configurable additional judging criteria
     $(document).ready(function(){
-      const mainJudgingSelectors = [options.documentHRelButtonSelector, options.documentRelButtonSelector, options.documentNonRelButtonSelector, options.docViewNextDocButtonSelector, options.docViewPreviousDocButtonSelector];
+      const mainJudgingSelectors = [options.documentHRelButtonSelector, options.documentRelButtonSelector, options.documentNonRelButtonSelector, options.docViewNextDocButtonSelector, options.docViewPreviousDocButtonSelector, options.sortReviewedDocumentsSelector];
       mainJudgingSelectors.forEach(function (selector) {
           let rel_val = -1;
           switch (selector) {
@@ -189,11 +194,13 @@ docView.prototype = {
               $(options.documentNonRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
               break
             case options.docViewNextDocButtonSelector:
-              $(options.docViewNextDocButtonSelector).each(function () { _linkNextDocButtons(this) });
+              $(options.docViewNextDocButtonSelector).each(function () {_linkNextDocButton(this)});
               break
             case options.docViewPreviousDocButtonSelector:
-              $(options.docViewPreviousDocButtonSelector).each(function () { _linkPreviousDocButtons(this) });
+              $(options.docViewPreviousDocButtonSelector).each(function () {_linkPreviousDocButton(this)});
               break
+            case options.sortReviewedDocumentsSelector:
+              $(options.sortReviewedDocumentsSelector).each(function () {_linkSortByRelevanceButton(this)});
           }
         }
       );
@@ -279,7 +286,7 @@ docView.prototype = {
     /**
      * Views top of the view stack document. Or,if in review mode, view the doc at NextDocIndex
      */
-    function refreshDocumentView(nextDocIndex=-1) {
+    function refreshDocumentView(nextDocIndex=0) {
       // Show loading
       showLoading();
       if (parent.viewStack.length === 0){
@@ -291,10 +298,9 @@ docView.prototype = {
         $(options.docViewSelector).trigger("updated");
         return;
       }
-      if (options.reviewMode) {
-        parent.currentDocIndex = (nextDocIndex == -1) ? 0 : nextDocIndex
-      }
-      let docid = options.reviewMode ? parent.viewStack[parent.currentDocIndex] : parent.viewStack[0];
+
+      parent.currentDocIndex = nextDocIndex
+      let docid = parent.viewStack[nextDocIndex];
       if (!options.reviewMode) {
         parent.viewStack.shift(); // remove it from viewStack
       }
@@ -311,8 +317,7 @@ docView.prototype = {
      * Views a previously judged document
      * @param docid
      */
-    function viewPreviouslyJudgedDocument(docid){
-
+    function viewPreviouslyJudgedDocument(docid) {
       const currentDocid = parent.currentDocID;
       // If its the same document currently shown, don't do anything
       if (currentDocid === docid){
@@ -328,14 +333,6 @@ docView.prototype = {
         parent.viewStack.unshift(docid);
         refreshDocumentView();
       } else {
-        $("." + options.prevReviewedDocumentItemClass).each(function () {
-          if ($(this).data("doc-id").toString() === docid) {
-            $(this).addClass("bold");
-          } else if ($(this).data("doc-id").toString() === currentDocid) {
-            $(this).removeClass("bold");
-          }
-        });
-
         refreshDocumentView(parent.viewStack.indexOf(docid));
       }
     }
@@ -565,7 +562,7 @@ docView.prototype = {
       $(options.documentCloseButtonSelector).removeClass("d-none");
     }
 
-    function updateOrCreatePreviouslyReviewedListItem(docid, title, rel){
+    function updateOrCreatePreviouslyReviewedListItem(docid, title, rel) {
       const div_elm = generate_prev_reviewed_doc_div_elm(docid, title, rel);
       // Check if docid is already in prev reviewed docs stack, if so, pop it
       const stack_index = parent.previouslyJudgedDocsStack.indexOf(docid);
@@ -581,14 +578,15 @@ docView.prototype = {
       // link on click
       div_elm.on("click", function () {viewPreviouslyJudgedDocument($(this).data("doc-id").toString())});
 
-      if (!options.reviewMode || stack_index == -1) {
+      if (!options.reviewMode || stack_index === -1) {
         // add to top of the list view/stack
         $(options.previouslyReviewedListSelector).prepend(div_elm);
         parent.previouslyJudgedDocsStack.push(docid);
       } else {
+        // update indicator
         $("." + options.prevReviewedDocumentItemClass).each(function () {
           if ($(this).data("doc-id").toString() === docid) {
-            $(this).replaceWith(div_elm);
+            $(this).children().eq(0).css('border-color', relToColor(rel));
           }
         });
       }
@@ -668,11 +666,10 @@ docView.prototype = {
           url: url,
           method: 'GET',
           success: function (result) {
-            $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
+            $(options.previouslyReviewedListSelector).empty();
             parent.previouslyJudgedDocsStack = [];
-            if (options.reviewMode) {
-              parent.viewStack = parent.previouslyJudgedDocsStack
-            }
+            parent.previouslyJudgedDocs = {};
+            $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
             for (let i = 0; i < result.length; i++){
               let item = result[result.length - 1 - i];
               parent.previouslyJudgedDocs[item["doc_id"]] = {
@@ -993,6 +990,19 @@ docView.prototype = {
         }
       }
 
+      if (options.reviewMode) {
+        const previous = $("." + options.prevReviewedDocumentItemClass + `[data-is-current='true']`);
+        previous.removeClass("bold");
+        previous.attr("data-is-current", "false");
+
+        $("." + options.prevReviewedDocumentItemClass).each(function () {
+          if ($(this).data("doc-id").toString() === docid) {
+            $(this).addClass("bold");
+            $(this).attr("data-is-current", "true");
+          }
+        });
+      }
+
       if (data.rel !== undefined && typeof data.rel === "number"){
         const color = relToColor(data.rel);
         checkIfDocumentPreviouslyJudged(docid);
@@ -1051,7 +1061,7 @@ docView.prototype = {
     function generate_prev_reviewed_doc_div_elm(docid, title, rel) {
       const rel_color = relToColor(rel);
       return $(`
-        <a href="#" class="d-flex mb-1 text-muted ${options.prevReviewedDocumentItemClass}" style="min-height: 1rem;" data-doc-id="${docid}">
+        <a href="#" class="d-flex mb-1 text-muted ${options.prevReviewedDocumentItemClass}" style="min-height: 1rem;" data-doc-id="${docid}" data-is-current="false">
             <div class="align-self-center align-self-stretch p-1" style="border-width: 0.15rem!important; border-style: none none none solid; border-color: ${rel_color};"></div>
             <div class="align-self-center text-truncate">
                 <div class="docView-default-font-family text-truncate">${title}</div>

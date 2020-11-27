@@ -196,7 +196,7 @@
             <div class="sticky-top card border-0 mr-2" style="top:75px; z-index: 0;">
                 <div class="card-body p-0 mt-3">
                     <div id="latest_judged">
-                        <h6 class="card-title text-secondary unselectable" unselectable="on">Reviewed Documents</h6>
+                        <h6 class="card-title text-secondary unselectable" unselectable="on">Reviewed Documents<button class="btn btn-sm sort_by_relevance" type="button">&darr;</button></h6>
                         <div class="card border-0">
                             <div class="card-body px-0 py-2 d-flex" style="min-height: 18rem; max-height: 38rem;">
                                 <!-- loader -->
@@ -248,7 +248,7 @@
         username: '{{ request.user }}',
         reviewMode: true,
         getDocumentsToJudgeURL: '{% url 'review:get_docs' %}',
-        getPrevDocumentsJudgedURL: '{% url 'judgment:get_all' number_of_docs_to_show=50 %}',
+        getPrevDocumentsJudgedURL: '{% url 'judgment:get_all' %}',
         getDocumentIDsToJudgeURL: '{% url 'review:get_docs_ids' %}',
         sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
         getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',

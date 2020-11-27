@@ -344,17 +344,13 @@ class GetAllAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
                         generic.View):
     require_json = False
 
-    def get(self, request, number_of_docs_to_show, *args, **kwargs):
-        try:
-            number_of_docs_to_show = int(number_of_docs_to_show)
-        except ValueError:
-            return self.render_json_response([])
+    def get(self, request, *args, **kwargs):
         latest = Judgment.objects.filter(
             user=self.request.user,
             session=self.request.user.current_session,
         ).filter(
             relevance__isnull=False
-        ).order_by('-relevance')[:number_of_docs_to_show]
+        ).order_by('-relevance')
         result = []
         for judgment in latest:
             result.append(
