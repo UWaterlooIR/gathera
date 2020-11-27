@@ -61,7 +61,7 @@ var docView = function() {
     previouslyReviewedListSpinnerSelector: ".previouslyReviewedListSpinner",
     searchItemSelector: ".searchItemSelector",
     documentModalSelector: "#documentModal",
-    sortReviewedDocumentsSelector: ".sort_by_relevance",
+    sortReviewedDocumentsSelector: ".docViewSortReviewListByRelButton",
 
     // Colors
     highlyRelevantColor: "#84c273",

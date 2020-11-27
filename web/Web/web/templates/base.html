@@ -68,7 +68,7 @@
           <a class="nav-item nav-link {% if 'CAL' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'CAL:main' %}">Discovery</a>
           {% endif %}
 
-          <a class="nav-item nav-link {% if 'Review' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'review:main' %}">Review</a>
+          <a class="nav-item nav-link {% if 'review' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'review:main' %}">Review</a>
         </div>
         {% endif %}
         <ul class="nav navbar-nav flex-fill justify-content-center align-self-center center-text pl-5 pr-5 order-2 {%block navbar-hidesmall %}d-none d-sm-block{%endblock%}">
