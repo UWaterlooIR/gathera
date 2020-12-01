@@ -139,7 +139,7 @@ def get_documents(session, num_docs):
 
         return content['docs'], content['top-terms']
     elif resp and resp['status'] == '404':
-        raise CALServerSessionNotFoundError()
+        raise CALServerSessionNotFoundError(resp['status'])
     else:
         raise CALServerError(resp['status'])
 
@@ -154,6 +154,8 @@ def restore_session(session_id, seed_query, seed_documents, session_strategy):
     """
     url = f"http://{CAL_SERVER_IP}:{CAL_SERVER_PORT}/CAL/begin"
     seed_docs = ','.join([d.doc_id + ':' + str(d.relevance) for d in seed_documents])
+    print(seed_docs)
+    print(seed_documents)
 
     data = 'session_id={}&seed_query={}&seed_judgments={}&mode={}'.format(
         session_id, seed_query, seed_docs, session_strategy)

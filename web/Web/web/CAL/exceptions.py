@@ -28,4 +28,4 @@ class CALServerSessionNotFoundError(CALError):
         if msg is None:
             msg = "Session is not found in CAL server. " \
                   "Returned status code {}.".format(status_code)
-        super(CALServerError, self).__init__(msg)
+        super(CALServerSessionNotFoundError, self).__init__(msg)
