@@ -115,6 +115,7 @@ class DocAJAXView(views.CsrfExemptMixin,
             error_dict = {u"message": u"Timeout error. Please check status of servers."}
             return self.render_timeout_request_response(error_dict)
         except CALServerSessionNotFoundError:
+            message = "Ops! Session is not found in CAL. "
             if "scal" not in self.request.user.current_session.strategy:
                 seed_judgments = Judgment.objects.filter(user=self.request.user,
                                                          session=session
@@ -124,8 +125,6 @@ class DocAJAXView(views.CsrfExemptMixin,
                                              seed_query,
                                              seed_judgments,
                                              strategy)
-            message = "Ops! Session is not found in CAL. "
-            if "scal" not in self.request.user.current_session.strategy:
                 message += "Restoring.. Please try in few minutes."
             return JsonResponse({"message": message}, status=404)
         except CALError as e:
