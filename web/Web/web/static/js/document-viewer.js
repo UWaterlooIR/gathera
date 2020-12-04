@@ -17,6 +17,7 @@ var docView = function() {
     getDocumentIDsToJudgeURL: null, // required
     sendDocumentJudgmentURL: null, // required
     getDocumentURL: null, // required
+    postLogURL: null, //required
 
     // options
     hideFullDocument: false,
@@ -172,7 +173,13 @@ docView.prototype = {
         }
       );
 
-      $('body').on("click", options.searchItemSelector, function(){showDocument($(this).data("doc-id").toString())});
+      $('body').on('click', options.searchItemSelector, function() {
+        const docID = $(this).data('doc-id').toString()
+        showDocument(docID)
+        sendLog('search_item_select', {
+          docID: docID
+        })
+      });
 
       $(".additionalJudgingCriterion").each(function(){
         const criterion_name = $(this).data("criterion-name");
@@ -322,6 +329,30 @@ docView.prototype = {
 
     function closeDocumentModal() {
       $(options.documentModalSelector).modal('hide');
+    }
+
+    /**
+     * Sends a log to the logger
+     * @param event
+     * @param data
+     */
+    function sendLog(event, data) {
+      $.ajax({
+          url: options.postLogURL,
+          method: 'POST',
+          data: JSON.stringify({
+              timestamp: new Date(),
+              event: event,
+              data: data,
+              message: 'done'
+          }),
+          success: function (response) {
+            console.log(response)
+          },
+          error: function (err){
+            console.error(err)
+          }
+      });
     }
 
     /****************

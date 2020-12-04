@@ -4,7 +4,7 @@ import logging
 from braces import views
 from django.views.generic.base import View
 
-logger = logging.getLogger("web")
+logger = logging.getLogger('web')
 
 
 class LoggerView(views.CsrfExemptMixin,
@@ -14,21 +14,21 @@ class LoggerView(views.CsrfExemptMixin,
 
     def post(self, request, *args, **kwargs):
         body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)["lg"][0]
-        message = json.loads(body["m"])
-        client_timestamp = body["t"]
-        # This is the base log message.
-        # Client message will contain different type of logs
-        log = {
-            "timestamp": client_timestamp,
-            "user": self.request.user.username,
-            # Add more below
+        body = json.loads(body_unicode)
+        timestamp = body['timestamp']
+        event = body['event']
+        data = body['data']
+        message = body['message']
 
-            # client log message
-            "client_message": message
+        log = {
+            'user': self.request.user.username,
+            'timestamp': timestamp,
+            'event': event,
+            'data': data,
+            'message': message
         }
 
         # Log
-        logger.info("{}".format(json.dumps(log)))
+        logger.info('{}'.format(json.dumps(log)))
 
-        return self.render_json_response({u"message": u"Your log has been received!"})
+        return self.render_json_response({u'message': message})

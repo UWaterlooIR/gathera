@@ -163,6 +163,7 @@
           getDocumentIDsToJudgeURL: '{% url 'CAL:get_docs_ids' %}',
           sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
           getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
+          postLogURL: '{% url 'logger' %}',
           fetchPreviouslyJudgedDocsOnInit: false,
           mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',
           csrfmiddlewaretoken: "{{ csrf_token }}",
