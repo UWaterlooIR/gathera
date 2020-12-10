@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from web.topic.models import Topic
 
 
@@ -19,5 +20,6 @@ class TopicAdmin(admin.ModelAdmin):
             return ['seed_query', ]  # Return a list or tuple of readonly fields' names
         else:  # This is an addition
             return []
+
 
 admin.site.register(Topic, TopicAdmin)

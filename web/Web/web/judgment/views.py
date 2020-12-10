@@ -22,7 +22,8 @@ from web.judgment.models import Judgment
 logger = logging.getLogger(__name__)
 
 
-class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
+class JudgmentAJAXView(views.CsrfExemptMixin,
+                       views.LoginRequiredMixin,
                        views.JsonRequestResponseMixin,
                        generic.View):
     require_json = False
@@ -253,9 +254,10 @@ class JudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
         return self.render_json_response(context)
 
 
-class NoJudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
-                       views.JsonRequestResponseMixin,
-                       generic.View):
+class NoJudgmentAJAXView(views.CsrfExemptMixin,
+                         views.LoginRequiredMixin,
+                         views.JsonRequestResponseMixin,
+                         generic.View):
     require_json = False
 
     def post(self, request, *args, **kwargs):
@@ -304,9 +306,10 @@ class NoJudgmentAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
         return self.render_json_response(context)
 
 
-class GetLatestAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
-                       views.JsonRequestResponseMixin,
-                       generic.View):
+class GetLatestAJAXView(views.CsrfExemptMixin,
+                        views.LoginRequiredMixin,
+                        views.JsonRequestResponseMixin,
+                        generic.View):
     require_json = False
 
     def get(self, request, number_of_docs_to_show, *args, **kwargs):
@@ -339,9 +342,10 @@ class GetLatestAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
         return self.render_json_response(result)
 
 
-class GetAllAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
-                        views.JsonRequestResponseMixin,
-                        generic.View):
+class GetAllAJAXView(views.CsrfExemptMixin,
+                     views.LoginRequiredMixin,
+                     views.JsonRequestResponseMixin,
+                     generic.View):
     require_json = False
 
     def get(self, request, *args, **kwargs):
@@ -368,7 +372,8 @@ class GetAllAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
         return self.render_json_response(result)
 
 
-class JudgmentsView(views.LoginRequiredMixin, generic.TemplateView):
+class JudgmentsView(views.LoginRequiredMixin,
+                    generic.TemplateView):
     template_name = 'judgment/judgments.html'
 
     def get_context_data(self, **kwargs):

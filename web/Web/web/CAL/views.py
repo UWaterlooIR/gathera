@@ -132,10 +132,10 @@ class DocAJAXView(views.CsrfExemptMixin,
 
 
 class SCALInfoView(views.CsrfExemptMixin,
-                  RetrievalMethodPermissionMixin,
-                  views.LoginRequiredMixin,
-                  views.JsonRequestResponseMixin,
-                  views.AjaxResponseMixin, generic.View):
+                   RetrievalMethodPermissionMixin,
+                   views.LoginRequiredMixin,
+                   views.JsonRequestResponseMixin,
+                   views.AjaxResponseMixin, generic.View):
     """
     View to get stratum information from the CAL engine
     """
@@ -188,7 +188,6 @@ class DocIDsAJAXView(views.CsrfExemptMixin,
 
     def get_ajax(self, request, *args, **kwargs):
         session = self.request.user.current_session.uuid
-        seed_query = self.request.user.current_session.topic.seed_query
         try:
             docs_ids_to_judge = CALFunctions.get_documents(str(session), 10)
             return self.render_json_response(docs_ids_to_judge)

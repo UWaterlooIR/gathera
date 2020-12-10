@@ -1,3 +1,5 @@
+from config.settings.base import CAL_SERVER_IP
+from config.settings.base import CAL_SERVER_PORT
 import json
 import logging
 import urllib.parse
@@ -5,8 +7,6 @@ import urllib.parse
 import httplib2
 import requests
 
-from config.settings.base import CAL_SERVER_IP
-from config.settings.base import CAL_SERVER_PORT
 from web.CAL.exceptions import CALServerError
 from web.CAL.exceptions import CALServerSessionNotFoundError
 

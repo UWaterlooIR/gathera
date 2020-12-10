@@ -1,4 +1,3 @@
-from django.db.models import Q
 from web.judgment.models import Judgment
 
 
@@ -29,17 +28,3 @@ def join_judgments(documents, document_ids, user, session):
             hit['additional_judging_criteria'] = judgment_object.additional_judging_criteria
 
     return documents
-
-
-def padder(doc_ids):
-    """
-    Pads zeros to ids to be length of 7
-    :param doc_ids: list of document ids
-    :return: doc ids padded with 0 to be length of 7.
-    """
-
-    for idx, doc_id in enumerate(doc_ids):
-        doc_id = doc_id.zfill(7)
-        doc_ids[idx] = doc_id
-
-    return doc_ids

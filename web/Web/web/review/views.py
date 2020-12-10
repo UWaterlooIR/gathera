@@ -4,10 +4,10 @@ import logging
 from braces import views
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
+
 from web.core.mixin import RetrievalMethodPermissionMixin
 from web.judgment.models import Judgment
 
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class ReviewHomePageView(views.LoginRequiredMixin,
-                      RetrievalMethodPermissionMixin,
-                      generic.TemplateView):
+                         RetrievalMethodPermissionMixin,
+                         generic.TemplateView):
     template_name = 'review/review.html'
 
     def get(self, request, *args, **kwargs):
@@ -47,7 +47,6 @@ class DocAJAXView(views.CsrfExemptMixin,
             json_context, content_type=self.get_content_type(), status=502)
 
     def get_ajax(self, request, *args, **kwargs):
-        session = self.request.user.current_session.uuid
         seed_query = self.request.user.current_session.topic.seed_query
 
         try:
@@ -57,8 +56,6 @@ class DocAJAXView(views.CsrfExemptMixin,
             ).filter(
                 relevance__isnull=False
             ).order_by('-relevance')
-
-            documents = []
 
             next_patch_ids = []
             for judgment in latest:
@@ -79,8 +76,7 @@ class DocAJAXView(views.CsrfExemptMixin,
                                                                  seed_query)
 
             return self.render_json_response(documents)
-    
+
         except TimeoutError:
             error_dict = {u"message": u"Timeout error. Please check status of servers."}
             return self.render_timeout_request_response(error_dict)
-

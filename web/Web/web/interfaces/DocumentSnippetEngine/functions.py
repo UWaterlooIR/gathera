@@ -1,8 +1,8 @@
-import httplib2
-import requests
-
 from config.settings.base import DOCUMENTS_URL
 from config.settings.base import PARA_URL
+
+import httplib2
+import requests
 
 try:
     # For c speedups
@@ -62,7 +62,6 @@ def get_documents(doc_ids, query=None, top_terms=None, orig_para_id=None):
         result.append(document)
 
     return result
-
 
 
 def get_documents_with_snippet(doc_ids, query=None, top_terms=None):

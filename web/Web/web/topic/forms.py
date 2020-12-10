@@ -1,7 +1,7 @@
-from crispy_forms.layout import Submit
 from crispy_forms.helper import FormHelper
-
+from crispy_forms.layout import Submit
 from django import forms
+
 from web.topic.models import Topic
 
 
@@ -28,4 +28,3 @@ class TopicForm(forms.ModelForm):
             Submit(self.submit_name, u'Submit',
                    css_class='btn btn-primary')
         )
-

@@ -1,12 +1,12 @@
 from config.settings.base import AUTH_USER_MODEL as User
 import uuid
 
+from django.apps import apps
 from django.db import models
 
 from web.CAL.exceptions import CALError
 from web.interfaces.CAL import functions as CALFunctions
 from web.topic.models import Topic
-from django.apps import apps
 
 
 class Session(models.Model):

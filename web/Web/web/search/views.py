@@ -37,7 +37,6 @@ class SimpleSearchView(views.LoginRequiredMixin,
             session=self.request.user.current_session,
         )
 
-
         sr, sr_was_created = SearchResult.objects.get_or_create(
             username=self.request.user,
             session=self.request.user.current_session,
@@ -109,7 +108,6 @@ class SimpleSearchView(views.LoginRequiredMixin,
         return render(request, self.template_name, context)
 
 
-
 class SearchButtonView(views.CsrfExemptMixin,
                        views.LoginRequiredMixin,
                        RetrievalMethodPermissionMixin,
@@ -132,32 +130,3 @@ class SearchButtonView(views.CsrfExemptMixin,
         return self.render_json_response(context)
 
 
-class SearchGetDocAJAXView(views.CsrfExemptMixin,
-                           views.LoginRequiredMixin,
-                           RetrievalMethodPermissionMixin,
-                           views.JsonRequestResponseMixin,
-                           views.AjaxResponseMixin, generic.View):
-    require_json = False
-
-    def render_timeout_request_response(self, error_dict=None):
-        if error_dict is None:
-            error_dict = self.error_response_dict
-        json_context = json.dumps(
-            error_dict,
-            cls=self.json_encoder_class,
-            **self.get_json_dumps_kwargs()
-        ).encode('utf-8')
-        return HttpResponse(
-            json_context, content_type=self.get_content_type(), status=502)
-
-    def get_ajax(self, request, *args, **kwargs):
-        docid = request.GET.get('docid')
-        if not docid:
-            return self.render_json_response([])
-        try:
-            document = DocEngine.get_documents([docid])
-        except TimeoutError:
-            error_dict = {u"message": u"Timeout error. Please check status of servers."}
-            return self.render_timeout_request_response(error_dict)
-
-        return self.render_json_response(document)

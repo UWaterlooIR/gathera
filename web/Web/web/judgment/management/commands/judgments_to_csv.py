@@ -8,7 +8,7 @@ from web.judgment.models import Judgment
 class Command(BaseCommand):
     help = 'Export judgments to csv format'
     filename = 'judgments.csv'
-    header = ('USER', 'TOPIC', 'DOCID', 'METHOD', 'JUDGMENT', 'TIME_AWAY',
+    header = ('USER', 'TOPIC', 'DOCID', 'SOURCE', 'JUDGMENT', 'TIME_AWAY',
               'TIME_TO_JUDGE')
 
     def handle(self, *args, **option):
@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 user = judgment.user
                 topic = judgment.session.topic.number
                 docid = judgment.doc_id
-                method = judgment.source
+                source = judgment.source
 
                 time_to_judge = 0.0
                 time_away = 0.0
@@ -39,7 +39,7 @@ class Command(BaseCommand):
                     time_away += d.get('timeAway')
                 time_away /= 1000
                 time_to_judge /= 1000
-                writer.writerow((user, topic, docid, method,
+                writer.writerow((user, topic, docid, source,
                                  value, time_away, time_to_judge))
 
         self.stdout.write(self.style.SUCCESS(
