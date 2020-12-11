@@ -190,26 +190,6 @@ vector<pair<int,float>> BMI::perform_training_iteration(){
     return results;
 }
 
-vector<pair<int,float>> BMI::perform_training_iteration_scal_docs(){
-    lock_guard<mutex> lock_training(training_mutex);
-
-    sync_training_cache();
-
-    // Training
-    TIMER_BEGIN(training);
-    auto weights = train();
-    TIMER_END(training);
-
-    // Scoring
-    TIMER_BEGIN(rescoring);
-    auto results = documents->rescore_scal_docs(weights, num_threads,
-                              judgments_per_iteration + (async_mode ? extra_judgment_docs : 0), judgments);
-    TIMER_END(rescoring);
-
-    return results;
-}
-
-
 std::vector<std::pair<string, float>> BMI::get_ranklist(){
     vector<std::pair<string, float>> ret_results;
     auto w = train();

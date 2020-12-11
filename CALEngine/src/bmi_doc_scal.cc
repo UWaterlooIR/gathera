@@ -23,8 +23,10 @@ BMI_doc_scal::BMI_doc_scal(Seed _seed,
     }
     perform_iteration();
     stratums.push_back(vector<pair<int, float>>());
-    for(auto doc_id: judgment_queue)
-        stratums.back().push_back(make_pair(doc_id.first, 1.0));
+    for(auto doc_id: judgment_queue){
+        cerr<<"Stratum pair (docid:score): ("<< documents->get_id(doc_id.first) << ": " << to_string(doc_id.second) + ")" <<endl;
+        stratums.back().push_back(make_pair(doc_id.first, doc_id.second));
+    }
     B = B + ceil(B/10.0);
 }
 
@@ -52,9 +54,8 @@ void BMI_doc_scal::record_judgment_batch(vector<pair<string, int>> _judgments){
         cerr<<"Batch Size = "<<B<<endl;
         judgments_per_iteration = B;
         auto batch = perform_training_iteration();
-        vector<pair<int,float>> batch_with_score = perform_training_iteration_scal_docs();
         stratums.push_back(vector<pair<int,float>>());
-        for(pair<int,float> doc_id_score: batch_with_score){
+        for(pair<int,float> doc_id_score: batch){
             cerr<<"Stratum pair (docid:score): ("<< documents->get_id(doc_id_score.first) << ": " << to_string(doc_id_score.second) + ")" <<endl;
             stratums.back().push_back(doc_id_score);
         }

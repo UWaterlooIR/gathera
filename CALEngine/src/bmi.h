@@ -91,7 +91,6 @@ class BMI{
 
     // Handler for performing a training iteration
     virtual std::vector<std::pair<int,float>> perform_training_iteration();
-    virtual std::vector<std::pair<int, float>> perform_training_iteration_scal_docs();
 
     // Check if a given document is judged, lock training_cache_mutex before using this (not done here for efficiency purpose)
     virtual bool is_judged(int id) {
