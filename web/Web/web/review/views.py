@@ -8,14 +8,12 @@ from django.urls import reverse_lazy
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
 
-from web.core.mixin import RetrievalMethodPermissionMixin
 from web.judgment.models import Judgment
 
 logger = logging.getLogger(__name__)
 
 
 class ReviewHomePageView(views.LoginRequiredMixin,
-                         RetrievalMethodPermissionMixin,
                          generic.TemplateView):
     template_name = 'review/review.html'
 
@@ -26,7 +24,6 @@ class ReviewHomePageView(views.LoginRequiredMixin,
 
 
 class DocAJAXView(views.CsrfExemptMixin,
-                  RetrievalMethodPermissionMixin,
                   views.LoginRequiredMixin,
                   views.JsonRequestResponseMixin,
                   views.AjaxResponseMixin, generic.View):
