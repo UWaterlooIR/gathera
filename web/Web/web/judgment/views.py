@@ -241,11 +241,11 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
                 'scal' not in self.request.user.current_session.strategy or
                 (is_from_cal and current_docview_stack_size is not None and current_docview_stack_size <= 0)
             ):
-                self.request.user.current_session = None
-                self.request.user.save()
+                self.request.user.current_session.max_number_of_judgments_reached = True
+                self.request.user.current_session.save()
 
-                message = 'You have judged >={} (max number of judgment you have ' \
-                          'specified for this session) documents.'.format(max_judged)
+                message = 'You have reached the max number of judgments allowed for ' \
+                          'this session (>={} documents).'.format(max_judged)
                 messages.add_message(request,
                                      messages.SUCCESS,
                                      message)

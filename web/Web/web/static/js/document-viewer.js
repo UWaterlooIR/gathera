@@ -448,8 +448,8 @@ docView.prototype = {
       hideDocTab();
 
       window.setTimeout(function(){
-        location.reload();
-      }, 5000);
+        window.location.replace(window.location.origin);
+      }, 2000);
 
     }
 

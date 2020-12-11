@@ -24,6 +24,8 @@ class Session(models.Model):
 
     # max number of judgments you wish for this task. 0 or negative to have no max.
     max_number_of_judgments = models.IntegerField(null=False, blank=False)
+    max_number_of_judgments_reached = models.BooleanField(default=False)
+
     strategy = models.CharField(max_length=64,
                                 choices=STRATEGY_CHOICES,
                                 null=False,
