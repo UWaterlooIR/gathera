@@ -67,7 +67,7 @@ def submit_new_session_form(request):
                         user=request.user,
                         session=session,
                         doc_id=doc_id,
-                        doc_title=doc_title,
+                        doc_title="N/A",
                         relevance=relevance,
                         source="seed",
                         historyVerbose=[{
@@ -76,7 +76,7 @@ def submit_new_session_form(request):
                             "judged": True,
                             "relevance": relevance
                         }]
-                    ) for doc_id, (doc_title, relevance) in judgments_dict.items()
+                    ) for doc_id, relevance in judgments_dict.items()
                 ])
                 request.user.save()
             elif msg_type == messages.ERROR:
@@ -104,13 +104,10 @@ def handle_judgments_file(file):
 
         judgments_dict = dict()
         for j in judgments:
-            doc = DocEngine.get_documents([j[0]])[0]
-            if doc['ok']:
-                try:
-                    doc_title = doc['title']
-                    judgments_dict[j[0]] = (doc_title, Judgment.JudgingChoices(int(j[1])))
-                except ValueError:
-                    pass  # judgements with invalid relevance scores are ignored
+            try:
+                judgments_dict[j[0]] = Judgment.JudgingChoices(int(j[1]))
+            except ValueError:
+                pass  # judgements with invalid relevance scores are ignored
 
         return judgments_dict,\
                messages.WARNING if len(judgments_dict) < len(judgments) else messages.SUCCESS,\
