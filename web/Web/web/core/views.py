@@ -237,7 +237,6 @@ class SessionShareView(View):
 
 class GetDocAJAXView(views.CsrfExemptMixin,
                      views.LoginRequiredMixin,
-                     RetrievalMethodPermissionMixin,
                      views.JsonRequestResponseMixin,
                      views.AjaxResponseMixin, generic.View):
 
