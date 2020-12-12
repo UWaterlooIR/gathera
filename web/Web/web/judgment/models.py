@@ -39,8 +39,10 @@ class Judgment(models.Model):
     # method used to make the judgment: click/keyboard
     method = models.CharField(null=True, blank=True, max_length=64)
 
-    # source of judgment: search/searchModal/CAL
+    # source of judgment: search/searchModal/CAL/...
     source = models.CharField(null=True, blank=True, max_length=64)
+    # was this document part of the seed judgments file
+    is_seed = models.BooleanField(default=False)
 
     # Search query and Ctrl+F terms related fields
     search_query = models.TextField(null=True, blank=True)

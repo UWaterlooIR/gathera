@@ -70,6 +70,7 @@ def submit_new_session_form(request):
                         doc_title=doc_title,
                         relevance=relevance,
                         source="seed",
+                        is_seed=True,
                         historyVerbose=[{
                             "username": request.user.username,
                             "source": "seed",

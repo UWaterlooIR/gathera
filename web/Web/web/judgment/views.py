@@ -40,6 +40,9 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
             json_context, content_type=self.get_content_type(), status=502)
 
     def post(self, request, *args, **kwargs):
+        user = self.request.user
+        current_session = self.request.user.current_session
+
         try:
             doc_id = self.request_json[u"doc_id"]
             doc_title = self.request_json[u"doc_title"]
@@ -64,9 +67,9 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
             return self.render_bad_request_response(error_dict)
 
         # Check if a judgment exists already, if so, update the db row.
-        exists = Judgment.objects.filter(user=self.request.user,
+        exists = Judgment.objects.filter(user=user,
                                          doc_id=doc_id,
-                                         session=self.request.user.current_session)
+                                         session=current_session)
 
         if exists:
             exists = exists.first()
@@ -92,12 +95,12 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
 
         else:
             Judgment.objects.create(
-                user=self.request.user,
+                user=user,
                 doc_id=doc_id,
                 doc_title=doc_title,
                 doc_CAL_snippet=doc_CAL_snippet,
                 doc_search_snippet=doc_search_snippet,
-                session=self.request.user.current_session,
+                session=current_session,
                 query=query,
                 relevance=relevance,
                 additional_judging_criteria=additional_judging_criteria,
@@ -124,13 +127,13 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
         # mark relevant documents as 1 to CAL.
         rel_CAL = -1 if relevance <= 0 else 1
 
-        if rel_CAL == 0 and self.request.user.current_session.is_shared:
+        if rel_CAL == 0 and current_session.is_shared:
             # Check if someone else in the shared session has marked it as rel
             # if so, cant re-train CAL with this doc as non-relevant
             others_judged_as_rel = Judgment.objects.filter(
-                session=self.request.user.current_session,
+                session=current_session,
                 relevance__lgt=0
-            ).exclude(user=self.request.user).exists()
+            ).exclude(user=user).exists()
             if others_judged_as_rel:
                 rel_CAL = 1
 
@@ -139,7 +142,7 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
 
             try:
                 next_patch, top_terms = CALFunctions.send_judgment(
-                    self.request.user.current_session.uuid,
+                    current_session.uuid,
                     doc_id,
                     rel_CAL)
                 if not next_patch:
@@ -158,8 +161,8 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
                     if '.' in doc_id:
                         doc['doc_id'], doc['para_id'] = doc_id.split('.')
                     doc_ids_hack.append(doc)
-                seed_query = self.request.user.current_session.topic.seed_query
-                if 'doc' in self.request.user.current_session.strategy:
+                seed_query = current_session.topic.seed_query
+                if 'doc' in current_session.strategy:
                     documents = DocEngine.get_documents(next_patch_ids,
                                                         seed_query,
                                                         top_terms)
@@ -182,9 +185,7 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
 
         else:
             try:
-                CALFunctions.send_judgment(self.request.user.current_session.uuid,
-                                           doc_id,
-                                           rel_CAL)
+                CALFunctions.send_judgment(current_session.uuid, doc_id, rel_CAL)
 
             except TimeoutError:
                 context["CALFailedToReceiveJudgment"] = True
@@ -203,7 +204,7 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
 
         if error_message:
             log_body = {
-                "user": self.request.user.username,
+                "user": user.username,
                 "client_time": client_time,
                 "result": {
                     "message": error_message,
@@ -211,8 +212,8 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
                     "doc_judgment": {
                         "doc_id": doc_id,
                         "doc_title": doc_title,
-                        "topic_number": self.request.user.current_session.topic.number,
-                        "session": str(self.request.user.current_session.uuid),
+                        "topic_number": current_session.topic.number,
+                        "session": str(current_session.uuid),
                         "query": query,
                         "relevance": relevance,
                         "additional_judging_criteria": additional_judging_criteria,
@@ -232,17 +233,19 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
 
         if not exists:
             # Check if user has judged `max_judged` documents in total.
-            judgements = Judgment.objects.filter(user=self.request.user,
-                                                 session=self.request.user.current_session).filter(
-                relevance__isnull=False)
-            max_judged = self.request.user.current_session.max_number_of_judgments
+            total_judgements = Judgment.objects.filter(
+                user=user,
+                session=current_session).filter(
+                relevance__isnull=False,
+                is_seed=False).count()
+            max_judged = current_session.max_number_of_judgments
             # Exit task only if number of judgments reached max (and maxjudged is enabled)
-            if len(judgements) >= max_judged > 0 and (
-                'scal' not in self.request.user.current_session.strategy or
+            if total_judgements >= max_judged > 0 and (
+                'scal' not in current_session.strategy or
                 (is_from_cal and current_docview_stack_size is not None and current_docview_stack_size <= 0)
             ):
-                self.request.user.current_session.max_number_of_judgments_reached = True
-                self.request.user.current_session.save()
+                current_session.max_number_of_judgments_reached = True
+                current_session.save()
 
                 message = 'You have reached the max number of judgments allowed for ' \
                           'this session (>={} documents).'.format(max_judged)
