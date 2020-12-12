@@ -18,7 +18,7 @@ BMI_doc_scal::BMI_doc_scal(Seed _seed,
         if (doc_index != documents->NPOS) {
             add_to_training_cache(documents->get_index(seed_judgment.first), seed_judgment.second);
         } else {
-            cerr << "Document with ID " << seed_judgment.first << " not found" << endl;
+            cerr << "Document with ID " << seed_judgment.first << " not found." << endl;
         }
     }
     perform_iteration();
@@ -32,13 +32,17 @@ void BMI_doc_scal::record_judgment_batch(vector<pair<string, int>> _judgments){
     lock_guard<mutex> lock(judgment_list_mutex);
     for(const auto &judgment: _judgments){
         size_t id = documents->get_index(judgment.first);
-        add_to_training_cache(id, judgment.second);
-        for(int i = (int)judgment_queue.size() - 1; i >= 0; i--){
-            if(judgment_queue[i].first == id){
-                judgment_queue.erase(judgment_queue.begin() + i);
-                if(judgment.second > 0) R++;
-                break;
+        if (id != documents->NPOS) {
+            add_to_training_cache(id, judgment.second);
+            for(int i = (int)judgment_queue.size() - 1; i >= 0; i--){
+                if(judgment_queue[i].first == id){
+                    judgment_queue.erase(judgment_queue.begin() + i);
+                    if(judgment.second > 0) R++;
+                    break;
+                }
             }
+        } else {
+            cerr << "Document with ID " << judgment.first << " not found." << endl;
         }
     }
 
