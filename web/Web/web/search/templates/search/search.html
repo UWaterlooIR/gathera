@@ -6,13 +6,17 @@
 {%block main-class%}col-md-12 pt-4 px-0{%endblock%}
 
 {% block navbar-noncollapse %}
-<form id="search_form_sm" name="search_input" class="input-group mx-auto w-50 d-lg-none order-sm-1 order-md-3 align-self-center search-input text-dark search_form" method="get" action="{% url 'search:main' %}">
-    <input autocomplete="off" class="form-control search_input-sm py-2 mr-1 pr-5 search-input bg-light text-dark shadow-none rounded-sm" type="search" placeholder="Search" id="search_input-sm" name="query">
-    <span class="input-group-append">
+<form id="search_form_sm" name="search_input"
+      class="input-group mx-auto w-50 d-lg-none order-sm-1 order-md-3 align-self-center search-input text-dark search_form"
+      method="get" action="{% url 'search:main' %}">
+  <input autocomplete="off"
+         class="form-control search_input-sm py-2 mr-1 pr-5 search-input bg-light text-dark shadow-none rounded-sm"
+         type="search" placeholder="Search" id="search_input-sm" name="query">
+  <span class="input-group-append">
      <button class="btn rounded-pill border-0 ml-n5 p-0 pl-2" type="submit"
-         ic-indicator="#searchSpinner" ic-target="#search_result"
-         ic-include="#search_input-sm" ic-post-to="{% url 'search:main' %}"
-          >
+             ic-indicator="#searchSpinner" ic-target="#search_result"
+             ic-include="#search_input-sm" ic-post-to="{% url 'search:main' %}"
+     >
         <i class="fas fa-search text-secondary"></i>
      </button>
     </span>
@@ -20,8 +24,11 @@
 {% endblock %}
 
 {% block navbar-center %}
-<form id="search_form" name="search_input" class="input-group mx-auto w-75 search-input text-dark search_form" method="get" action="{% url 'search:main' %}">
-  <input autocomplete="off" class="form-control py-2 mr-1 pr-5 search-input bg-light text-dark border-0 shadow-none rounded-sm" type="search" placeholder="Search" id="search_input" name="query" value="{{query}}">
+<form id="search_form" name="search_input" class="input-group mx-auto w-75 search-input text-dark search_form"
+      method="get" action="{% url 'search:main' %}">
+  <input autocomplete="off"
+         class="form-control py-2 mr-1 pr-5 search-input bg-light text-dark border-0 shadow-none rounded-sm"
+         type="search" placeholder="Search" id="search_input" name="query" value="{{query}}">
   <span class="input-group-append">
      <button class="btn rounded-pill border-0 ml-n5 p-0 pl-2" type="submit">
   	  <i class="fas fa-search text-secondary"></i>
@@ -55,106 +62,111 @@
 {% endblock %}
 
 {% block extra_scripts %}
-    <script src="http://cdn.intercoolerjs.org/intercooler-1.1.1.min.js"></script>
-    <script src="{% static 'js/mousetrap.min.js' %}"></script>
-    <script src="https://unpkg.com/runtime-memcache@2.0.0"></script>
-    <script src="{% static 'js/moment.min.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
-    <script src="{% static 'js/document-viewer.js' %}"></script>
-    <script src="{% static 'js/highlight.js' %}"></script>
+<script src="http://cdn.intercoolerjs.org/intercooler-1.1.1.min.js"></script>
+<script src="{% static 'js/mousetrap.min.js' %}"></script>
+<script src="https://unpkg.com/runtime-memcache@2.0.0"></script>
+<script src="{% static 'js/moment.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+<script src="{% static 'js/logger.js' %}"></script>
+<script src="{% static 'js/document-viewer.js' %}"></script>
+<script src="{% static 'js/highlight.js' %}"></script>
 
-    <script>
+<script>
 
-        var context = {
-            "isQueryPage": {{ isQueryPage|yesno:"true,false"}},
-            "queryID": "{{ queryID }}",
-            "query": "{{ query }}"
+  const context = {
+    isQueryPage: "{{isQueryPage | yesno:'true,false'}}",
+    queryID: "{{ queryID }}",
+    query: "{{ query }}"
+  };
+
+  const dv = new docView();
+  dv.init({
+    username: '{{ request.user }}',
+    singleDocumentMode: true,
+    judgingSourceName: "search",
+    queryID: "{{ queryID }}",
+    query: "{{ query }}",
+    searchMode: true,
+    getDocumentsToJudgeURL: "{% url 'CAL:get_docs' %}",
+    getPrevDocumentsJudgedURL: "{% url 'judgment:get_latest' number_of_docs_to_show=50 %}",
+    getDocumentIDsToJudgeURL: "{% url 'CAL:get_docs_ids' %}",
+    sendDocumentJudgmentURL: "{% url 'judgment:post_judgment' %}",
+    getDocumentURL: "{% url 'core:get_single_doc' %}?docid=",
+    postLogURL: "{% url 'logger' %}",
+    fetchPreviouslyJudgedDocsOnInit: false,
+    mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',
+    csrfmiddlewaretoken: "{{ csrf_token }}",
+
+    afterDocumentJudge: function (docid, rel) {
+      // update document indicator in SERP
+      let newColor = "#fff";
+      switch (rel) {
+        case 0:
+          newColor = "#a5a5a5";
+          break;
+        case 1:
+          newColor = "#c6fab8";
+          break;
+        case 2:
+          newColor = "#84c273";
+          break;
+      }
+      $(`#doc_${docid}_SERP_indicator`).attr('style', `border-color:${newColor}`);
+    },
+
+    afterDocumentLoad: function (docid) {
+      // Perform keyword search if necessary
+      searchForKeyword();
+    }
+  });
+
+  function HtmlDecode(s) {
+    var el = document.createElement("div");
+    el.innerHTML = s;
+    return el.innerText || el.textContent;
+  }
+
+  // updates input bar if user already submitted a query.
+  document.getElementById("search_input").value = HtmlDecode(context.query);
+
+  // shows loading spinner once a user reformulates
+  $('#search_bar_form').submit(function () {
+    document.activeElement.blur();
+    $("#search_list").removeClass("d-flex flex-column").addClass("d-none");
+    $("#search-result-spinner").removeClass("d-none");
+  });
+
+  $('.search_form').one('submit', function (e) {
+    // prevents default behaviour,
+    e.preventDefault();
+    // shows loading spinner once a user reformulates
+    document.activeElement.blur();
+    $("#search_result").addClass("d-none");
+    $("#search-result-spinner").removeClass("d-none");
+    sendLog(LOG_EVENT.SEARCH_ATTEMPT, {
+      query: $("#search_input").val()
+    })
+    $(this).submit();
+  });
+
+  $('#search_button').on('beforeSend.ic',
+    function (evt, elt, data, settings, xhr, requestId) {
+      const now = +new Date();
+      $.ajax({
+        url: "{% url 'search:post_search_request' %}",
+        method: 'POST',
+        data: JSON.stringify({
+          client_time: now,
+          query: $("#search_input").val(),
+          numdisplay: $("#id_numdisplay").val(),
+          csrfmiddlewaretoken: '{{ csrf_token }}',
+          page_title: document.title
+        }),
+        success: function (result) {
+          console.log(result['message']);
         }
+      });
+    });
 
-        var dv = new docView();
-        dv.init({
-          username: '{{ request.user }}',
-          singleDocumentMode: true,
-          judgingSourceName: "search",
-          queryID: "{{ queryID }}",
-          query: "{{ query }}",
-          searchMode: true,
-          getDocumentsToJudgeURL: '{% url 'CAL:get_docs' %}',
-          getPrevDocumentsJudgedURL: '{% url 'judgment:get_latest' number_of_docs_to_show=50 %}',
-          getDocumentIDsToJudgeURL: '{% url 'CAL:get_docs_ids' %}',
-          sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
-          getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
-          postLogURL: '{% url 'logger' %}',
-          fetchPreviouslyJudgedDocsOnInit: false,
-          mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',
-          csrfmiddlewaretoken: "{{ csrf_token }}",
-
-          afterDocumentJudge: function(docid, rel) {
-            // update document indicator in SERP
-            let newColor = "#fff";
-            switch (rel) {
-              case 0:
-                newColor = "#a5a5a5"; break;
-              case 1:
-                newColor = "#c6fab8"; break;
-              case 2:
-                newColor = "#84c273"; break;
-            }
-            $(`#doc_${docid}_SERP_indicator`).attr('style', `border-color:${newColor}`);
-          },
-
-          afterDocumentLoad: function (docid) {
-            // Perform keyword search if necessary
-            searchForKeyword();
-          }
-        });
-
-        function HtmlDecode(s) {
-            var el = document.createElement("div");
-            el.innerHTML = s;
-            return el.innerText || el.textContent;
-        }
-
-        // updates input bar if user already submitted a query.
-        document.getElementById("search_input").value = HtmlDecode(context.query);
-
-        // shows loading spinner once a user reformulates
-        $('#search_bar_form').submit(function() {
-            document.activeElement.blur();
-            $("#search_list").removeClass("d-flex flex-column").addClass("d-none");
-            $("#search-result-spinner").removeClass("d-none");
-        });
-
-        $('.search_form').one('submit', function(e) {
-            // prevents default behaviour,
-            e.preventDefault();
-            // shows loading spinner once a user reformulates
-            document.activeElement.blur();
-            $("#search_result").addClass("d-none");
-            $("#search-result-spinner").removeClass("d-none");
-            //logQuerySubmit(); # TODO
-            $(this).submit();
-        });
-
-        $('#search_button').on('beforeSend.ic',
-            function(evt, elt, data, settings, xhr, requestId) {
-                var now = + new Date();
-                $.ajax({
-                    url: '{% url 'search:post_search_request' %}',
-                    method: 'POST',
-                    data: JSON.stringify({
-                        'client_time': now,
-                        'query': $("#search_input").val(),
-                        'numdisplay': $("#id_numdisplay").val(),
-                        'csrfmiddlewaretoken': '{{ csrf_token }}',
-                        'page_title': document.title
-                    }),
-                    success: function (result) {
-                        console.log(result['message']);
-                    }
-                });
-            });
-
-
-    </script>
+</script>
 {% endblock %}

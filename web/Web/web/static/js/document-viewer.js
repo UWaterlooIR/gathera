@@ -1,6 +1,6 @@
 /* docView.js, (c) 2016 - 2020 Mustafa Abualsaud - http://www.mustafa-s.com */
 
-var docView = function() {
+var docView = function () {
 
   var self = this;
   this.version = '0.1.0';
@@ -17,7 +17,7 @@ var docView = function() {
     getDocumentIDsToJudgeURL: null, // required
     sendDocumentJudgmentURL: null, // required
     getDocumentURL: null, // required
-    postLogURL: null, //required
+    postLogURL: null,
 
     // options
     hideFullDocument: false,
@@ -87,10 +87,10 @@ var docView = function() {
   this.additionalJudgingCriteriaList = [];
 
 
-  this._init = function() {
+  this._init = function () {
     console.log("Initiating document view.");
     // create cache store
-    if (this.options.allowDocumentCaching){
+    if (this.options.allowDocumentCaching) {
       // uses RMStore from https://github.com/tusharf5/runtime-memcache.
       this.documentCacheStore = RMStore({"cacheStoreMax": this.options.cacheStoreMax});
     }
@@ -101,13 +101,13 @@ var docView = function() {
 
 docView.prototype = {
   /**
-	 * Validate and merge user settings with default settings
-	 *
-	 * @param  {object} settings User settings
-	 * @return {bool} False if settings contains error
-	 */
-	/* jshint maxstatements:false */
-	init: function(settings) {
+   * Validate and merge user settings with default settings
+   *
+   * @param  {object} settings User settings
+   * @return {bool} False if settings contains error
+   */
+  /* jshint maxstatements:false */
+  init: function (settings) {
     "use strict";
 
     var parent = this;
@@ -143,61 +143,81 @@ docView.prototype = {
       }
     }
 
-    function _linkJudgingButtons(elm, rel_val){
-      if ($(elm).data('is-serp-judging')){
-        $(elm).on("click", function(){sendSERPJudgment($(elm).data("doc-id"), rel_val)});
-      }else{
-        $(elm).on("click", function(){sendJudgment(rel_val, options.searchMode? null : refreshDocumentView)});
+    function _linkJudgingButtons(elm, rel_val) {
+      if ($(elm).data('is-serp-judging')) {
+        $(elm).on("click", function () {
+          sendSERPJudgment($(elm).data("doc-id"), rel_val)
+        });
+      } else {
+        $(elm).on("click", function () {
+          sendJudgment(rel_val, options.searchMode ? null : refreshDocumentView)
+        });
       }
     }
 
     // start linking selectors and collect info on configurable additional judging criteria
-    $(document).ready(function(){
+    $(document).ready(function () {
       const mainJudgingSelectors = [options.documentHRelButtonSelector, options.documentRelButtonSelector, options.documentNonRelButtonSelector];
       mainJudgingSelectors.forEach(function (selector) {
           let rel_val = -1;
           switch (selector) {
             case options.documentHRelButtonSelector:
               rel_val = 2
-              $(options.documentHRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
+              $(options.documentHRelButtonSelector).each(function () {
+                _linkJudgingButtons(this, rel_val)
+              });
               break
             case options.documentRelButtonSelector:
               rel_val = 1;
-              $(options.documentRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
+              $(options.documentRelButtonSelector).each(function () {
+                _linkJudgingButtons(this, rel_val)
+              });
               break
             case options.documentNonRelButtonSelector:
               rel_val = 0;
-              $(options.documentNonRelButtonSelector).each(function() {_linkJudgingButtons(this, rel_val)});
+              $(options.documentNonRelButtonSelector).each(function () {
+                _linkJudgingButtons(this, rel_val)
+              });
               break
           }
         }
       );
 
-      $('body').on('click', options.searchItemSelector, function() {
-        const docID = $(this).data('doc-id').toString()
-        showDocument(docID)
-        sendLog('search_item_select', {
-          docID: docID
+      $('body').on('click', options.searchItemSelector, function () {
+        const docId = $(this).data('doc-id').toString()
+        showDocument(docId)
+        sendLog(LOG_EVENT.SERP_SELECT, {
+          docId: docId
         })
       });
 
-      $(".additionalJudgingCriterion").each(function(){
+      $(".additionalJudgingCriterion").each(function () {
         const criterion_name = $(this).data("criterion-name");
         parent.additionalJudgingCriteriaList.push(criterion_name);
-        $(`input[type=radio][name=${criterion_name}_radio]`).change(function() {
-            sendAdditionalJudgingCriteriaJudgments();
+        $(`input[type=radio][name=${criterion_name}_radio]`).change(function () {
+          sendAdditionalJudgingCriteriaJudgments();
         });
       });
 
-      $(options.documentCloseButtonSelector).on("click", function(){closePreviouslyReviewedDocument()});
+      $(options.documentCloseButtonSelector).on("click", function () {
+        closePreviouslyReviewedDocument()
+      });
+
+      $(options.documentModalSelector).on('hidden.bs.modal', function () {
+        sendLog(LOG_EVENT.JUDGMENT_END, {
+          docId: parent.currentDocID,
+          rel: parent.previouslyJudgedDocs[parent.currentDocID] ?
+            parent.previouslyJudgedDocs[parent.currentDocID]["relevance"] : null
+        })
+      });
 
     });
 
-    if (!options.singleDocumentMode && !options.searchMode){
+    if (!options.singleDocumentMode && !options.searchMode) {
       // start process of updating document view
       showLoading();
       getDocumentsToJudge(refreshDocumentView);
-    }else{
+    } else {
       showNoDocumentIsSelected();
     }
 
@@ -231,15 +251,15 @@ docView.prototype = {
      */
     function showDocument(docid) {
       parent.beforeDocumentLoad(docid);
-      if (options.allowDocumentCaching){
+      if (options.allowDocumentCaching) {
         // check if it exists in cache
-        if (parent.documentCacheStore.get(docid) !== null){
+        if (parent.documentCacheStore.get(docid) !== null) {
           _showDocumentCallback(docid, parent.documentCacheStore.get(docid));
           return;
         }
       }
       showLoading();
-      fetchDocument(docid,  _showDocumentCallback);
+      fetchDocument(docid, _showDocumentCallback);
     }
 
     /**
@@ -248,10 +268,10 @@ docView.prototype = {
     function refreshDocumentView() {
       // Show loading
       showLoading();
-      if (parent.viewStack.length === 0){
-        if (options.singleDocumentMode || options.searchMode){
+      if (parent.viewStack.length === 0) {
+        if (options.singleDocumentMode || options.searchMode) {
           showNoDocumentIsSelected();
-        }else{
+        } else {
           showNoMoreDocuments();
         }
         $(options.docViewSelector).trigger("updated");
@@ -268,15 +288,15 @@ docView.prototype = {
      * Views a previously judged document
      * @param docid
      */
-    function viewPreviouslyJudgedDocument(docid){
+    function viewPreviouslyJudgedDocument(docid) {
 
       const currentDocid = parent.currentDocID;
       // If its the same document currently shown, don't do anything
-      if (currentDocid === docid){
+      if (currentDocid === docid) {
         return;
       }
       // If the current doc not already reviewed, add non-reviewed document back to stack
-      if ( currentDocid !== null && (!(currentDocid in parent.previouslyJudgedDocs) || parent.previouslyJudgedDocs[currentDocid]["relevance"]  === null) ) {
+      if (currentDocid !== null && (!(currentDocid in parent.previouslyJudgedDocs) || parent.previouslyJudgedDocs[currentDocid]["relevance"] === null)) {
         parent.viewStack.unshift(currentDocid);
       }
 
@@ -288,8 +308,8 @@ docView.prototype = {
 
     function closePreviouslyReviewedDocument() {
       // If the current doc is already reviewed, remove it and dont show it unless requested
-      if (parent.currentDocID in parent.previouslyJudgedDocs && parent.previouslyJudgedDocs[parent.currentDocID]["relevance"]  !== null) {
-        if (parent.viewStack.length !== 0 && parent.viewStack[0] === parent.currentDocID){
+      if (parent.currentDocID in parent.previouslyJudgedDocs && parent.previouslyJudgedDocs[parent.currentDocID]["relevance"] !== null) {
+        if (parent.viewStack.length !== 0 && parent.viewStack[0] === parent.currentDocID) {
           parent.viewStack.shift();
         }
       }
@@ -299,30 +319,29 @@ docView.prototype = {
 
     function checkIfDocumentPreviouslyJudged(docid) {
       let color = null;
-      if (docid in parent.previouslyJudgedDocs){
+      if (docid in parent.previouslyJudgedDocs) {
         color = relToColor(parent.previouslyJudgedDocs[docid]["relevance"]);
-        if (!(options.singleDocumentMode || options.searchMode)){
+        if (!(options.singleDocumentMode || options.searchMode)) {
           showCloseButton();
         }
-      } else{
+      } else {
         hideCloseButton();
         color = options.otherColor;
       }
 
       const prevJudgedDocObj = parent.previouslyJudgedDocs[docid];
       let prevJudgedDocRel = null;
-      if (prevJudgedDocObj !== undefined){
+      if (prevJudgedDocObj !== undefined) {
         prevJudgedDocRel = prevJudgedDocObj["relevance"];
         updateAdditionalJudgingCriteriaValues(prevJudgedDocObj["additional_judging_criteria"]);
       }
       updateDocumentIndicator(relToTitle(prevJudgedDocRel), color);
-
-
+      return prevJudgedDocRel;
     }
 
     function updateAdditionalJudgingCriteriaValues(criteria_value_map) {
       // update radio buttons for the additional judging criteria
-      $.each(criteria_value_map, function (criteria , value) {
+      $.each(criteria_value_map, function (criteria, value) {
         $(`input[name="${criteria}_radio"][value="${value}"]`).prop("checked", "on");
       });
     }
@@ -331,36 +350,12 @@ docView.prototype = {
       $(options.documentModalSelector).modal('hide');
     }
 
-    /**
-     * Sends a log to the logger
-     * @param event
-     * @param data
-     */
-    function sendLog(event, data) {
-      $.ajax({
-          url: options.postLogURL,
-          method: 'POST',
-          data: JSON.stringify({
-              timestamp: new Date(),
-              event: event,
-              data: data,
-              message: 'done'
-          }),
-          success: function (response) {
-            console.log(response)
-          },
-          error: function (err){
-            console.error(err)
-          }
-      });
-    }
-
     /****************
      * VIEW CHANGES *
      ***************/
 
     function clearDocumentView() {
-      updateDocumentIndicator("",options.otherColor);
+      updateDocumentIndicator("", options.otherColor);
       showDocTab();
       clearAdditionalJudgingCriteria();
       updateDocID(null);
@@ -383,8 +378,8 @@ docView.prototype = {
       elm.addClass("d-none");
     }
 
-    function showLoading(){
-      updateDocumentIndicator("",options.otherColor);
+    function showLoading() {
+      updateDocumentIndicator("", options.otherColor);
       updateTitle("Loading...", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       //updateMessage("");
       updateDocID(null);
@@ -395,8 +390,11 @@ docView.prototype = {
     }
 
     function showNoDocumentIsSelected() {
-      updateDocumentIndicator("",options.otherColor);
-      updateTitle("Please select a document to show", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
+      updateDocumentIndicator("", options.otherColor);
+      updateTitle("Please select a document to show", {
+        "font": options.secondaryTitleFont,
+        "color": options.projectPrimaryColor
+      });
       updateMessage("No document has been selected. Please click on a document to view its content.");
       updateDocID(null);
       hideCloseButton();
@@ -404,7 +402,7 @@ docView.prototype = {
     }
 
     function showNoMoreDocuments() {
-      updateDocumentIndicator("",options.otherColor);
+      updateDocumentIndicator("", options.otherColor);
       updateTitle("Please wait..", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       updateMessage("There are no more documents to judge. Please wait or try refreshing the page.");
       updateDocID(null);
@@ -413,7 +411,7 @@ docView.prototype = {
     }
 
     function showMaxJudgmentReached() {
-      updateDocumentIndicator("",options.otherColor);
+      updateDocumentIndicator("", options.otherColor);
       updateTitle("No more documents", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       updateMessage("There are no more documents to judge. Please wait or try refreshing the page.");
       updateDocID(null);
@@ -422,8 +420,8 @@ docView.prototype = {
     }
 
 
-    function showError(err_msg){
-      updateDocumentIndicator("",options.dangerColor);
+    function showError(err_msg) {
+      updateDocumentIndicator("", options.dangerColor);
       updateTitle("Error...", {"font": options.secondaryTitleFont, "color": options.dangerColor});
       updateMessage(err_msg, {"font": options.secondaryTitleFont, "color": options.dangerColor});
       updateDocID(null);
@@ -455,7 +453,7 @@ docView.prototype = {
     }
 
     function updateDocumentIndicator(title, color) {
-      if (color !== null){
+      if (color !== null) {
         $(options.documentIndicatorSelector).css("border-color", color);
         $(options.documentIndicatorSelector).attr('title', title);
       }
@@ -468,27 +466,27 @@ docView.prototype = {
       updateStyles(elm, styles);
     }
 
-    function updateDocID(docid){
+    function updateDocID(docid) {
       parent.currentDocID = docid;
       const elm = $(options.documentIDSelector);
-      if (docid){
+      if (docid) {
         elm.html(docid);
         $(options.docViewSelector).data('doc-id', docid);
-      }else{
+      } else {
         elm.html("");
         $(options.docViewSelector).data('doc-id', '');
       }
     }
 
     function clearAdditionalJudgingCriteria() {
-      $.each(parent.additionalJudgingCriteriaList, function(index, value){
+      $.each(parent.additionalJudgingCriteriaList, function (index, value) {
         $(`input[name="${value}_radio"]`).prop('checked', false);
       });
     }
 
     function collectAdditionalJudgingCriteria() {
       let additional_judging_criteria_values = {};
-      $.each(parent.additionalJudgingCriteriaList, function(index, value){
+      $.each(parent.additionalJudgingCriteriaList, function (index, value) {
         const criteria_val = $(`input[name="${value}_radio"]:checked`).val();
         if (criteria_val !== undefined) {
           additional_judging_criteria_values[value] = criteria_val;
@@ -497,7 +495,7 @@ docView.prototype = {
       return additional_judging_criteria_values;
     }
 
-    function setAdditionalJudgingCriterionValue(criterion_name, value){
+    function setAdditionalJudgingCriterionValue(criterion_name, value) {
       $(`input[name="${criterion_name}_radio"][value="${value}"]`).prop("checked", "on");
     }
 
@@ -509,7 +507,7 @@ docView.prototype = {
       $(options.documentWrapperSelector).removeClass("d-none");
     }
 
-    function hideCloseButton(){
+    function hideCloseButton() {
       $(options.documentCloseButtonSelector).addClass("d-none");
     }
 
@@ -517,21 +515,23 @@ docView.prototype = {
       $(options.documentCloseButtonSelector).removeClass("d-none");
     }
 
-    function updateOrCreatePreviouslyReviewedListItem(docid, title, rel){
+    function updateOrCreatePreviouslyReviewedListItem(docid, title, rel) {
       const div_elm = generate_prev_reviewed_doc_div_elm(docid, title, rel);
       // Check if docid is already in prev reviewed docs stack, if so, pop it
       const stack_index = parent.previouslyJudgedDocsStack.indexOf(docid);
-      if (stack_index !== -1){
+      if (stack_index !== -1) {
         parent.previouslyJudgedDocsStack.splice(stack_index, 1);
         // remove the div associated with the docid
-        $("."+options.prevReviewedDocumentItemClass).each(function() {
-          if ($(this).data("doc-id").toString() === docid){
+        $("." + options.prevReviewedDocumentItemClass).each(function () {
+          if ($(this).data("doc-id").toString() === docid) {
             $(this).remove();
           }
         });
       }
       // link on click
-      div_elm.on("click", function(){viewPreviouslyJudgedDocument($(this).data("doc-id").toString())});
+      div_elm.on("click", function () {
+        viewPreviouslyJudgedDocument($(this).data("doc-id").toString())
+      });
 
       // add to top of the list view/stack
       $(options.previouslyReviewedListSelector).prepend(div_elm);
@@ -573,44 +573,44 @@ docView.prototype = {
     function getDocumentsToJudge(callback) {
       const url = options.allowDocumentCaching ? options.getDocumentsToJudgeURL : options.getDocumentIDsToJudgeURL;
       $.ajax({
-          url: url,
-          method: 'GET',
-          success: function (result) {
-            updateViewStack(result);
-            if (typeof callback === "function") {
-              callback();
-            }
-          },
-          error: function (err_msg){
-            showError(JSON.stringify(err_msg));
+        url: url,
+        method: 'GET',
+        success: function (result) {
+          updateViewStack(result);
+          if (typeof callback === "function") {
+            callback();
           }
+        },
+        error: function (err_msg) {
+          showError(JSON.stringify(err_msg));
+        }
       });
     }
 
     function populatePrevReviewedDocuments(callback) {
       const url = options.getPrevDocumentsJudgedURL;
       $.ajax({
-          url: url,
-          method: 'GET',
-          success: function (result) {
-            $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
-            parent.previouslyJudgedDocsStack = [];
-            for (let i = 0; i < result.length; i++){
-              let item = result[result.length - 1 - i];
-              parent.previouslyJudgedDocs[item["doc_id"]] = {
-                "relevance": item["relevance"],
-                "additional_judging_criteria": item["additional_judging_criteria"]
-              };
-              updateOrCreatePreviouslyReviewedListItem(item["doc_id"], item["doc_title"], item["relevance"]);
-            }
-            if (typeof callback === "function") {
-              callback();
-            }
-          },
-          error: function (err_msg){
-            $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
-            $(options.previouslyReviewedListSelector).prepend(JSON.stringify(err_msg));
+        url: url,
+        method: 'GET',
+        success: function (result) {
+          $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
+          parent.previouslyJudgedDocsStack = [];
+          for (let i = 0; i < result.length; i++) {
+            let item = result[result.length - 1 - i];
+            parent.previouslyJudgedDocs[item["doc_id"]] = {
+              "relevance": item["relevance"],
+              "additional_judging_criteria": item["additional_judging_criteria"]
+            };
+            updateOrCreatePreviouslyReviewedListItem(item["doc_id"], item["doc_title"], item["relevance"]);
           }
+          if (typeof callback === "function") {
+            callback();
+          }
+        },
+        error: function (err_msg) {
+          $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
+          $(options.previouslyReviewedListSelector).prepend(JSON.stringify(err_msg));
+        }
       });
     }
 
@@ -619,32 +619,32 @@ docView.prototype = {
      */
     function fetchDocument(docid, callback) {
       $.ajax({
-            url: getDocumentURL(docid),
-            type: 'GET',
-            dataType: 'json', // added data type
-            success: function(res) {
-              // AFTER SUCCESSFUL RETRIEVAL OF DOCUMENT INFO
-              callback(docid, res[0]);
+        url: getDocumentURL(docid),
+        type: 'GET',
+        dataType: 'json', // added data type
+        success: function (res) {
+          // AFTER SUCCESSFUL RETRIEVAL OF DOCUMENT INFO
+          callback(docid, res[0]);
         }
       });
     }
 
     function sendAdditionalJudgingCriteriaJudgments() {
       const docid = parent.currentDocID;
-      if (docid === null){
+      if (docid === null) {
         return;
       }
       const additional_judging_criteria = collectAdditionalJudgingCriteria();
-      if ($.isEmptyObject(additional_judging_criteria)){
+      if ($.isEmptyObject(additional_judging_criteria)) {
         return;
       }
       const currentTitle = getCurrentDocTitle();
       const currentSnippet = getCurrentDocSnippet();
-      const now = + new Date();
+      const now = +new Date();
 
-      if (docid in parent.previouslyJudgedDocs){
+      if (docid in parent.previouslyJudgedDocs) {
         parent.previouslyJudgedDocs[docid]["additional_judging_criteria"] = additional_judging_criteria
-      }else{
+      } else {
         parent.previouslyJudgedDocs[docid] = {
           "relevance": null,
           "additional_judging_criteria": additional_judging_criteria
@@ -652,139 +652,143 @@ docView.prototype = {
       }
 
       var data = {
-          'doc_id': docid,
-          'doc_title': currentTitle,
-          'doc_CAL_snippet': currentSnippet,
-          'doc_search_snippet': "",
-          'relevance': null,
-          'additional_judging_criteria': additional_judging_criteria,
-          'source': options.judgingSourceName,
-          'client_time': now,
-          'search_query': null,
-          'ctrl_f_terms_input': $("#search_content").val(),
-          'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
-          'page_title': document.title,
+        'doc_id': docid,
+        'doc_title': currentTitle,
+        'doc_CAL_snippet': currentSnippet,
+        'doc_search_snippet': "",
+        'relevance': null,
+        'additional_judging_criteria': additional_judging_criteria,
+        'source': options.judgingSourceName,
+        'client_time': now,
+        'search_query': null,
+        'ctrl_f_terms_input': $("#search_content").val(),
+        'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
+        'page_title': document.title,
 
-          // history item
-          'historyItem': {
-            "username": options.username,
-            "timestamp": now,
-            "source": options.judgingSourceName,
-            "judged": false,
-            "relevance": null,
-            'additional_judging_criteria': additional_judging_criteria,
-          },
+        // history item
+        'historyItem': {
+          "username": options.username,
+          "timestamp": now,
+          "source": options.judgingSourceName,
+          "judged": false,
+          "relevance": null,
+          'additional_judging_criteria': additional_judging_criteria,
+        },
       };
 
       $.ajax({
-          url: options.sendDocumentJudgmentURL,
-          method: 'POST',
-          data: JSON.stringify(data),
-          success: function (result) {
-              console.log(result);
-          },
-          error: function (result){
-            if (parent.currentDocID === null){
-              showError(result);
-            }
-            console.error("Something went wrong. ");
-          },
-          statusCode: {
-              502: function (xhr) {
-                if (parent.currentDocID === null){
-                  showError(xhr.responseText);
-                }
-                console.log("Something went wrong. Timeout error." +
-                      "Judgment may have not been recorded.", xhr.responseText);
-              }
+        url: options.sendDocumentJudgmentURL,
+        method: 'POST',
+        data: JSON.stringify(data),
+        success: function (result) {
+          console.log(result);
+        },
+        error: function (result) {
+          if (parent.currentDocID === null) {
+            showError(result);
           }
+          console.error("Something went wrong. ");
+        },
+        statusCode: {
+          502: function (xhr) {
+            if (parent.currentDocID === null) {
+              showError(xhr.responseText);
+            }
+            console.log("Something went wrong. Timeout error." +
+              "Judgment may have not been recorded.", xhr.responseText);
+          }
+        }
       });
 
     }
 
-    function sendSERPJudgment(docid, rel){
-      if (docid in parent.previouslyJudgedDocs){
-        parent.previouslyJudgedDocs[docid]["relevance"] = rel;
-      }else{
-        parent.previouslyJudgedDocs[docid] = {
+    function sendSERPJudgment(docId, rel) {
+      if (docId in parent.previouslyJudgedDocs) {
+        parent.previouslyJudgedDocs[docId]["relevance"] = rel;
+      } else {
+        parent.previouslyJudgedDocs[docId] = {
           "relevance": rel,
         };
       }
 
-      const docTitle = $(`#doc_${docid}_card`).data("title");
-      const docSnippet = $(`#doc_${docid}_card`).data("snippet");
+      const docTitle = $(`#doc_${docId}_card`).data("title");
+      const docSnippet = $(`#doc_${docId}_card`).data("snippet");
 
-      const now = + new Date();
+      const now = +new Date();
       var data = {
-          'doc_id': docid,
-          'doc_title': docTitle,
-          'doc_CAL_snippet': "",
-          'doc_search_snippet': docSnippet,
-          'relevance': rel,
-          'source': "SERP",
-          'client_time': now,
-          'search_query': null,
-          'ctrl_f_terms_input': $("#search_content").val(),
-          'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
-          'page_title': document.title,
+        'doc_id': docId,
+        'doc_title': docTitle,
+        'doc_CAL_snippet': "",
+        'doc_search_snippet': docSnippet,
+        'relevance': rel,
+        'source': "SERP",
+        'client_time': now,
+        'search_query': null,
+        'ctrl_f_terms_input': $("#search_content").val(),
+        'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
+        'page_title': document.title,
 
-          // history item
-          'historyItem': {
-            "username": options.username,
-            "timestamp": now,
-            "source": "SERP",
-            "queryID": options.queryID,
-            "query": options.query,
-            "judged": true,
-            "relevance": rel,
-          },
+        // history item
+        'historyItem': {
+          "username": options.username,
+          "timestamp": now,
+          "source": "SERP",
+          "queryID": options.queryID,
+          "query": options.query,
+          "judged": true,
+          "relevance": rel,
+        },
       };
 
       $.ajax({
-          url: options.sendDocumentJudgmentURL,
-          method: 'POST',
-          data: JSON.stringify(data),
-          success: function (result) {
-              if(result['is_max_judged_reached']){
-                  showMaxJudgmentReached();
-                  return;
-              }
-              parent.afterDocumentJudge(docid, rel);
-          },
-          error: function (result){
-            console.error("Something went wrong. ", result);
-          },
-          statusCode: {
-              502: function (xhr) {
-                console.log("Something went wrong. Timeout error." +
-                      "Judgment may have not been recorded.", xhr.responseText);
-              }
+        url: options.sendDocumentJudgmentURL,
+        method: 'POST',
+        data: JSON.stringify(data),
+        success: function (result) {
+          if (result['is_max_judged_reached']) {
+            showMaxJudgmentReached();
+            return;
           }
+          sendLog(LOG_EVENT.JUDGMENT_END, {
+            docId: docId,
+            rel: rel
+          })
+          parent.afterDocumentJudge(docId, rel);
+        },
+        error: function (result) {
+          console.error("Something went wrong. ", result);
+        },
+        statusCode: {
+          502: function (xhr) {
+            console.log("Something went wrong. Timeout error." +
+              "Judgment may have not been recorded.", xhr.responseText);
+          }
+        }
       });
 
     }
 
     function sendJudgment(rel, callback) {
-      if (!(options.singleDocumentMode || options.searchMode)){
+      if (!(options.singleDocumentMode || options.searchMode)) {
         window.scrollTo(0, 0);
       }
-      const docid = parent.currentDocID;
-      if (docid === null){
+      const docId = parent.currentDocID;
+      if (docId === null) {
         return;
       }
 
       const additional_judging_criteria = collectAdditionalJudgingCriteria();
-      parent.previouslyJudgedDocs[docid] = {
+      parent.previouslyJudgedDocs[docId] = {
         "relevance": rel,
         "additional_judging_criteria": additional_judging_criteria
       };
       const currentTitle = getCurrentDocTitle();
       const currentSnippet = getCurrentDocSnippet();
-      updateOrCreatePreviouslyReviewedListItem(docid, currentTitle, rel);
+      updateOrCreatePreviouslyReviewedListItem(docId, currentTitle, rel);
 
-      if (!options.singleDocumentMode && !options.searchMode){
+      if (!options.singleDocumentMode && !options.searchMode) {
         clearDocumentView();
-      }else{
+      } else {
         updateDocumentIndicator(relToTitle(rel), relToColor(rel));
       }
       // add document to previously judged map
@@ -793,74 +797,74 @@ docView.prototype = {
         callback();
       }
 
-      const now = + new Date();
+      const now = +new Date();
       var data = {
-          'doc_id': docid,
-          'doc_title': currentTitle,
-          'doc_CAL_snippet': currentSnippet,
-          'doc_search_snippet': "",
-          'relevance': rel,
-          'additional_judging_criteria': additional_judging_criteria,
-          'source': options.judgingSourceName,
-          'client_time': now,
-          'search_query': null,
-          'ctrl_f_terms_input': $("#search_content").val(),
-          'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
-          'page_title': document.title,
+        'doc_id': docId,
+        'doc_title': currentTitle,
+        'doc_CAL_snippet': currentSnippet,
+        'doc_search_snippet': "",
+        'relevance': rel,
+        'additional_judging_criteria': additional_judging_criteria,
+        'source': options.judgingSourceName,
+        'client_time': now,
+        'search_query': null,
+        'ctrl_f_terms_input': $("#search_content").val(),
+        'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
+        'page_title': document.title,
 
-          // history item
-          'historyItem': {
-            "username": options.username,
-            "timestamp": now,
-            "source": options.judgingSourceName,
-            "judged": true,
-            "relevance": rel,
-            "queryID": options.queryID,
-            "query": options.query,
-            'additional_judging_criteria': additional_judging_criteria,
-          },
+        // history item
+        'historyItem': {
+          "username": options.username,
+          "timestamp": now,
+          "source": options.judgingSourceName,
+          "judged": true,
+          "relevance": rel,
+          "queryID": options.queryID,
+          "query": options.query,
+          'additional_judging_criteria': additional_judging_criteria,
+        },
       };
 
-      if ($(`#doc_${docid}_card`).length){
-        data["doc_search_snippet"] = $(`#doc_${docid}_card`).data("snippet");
+      if ($(`#doc_${docId}_card`).length) {
+        data["doc_search_snippet"] = $(`#doc_${docId}_card`).data("snippet");
       }
 
       $.ajax({
-          url: options.sendDocumentJudgmentURL,
-          method: 'POST',
-          data: JSON.stringify(data),
-          success: function (result) {
-              if (!options.singleDocumentMode && !options.searchMode){
-                updateViewStack(result["next_docs"]);
-              }
-              if(result['is_max_judged_reached']){
-                  showMaxJudgmentReached();
-                  //disableJudgments();
-                  return;
-              }
-
-              if (parent.currentDocID === null){
-                if (typeof callback === "function") {
-                  callback();
-                }
-              }
-              parent.afterDocumentJudge(docid, rel);
-          },
-          error: function (result){
-            if (parent.currentDocID === null){
-              showError(result);
-            }
-            console.error("Something went wrong. ");
-          },
-          statusCode: {
-              502: function (xhr) {
-                if (parent.currentDocID === null){
-                  showError(xhr.responseText);
-                }
-                console.log("Something went wrong. Timeout error." +
-                      "Judgment may have not been recorded.", xhr.responseText);
-              }
+        url: options.sendDocumentJudgmentURL,
+        method: 'POST',
+        data: JSON.stringify(data),
+        success: function (result) {
+          if (!options.singleDocumentMode && !options.searchMode) {
+            updateViewStack(result["next_docs"]);
           }
+          if (result['is_max_judged_reached']) {
+            showMaxJudgmentReached();
+            //disableJudgments();
+            return;
+          }
+
+          if (parent.currentDocID === null) {
+            if (typeof callback === "function") {
+              callback();
+            }
+          }
+          parent.afterDocumentJudge(docId, rel);
+        },
+        error: function (result) {
+          if (parent.currentDocID === null) {
+            showError(result);
+          }
+          console.error("Something went wrong. ");
+        },
+        statusCode: {
+          502: function (xhr) {
+            if (parent.currentDocID === null) {
+              showError(xhr.responseText);
+            }
+            console.log("Something went wrong. Timeout error." +
+              "Judgment may have not been recorded.", xhr.responseText);
+          }
+        }
       });
 
     }
@@ -869,46 +873,52 @@ docView.prototype = {
      * CALLBACKS *
      *************/
 
-    function _showDocumentCallback(docid, data) {
+    function _showDocumentCallback(docId, data) {
       /**
        * Callback to show document in document view once server returns document information.
        */
       clearDocumentView();
 
-      updateDocID(docid);
+      updateDocID(docId);
 
-      if (typeof data.title === "string"){
+      if (typeof data.title === "string") {
         updateTitle(data.title, {"font": options.primaryTitleFont, "color": options.primaryColor});
       }
-      if (typeof data.content === "string"){
+      if (typeof data.content === "string") {
         updateBody(data.content, {"color": options.primaryColor});
       }
-      if (typeof data.date === "string"){
+      if (typeof data.date === "string") {
         updateMeta(data.date);
       }
-      if (typeof data.snippet === "string"){
+      if (typeof data.snippet === "string") {
         updateSnippet(data.snippet, {"color": options.primaryColor});
       }
-      if (options.showTopTerms && isDict(data.top_terms)){
-        for (let term in data.top_terms){
+      if (options.showTopTerms && isDict(data.top_terms)) {
+        for (let term in data.top_terms) {
           const score = data.top_terms[term]
-          if (term.endsWith("i")){ // this is because we have stemmed top terms
+          if (term.endsWith("i")) { // this is because we have stemmed top terms
             term = term.slice(0, -1) + 'y';
           }
           highlightTerm(term, score);
         }
       }
 
-      if (data.rel !== undefined && typeof data.rel === "number"){
+      let prevRel;
+      if (data.rel !== undefined && typeof data.rel === "number") {
         const color = relToColor(data.rel);
-        checkIfDocumentPreviouslyJudged(docid);
+        prevRel = checkIfDocumentPreviouslyJudged(docId);
         updateDocumentIndicator(relToTitle(data.rel), color);
         updateAdditionalJudgingCriteriaValues(data.additional_judging_criteria);
-      }else{
-        checkIfDocumentPreviouslyJudged(docid);
+      } else {
+        prevRel = checkIfDocumentPreviouslyJudged(docId);
       }
 
-      parent.afterDocumentLoad(docid);
+      sendLog(LOG_EVENT.JUDGMENT_START, {
+        docId: docId,
+        rel: prevRel
+      })
+
+      parent.afterDocumentLoad(docId);
     }
 
 
@@ -941,13 +951,13 @@ docView.prototype = {
      */
     function updateViewStack(result) {
       let docids = [];
-      for (let i = 0; i < result.length; i++){
+      for (let i = 0; i < result.length; i++) {
         const doc = result[i];
-        if (options.allowDocumentCaching){
+        if (options.allowDocumentCaching) {
           parent.documentCacheStore.set(doc.doc_id, doc);
         }
         // make sure stack doesn't include previously judged documents or current doc
-        if ( (!(doc.doc_id in parent.previouslyJudgedDocs) || (parent.previouslyJudgedDocs[doc.doc_id]["relevance"]  === null)) &&  doc.doc_id !== parent.currentDocID ){
+        if ((!(doc.doc_id in parent.previouslyJudgedDocs) || (parent.previouslyJudgedDocs[doc.doc_id]["relevance"] === null)) && doc.doc_id !== parent.currentDocID) {
           docids.push(doc.doc_id);
         }
       }
@@ -967,25 +977,25 @@ docView.prototype = {
     }
 
     function getCurrentDocTitle() {
-      if (parent.currentDocID !== null){
+      if (parent.currentDocID !== null) {
         return $(options.documentTitleSelector).text()
       }
       return null;
     }
 
     function getCurrentDocSnippet() {
-      if (parent.currentDocID !== null){
+      if (parent.currentDocID !== null) {
         return $(options.documentSnippetSelector).text()
       }
       return null;
     }
 
     function updateStyles(selector, styles) {
-      if (styles !== undefined){
-        if (styles.font !== undefined){
+      if (styles !== undefined) {
+        if (styles.font !== undefined) {
           selector.addClass(styles.font);
         }
-        if (styles.color !== undefined){
+        if (styles.color !== undefined) {
           selector.css("color", styles.color);
         }
       }
@@ -997,15 +1007,15 @@ docView.prototype = {
     }
 
     function isDict(v) {
-      return typeof v==='object' && v!==null && !(v instanceof Array) && !(v instanceof Date);
+      return typeof v === 'object' && v !== null && !(v instanceof Array) && !(v instanceof Date);
     }
 
-    function convertHex(hex, opacity){
-      hex = hex.replace('#','');
-      const r = parseInt(hex.substring(0,2), 16);
-      const g = parseInt(hex.substring(2,4), 16);
-      const b = parseInt(hex.substring(4,6), 16);
-      return 'rgba('+r+','+g+','+b+','+opacity+')';
+    function convertHex(hex, opacity) {
+      hex = hex.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + opacity + ')';
     }
 
     /**
@@ -1014,7 +1024,7 @@ docView.prototype = {
     function relToColor(rel) {
       if (rel === 2) {
         return options.highlyRelevantColor;
-      }else if (rel === 1) {
+      } else if (rel === 1) {
         return options.relevantColor;
       } else if (rel === 0) {
         return options.nonrelevantColor;
@@ -1028,7 +1038,7 @@ docView.prototype = {
     function relToTitle(rel) {
       if (rel === 2) {
         return `Highly ${options.mainJudgingCriteriaName}`;
-      }else if (rel === 1) {
+      } else if (rel === 1) {
         return `${options.mainJudgingCriteriaName}`;
       } else if (rel === 0) {
         return `Non${options.mainJudgingCriteriaName}`;
@@ -1053,7 +1063,7 @@ docView.prototype = {
    * @param  boolean  skip      Whether to skip the event triggering
    * @return mixed  True when the triggering was skipped, false on error, else the callback function
    */
-  triggerEvent: function(eventName, successArgs, skip) {
+  triggerEvent: function (eventName, successArgs, skip) {
     "use strict";
 
     if ((arguments.length === 3 && skip) || this.options[eventName] === null) {
@@ -1071,17 +1081,17 @@ docView.prototype = {
     }
   },
 
-  beforeDocumentLoad: function(docid) {
+  beforeDocumentLoad: function (docid) {
     "use strict";
     return this.triggerEvent("beforeDocumentLoad", [docid]);
   },
 
-  afterDocumentLoad: function(docid) {
+  afterDocumentLoad: function (docid) {
     "use strict";
     return this.triggerEvent("afterDocumentLoad", [docid]);
   },
 
-  afterDocumentJudge: function(docid, rel) {
+  afterDocumentJudge: function (docid, rel) {
     "use strict";
     return this.triggerEvent("afterDocumentJudge", [docid, rel]);
   },
@@ -1107,7 +1117,7 @@ function mergeRecursive(obj1, obj2) {
       } else {
         obj1[p] = obj2[p];
       }
-    } catch(e) {
+    } catch (e) {
       // Property in destination object not set; create it and set its value.
       obj1[p] = obj2[p];
     }
@@ -1120,7 +1130,7 @@ function mergeRecursive(obj1, obj2) {
  * Loader
  */
 if (typeof define === "function" && define.amd) {
-  define([], function() {
+  define([], function () {
     "use strict";
 
     return docView;
