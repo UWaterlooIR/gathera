@@ -1258,7 +1258,10 @@ docView.prototype = {
 
   afterDocumentLoad: function(docid) {
     "use strict";
-    return this.triggerEvent("afterDocumentLoad", [docid]);
+    return this.triggerEvent("afterDocumentLoad", [
+      docid,
+      this.previouslyJudgedDocs[docid] ? this.previouslyJudgedDocs[docid]["relevance"] : null
+    ]);
   },
 
   afterDocumentClose: function (docid) {

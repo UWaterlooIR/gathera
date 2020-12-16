@@ -116,10 +116,10 @@
             })
           },
 
-          afterDocumentLoad: function (docid) {
+          afterDocumentLoad: function (docid, rel) {
             sendLog(LOG_EVENT.JUDGMENT_START, {
               docId: docid,
-              rel: dv.previouslyJudgedDocs[docid] ? dv.previouslyJudgedDocs[docid]["relevance"] : null
+              rel: rel
             })
             // Perform keyword search if necessary
             searchForKeyword();
