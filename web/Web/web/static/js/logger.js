@@ -20,8 +20,7 @@ function sendLog(event, data) {
     data: JSON.stringify({
       timestamp: new Date(),
       event: event,
-      data: data,
-      message: 'log'
+      data: data
     }),
     success: function (response) {
       console.log('log saved with response: ' + JSON.stringify(response))

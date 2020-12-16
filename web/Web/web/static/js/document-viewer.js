@@ -224,8 +224,7 @@ docView.prototype = {
       _linkSortByRelevanceButton($(options.sortReviewedDocumentsSelector));
 
       $(options.documentModalSelector).on('hidden.bs.modal', function () {
-        parent.afterDocumentClose(parent.currentDocID, parent.previouslyJudgedDocs[parent.currentDocID] ?
-            parent.previouslyJudgedDocs[parent.currentDocID]["relevance"] : null)
+        parent.afterDocumentClose(parent.currentDocID)
       });
     });
 
@@ -1055,18 +1054,17 @@ docView.prototype = {
       current.addClass("bold");
       current.attr("data-is-current", "true");
 
-      let currentDocRel;
       if (data.rel !== undefined && typeof data.rel === "number"){
         const color = relToColor(data.rel);
-        currentDocRel = checkIfDocumentPreviouslyJudged(docid);
+        checkIfDocumentPreviouslyJudged(docid);
         updateDocumentIndicator(relToTitle(data.rel), color);
         updateActiveJudgingButton(docid, data.rel);
         updateAdditionalJudgingCriteriaValues(data.additional_judging_criteria);
       }else{
-        currentDocRel = checkIfDocumentPreviouslyJudged(docid);
+        checkIfDocumentPreviouslyJudged(docid);
       }
 
-      parent.afterDocumentLoad(docid, currentDocRel);
+      parent.afterDocumentLoad(docid);
     }
 
 
@@ -1259,14 +1257,14 @@ docView.prototype = {
     return this.triggerEvent("beforeDocumentLoad", [docid]);
   },
 
-  afterDocumentLoad: function(docid, rel) {
+  afterDocumentLoad: function(docid) {
     "use strict";
-    return this.triggerEvent("afterDocumentLoad", [docid, rel]);
+    return this.triggerEvent("afterDocumentLoad", [docid]);
   },
 
-  afterDocumentClose: function (docid, rel) {
+  afterDocumentClose: function (docid) {
     "use strict";
-    return this.triggerEvent("afterDocumentClose", [docid, rel]);
+    return this.triggerEvent("afterDocumentClose", [docid]);
   },
 
   afterDocumentJudge: function(docid, rel) {

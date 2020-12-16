@@ -18,17 +18,15 @@ class LoggerView(views.CsrfExemptMixin,
         timestamp = body['timestamp']
         event = body['event']
         data = body['data']
-        message = body['message']
 
         log = {
             'user': self.request.user.username,
             'timestamp': timestamp,
             'event': event,
-            'data': data,
-            'message': message
+            'data': data
         }
 
         # Log
         logger.info('{}'.format(json.dumps(log)))
 
-        return self.render_json_response({u'message': message})
+        return self.render_json_response({u'message': 'done'})
