@@ -252,7 +252,7 @@
         allowDocumentCaching: false,
         judgingSourceName: "review",
         getPrevDocumentsJudgedURL: '{% url 'judgment:get_all' %}',
-        getDocumentIDsToJudgeURL: '{% url 'review:get_docs_ids' %}',
+        getDocumentIDsToJudgeURL: '{% url 'judgment:get_all' %}',
         sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
         getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
         fetchPreviouslyJudgedDocsOnInit: true,
