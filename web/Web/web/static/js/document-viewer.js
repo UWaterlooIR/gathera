@@ -1,6 +1,6 @@
 /* docView.js, (c) 2016 - 2020 Mustafa Abualsaud - http://www.mustafa-s.com */
 
-var docView = function() {
+var docView = function () {
 
   var self = this;
   this.version = '0.1.0';
@@ -170,15 +170,22 @@ docView.prototype = {
     }
 
     function _linkNextDocButton(elm) {
-      $(elm).on("click", function () { gotoNextDocument() });
+      $(elm).on("click", function () {
+        gotoNextDocument()
+      });
     }
 
     function _linkPreviousDocButton(elm) {
-      $(elm).on("click", function () { gotoPreviousDocument() });
+      $(elm).on("click", function () {
+        gotoPreviousDocument()
+      });
     }
 
     function _linkSortByRelevanceButton(elm) {
-      $(elm).on("click", function () { getDocumentsToJudge(refreshDocumentView); populatePrevReviewedDocuments() });
+      $(elm).on("click", function () {
+        getDocumentsToJudge(refreshDocumentView);
+        populatePrevReviewedDocuments()
+      });
     }
 
     // start linking selectors and collect info on configurable additional judging criteria
@@ -210,10 +217,10 @@ docView.prototype = {
       );
 
       $('body').on('click', options.searchItemSelector, function () {
-        const docId = $(this).data('doc-id').toString()
-        showDocument(docId)
+        const docid = $(this).data('doc-id').toString()
+        showDocument(docid)
         sendLog(LOG_EVENT.SERP_SELECT, {
-          docId: docId
+          docId: docid
         })
       });
 
@@ -309,7 +316,7 @@ docView.prototype = {
     /**
      * Views top of the view stack document. Or,if in review mode, view the doc at NextDocIndex
      */
-    function refreshDocumentView(nextDocIndex=0) {
+    function refreshDocumentView(nextDocIndex = 0) {
       // Show loading
       showLoading();
       if (parent.viewStack.length === 0) {
@@ -330,8 +337,8 @@ docView.prototype = {
       // Show document
       showDocument(docid);
       $(options.docViewSelector).trigger("updated");
-      if (options.getSCALInfoURL !== null){
-          getSCALInfo()
+      if (options.getSCALInfoURL !== null) {
+        getSCALInfo()
       }
 
     }
@@ -347,7 +354,7 @@ docView.prototype = {
         return;
       }
       // If the current doc not already reviewed, add non-reviewed document back to stack
-      if (!options.reviewMode &&currentDocid !== null && (!(currentDocid in parent.previouslyJudgedDocs) || parent.previouslyJudgedDocs[currentDocid]["relevance"] === null)) {
+      if (!options.reviewMode && currentDocid !== null && (!(currentDocid in parent.previouslyJudgedDocs) || parent.previouslyJudgedDocs[currentDocid]["relevance"] === null)) {
         parent.viewStack.unshift(currentDocid);
       }
 
@@ -470,14 +477,17 @@ docView.prototype = {
 
     function showMaxJudgmentReached() {
       updateDocumentIndicator("", options.otherColor);
-      updateTitle("Max number of judgments reached", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
+      updateTitle("Max number of judgments reached", {
+        "font": options.secondaryTitleFont,
+        "color": options.projectPrimaryColor
+      });
       updateMessage("You have reached the max number of judgments for this session. You will be redirected to the home page shortly.");
       updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
 
-      window.setTimeout(function(){
+      window.setTimeout(function () {
         window.location.replace(window.location.origin);
       }, 2000);
 
@@ -500,17 +510,17 @@ docView.prototype = {
       updateStyles(elm, styles);
     }
 
-      function updateSCALInfo(result) {
-        if (result) {
-          let temp = [result['stratum_number'], result['stratum_size'], result['sample_size'], (parent.viewStack.length + 1).toString()]
-          Array.from(document.getElementById('scal-info').getElementsByTagName('small')).forEach((span, i) => {
-            span.innerHTML = temp[i]
-          })
-        }
+    function updateSCALInfo(result) {
+      if (result) {
+        let temp = [result['stratum_number'], result['stratum_size'], result['sample_size'], (parent.viewStack.length + 1).toString()]
+        Array.from(document.getElementById('scal-info').getElementsByTagName('small')).forEach((span, i) => {
+          span.innerHTML = temp[i]
+        })
       }
+    }
 
     function updateMeta(content) {
-      if (isURL(content) === true){
+      if (isURL(content) === true) {
         content = `<a href="${content}" target="_blank">${content}</a>`;
       }
       const elm = $(options.documentMetaSelector);
@@ -552,11 +562,11 @@ docView.prototype = {
     function updateActiveJudgingButton(docid, rel) {
       const btn_group = $(options.documentJudgingCriteriaButtonGroupSelector + `[data-doc-id='${docid}']`);
       btn_group.children().removeClass("active");
-      if (rel === 2){
+      if (rel === 2) {
         btn_group.find(options.documentHRelButtonSelector).addClass("active");
-      }else if (rel === 1){
+      } else if (rel === 1) {
         btn_group.find(options.documentRelButtonSelector).addClass("active");
-      }else if (rel === 0){
+      } else if (rel === 0) {
         btn_group.find(options.documentNonRelButtonSelector).addClass("active");
       }
     }
@@ -711,26 +721,26 @@ docView.prototype = {
       });
     }
 
-      function getSCALInfo(callback) {
-        const url = options.getSCALInfoURL;
-        $.ajax({
-          url: url,
-          method: 'GET',
-          success: function (result) {
-            updateSCALInfo(result)
-            if (typeof callback === "function") {
-              callback();
-            }
-          },
-          error: function (_) {
-            updateSCALInfo({
-              "stratum_number": "NA",
-              "sample_size": "NA",
-              "stratum_size": "NA",
-            });
+    function getSCALInfo(callback) {
+      const url = options.getSCALInfoURL;
+      $.ajax({
+        url: url,
+        method: 'GET',
+        success: function (result) {
+          updateSCALInfo(result)
+          if (typeof callback === "function") {
+            callback();
           }
-        });
-      }
+        },
+        error: function (_) {
+          updateSCALInfo({
+            "stratum_number": "NA",
+            "sample_size": "NA",
+            "stratum_size": "NA",
+          });
+        }
+      });
+    }
 
     function populatePrevReviewedDocuments(callback) {
       const url = options.getPrevDocumentsJudgedURL;
@@ -739,9 +749,9 @@ docView.prototype = {
         method: 'GET',
         success: function (result) {
           $(options.previouslyReviewedListSelector).empty();
-            parent.previouslyJudgedDocsStack = [];
-            parent.previouslyJudgedDocs = {};
-            $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
+          parent.previouslyJudgedDocsStack = [];
+          parent.previouslyJudgedDocs = {};
+          $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
 
           for (let i = 0; i < result.length; i++) {
             let item = result[result.length - 1 - i];
@@ -850,21 +860,21 @@ docView.prototype = {
 
     }
 
-    function sendSERPJudgment(docId, rel) {
-      if (docId in parent.previouslyJudgedDocs) {
-        parent.previouslyJudgedDocs[docId]["relevance"] = rel;
+    function sendSERPJudgment(docid, rel) {
+      if (docid in parent.previouslyJudgedDocs) {
+        parent.previouslyJudgedDocs[docid]["relevance"] = rel;
       } else {
-        parent.previouslyJudgedDocs[docId] = {
+        parent.previouslyJudgedDocs[docid] = {
           "relevance": rel,
         };
       }
 
-      const docTitle = $(`#doc_${docId}_card`).data("title");
-      const docSnippet = $(`#doc_${docId}_card`).data("snippet");
+      const docTitle = $(`#doc_${docid}_card`).data("title");
+      const docSnippet = $(`#doc_${docid}_card`).data("snippet");
 
       const now = +new Date();
       var data = {
-        'doc_id': docId,
+        'doc_id': docid,
         'doc_title': docTitle,
         'doc_CAL_snippet': "",
         'doc_search_snippet': docSnippet,
@@ -893,19 +903,21 @@ docView.prototype = {
         method: 'POST',
         data: JSON.stringify(data),
         success: function (result) {
-          updateActiveJudgingButton(docid, rel);if (result['is_max_judged_reached']) {
+          updateActiveJudgingButton(docid, rel);
+          if (result['is_max_judged_reached']) {
             showMaxJudgmentReached();
-            return;}
+            return;
+          }
 
-              if(result["CALFailedToReceiveJudgment"]){
-                parent.afterCALFailedToReceiveJudgment(docid, rel);
-              }
+          if (result["CALFailedToReceiveJudgment"]) {
+            parent.afterCALFailedToReceiveJudgment(docid, rel);
+          }
 
           sendLog(LOG_EVENT.JUDGMENT_END, {
-            docId: docId,
+            docId: docid,
             rel: rel
           })
-          parent.afterDocumentJudge(docId, rel);
+          parent.afterDocumentJudge(docid, rel);
         },
         error: function (result) {
           console.error("Something went wrong. ", result);
@@ -925,19 +937,19 @@ docView.prototype = {
       if (!(options.singleDocumentMode || options.searchMode)) {
         window.scrollTo(0, 0);
       }
-      const docId = parent.currentDocID;
-      if (docId === null) {
+      const docid = parent.currentDocID;
+      if (docid === null) {
         return;
       }
 
       const additional_judging_criteria = collectAdditionalJudgingCriteria();
-      parent.previouslyJudgedDocs[docId] = {
+      parent.previouslyJudgedDocs[docid] = {
         "relevance": rel,
         "additional_judging_criteria": additional_judging_criteria
       };
       const currentTitle = getCurrentDocTitle();
       const currentSnippet = getCurrentDocSnippet();
-      updateOrCreatePreviouslyReviewedListItem(docId, currentTitle, rel);
+      updateOrCreatePreviouslyReviewedListItem(docid, currentTitle, rel);
 
       if (!options.singleDocumentMode && !options.searchMode && !options.reviewMode) {
         clearDocumentView();
@@ -952,7 +964,7 @@ docView.prototype = {
 
       const now = +new Date();
       var data = {
-        'doc_id': docId,
+        'doc_id': docid,
         'doc_title': currentTitle,
         'doc_CAL_snippet': currentSnippet,
         'doc_search_snippet': "",
@@ -964,7 +976,7 @@ docView.prototype = {
         'ctrl_f_terms_input': $("#search_content").val(),
         'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
         'page_title': document.title,
-          'current_docview_stack_size': current_docview_stack_size,
+        'current_docview_stack_size': current_docview_stack_size,
 
         // history item
         'historyItem': {
@@ -979,8 +991,8 @@ docView.prototype = {
         },
       };
 
-      if ($(`#doc_${docId}_card`).length) {
-        data["doc_search_snippet"] = $(`#doc_${docId}_card`).data("snippet");
+      if ($(`#doc_${docid}_card`).length) {
+        data["doc_search_snippet"] = $(`#doc_${docid}_card`).data("snippet");
       }
 
       $.ajax({
@@ -988,25 +1000,26 @@ docView.prototype = {
         method: 'POST',
         data: JSON.stringify(data),
         success: function (result) {
-          if (!options.singleDocumentMode && !options.searchMode&& !options.reviewMode) {
+          if (!options.singleDocumentMode && !options.searchMode && !options.reviewMode) {
             updateViewStack(result["next_docs"]);
-          }else{
-                updateActiveJudgingButton(docid, rel);
-              }
+          } else {
+            updateActiveJudgingButton(docid, rel);
+          }
           if (result['is_max_judged_reached']) {
             showMaxJudgmentReached();
 
             return;
           }
 
-          if(result["CALFailedToReceiveJudgment"]){
-                parent.afterCALFailedToReceiveJudgment(docid, rel);
-              }if (parent.currentDocID === null) {
+          if (result["CALFailedToReceiveJudgment"]) {
+            parent.afterCALFailedToReceiveJudgment(docid, rel);
+          }
+          if (parent.currentDocID === null) {
             if (typeof callback === "function") {
               callback();
             }
           }
-          parent.afterDocumentJudge(docId, rel);
+          parent.afterDocumentJudge(docid, rel);
         },
         error: function (result) {
           if (parent.currentDocID === null) {
@@ -1031,21 +1044,21 @@ docView.prototype = {
      * CALLBACKS *
      *************/
 
-    function _showDocumentCallback(docId, data) {
+    function _showDocumentCallback(docid, data) {
       /**
        * Callback to show document in document view once server returns document information.
        */
       clearDocumentView();
 
-      updateDocID(docId);
+      updateDocID(docid);
 
       if (typeof data.title === "string") {
         updateTitle(data.title, {"font": options.primaryTitleFont, "color": options.primaryColor});
       }
       if (typeof data.content === "string") {
         updateBody(data.content, {"color": options.primaryColor});
-        if (options.embedTweet){
-          embedTweet(docId); // docid is the tweet id.
+        if (options.embedTweet) {
+          embedTweet(docid); // docid is the tweet id.
         }
       }
       if (typeof data.date === "string") {
@@ -1077,20 +1090,20 @@ docView.prototype = {
       let prevRel;
       if (data.rel !== undefined && typeof data.rel === "number") {
         const color = relToColor(data.rel);
-        prevRel = checkIfDocumentPreviouslyJudged(docId);
+        prevRel = checkIfDocumentPreviouslyJudged(docid);
         updateDocumentIndicator(relToTitle(data.rel), color);
         updateActiveJudgingButton(docid, data.rel);
         updateAdditionalJudgingCriteriaValues(data.additional_judging_criteria);
       } else {
-        prevRel = checkIfDocumentPreviouslyJudged(docId);
+        prevRel = checkIfDocumentPreviouslyJudged(docid);
       }
 
       sendLog(LOG_EVENT.JUDGMENT_START, {
-        docId: docId,
+        docId: docid,
         rel: prevRel
       })
 
-      parent.afterDocumentLoad(docId);
+      parent.afterDocumentLoad(docid);
     }
 
 
@@ -1129,7 +1142,7 @@ docView.prototype = {
           parent.documentCacheStore.set(doc.doc_id, doc);
         }
         // make sure stack doesn't include previously judged documents or current doc
-        if (((!(doc.doc_id in parent.previouslyJudgedDocs) || (parent.previouslyJudgedDocs[doc.doc_id]["relevance"] === null)) && doc.doc_id !== parent.currentDocID) || options.reviewMode){
+        if (((!(doc.doc_id in parent.previouslyJudgedDocs) || (parent.previouslyJudgedDocs[doc.doc_id]["relevance"] === null)) && doc.doc_id !== parent.currentDocID) || options.reviewMode) {
           docids.push(doc.doc_id);
         }
       }
@@ -1235,12 +1248,12 @@ docView.prototype = {
     }
 
     function isURL(str) {
-      var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
-        '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-        '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-        '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+      var pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+        '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
       return !!pattern.test(str);
     }
 
@@ -1293,7 +1306,7 @@ docView.prototype = {
     return this.triggerEvent("afterDocumentJudge", [docid, rel]);
   },
 
-  afterCALFailedToReceiveJudgment: function(docid, rel) {
+  afterCALFailedToReceiveJudgment: function (docid, rel) {
     "use strict";
     return this.triggerEvent("afterCALFailedToReceiveJudgment", [docid, rel]);
   },
@@ -1342,4 +1355,36 @@ if (typeof define === "function" && define.amd) {
   module.exports = docView;
 } else {
   window.docView = docView;
+}
+
+const postLogURL = '/logger/';
+const LOG_EVENT = {
+  SERP_SELECT: 'SERP_SELECT',
+  SEARCH_ATTEMPT: 'SEARCH_ATTEMPT',
+  JUDGMENT_START: 'JUDGMENT_START',
+  JUDGMENT_END: 'JUDGMENT_END'
+};
+
+/**
+ * Sends a log to the logger
+ * @param event
+ * @param data
+ */
+function sendLog(event, data) {
+  $.ajax({
+    url: postLogURL,
+    method: 'POST',
+    data: JSON.stringify({
+      timestamp: new Date(),
+      event: event,
+      data: data,
+      message: 'log'
+    }),
+    success: function (response) {
+      console.log('log saved with response: ' + JSON.stringify(response))
+    },
+    error: function (err) {
+      console.error(err)
+    }
+  });
 }

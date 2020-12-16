@@ -42,7 +42,7 @@
   After finishing the process of judging a document this log event is triggered. It contains:
   * User ID
   * DocId
-  * New Judgement (`null` if left unjudged)  
+  * New Judgement (unchanged if just opened the doc and closed)  
   * Timestamp 
     
   Sample:
