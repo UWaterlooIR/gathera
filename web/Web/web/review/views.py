@@ -54,25 +54,7 @@ class DocAJAXView(views.CsrfExemptMixin,
                 relevance__isnull=False
             ).order_by('-relevance')
 
-            next_patch_ids = []
-            for judgment in latest:
-                next_patch_ids.append(judgment.doc_id)
-
-            doc_ids_hack = []
-            for doc_id in next_patch_ids:
-                doc = {'doc_id': doc_id}
-                if '.' in doc_id:
-                    doc['doc_id'], doc['para_id'] = doc_id.split('.')
-                doc_ids_hack.append(doc)
-
-            if 'doc' in self.request.user.current_session.strategy:
-                documents = DocEngine.get_documents(next_patch_ids,
-                                                    seed_query)
-            else:
-                documents = DocEngine.get_documents_with_snippet(doc_ids_hack,
-                                                                 seed_query)
-
-            return self.render_json_response(documents)
+            return self.render_json_response([{'doc_id': judgment.doc_id} for judgment in latest])
 
         except TimeoutError:
             error_dict = {u"message": u"Timeout error. Please check status of servers."}

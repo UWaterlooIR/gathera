@@ -249,10 +249,10 @@
     dv.init({
         username: '{{ request.user }}',
         reviewMode: true,
+        allowDocumentCaching: false,
         judgingSourceName: "review",
-        getDocumentsToJudgeURL: '{% url 'review:get_docs' %}',
         getPrevDocumentsJudgedURL: '{% url 'judgment:get_all' %}',
-        getDocumentIDsToJudgeURL: '{% url 'review:get_docs' %}',
+        getDocumentIDsToJudgeURL: '{% url 'review:get_docs_ids' %}',
         sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
         getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
         fetchPreviouslyJudgedDocsOnInit: true,
