@@ -115,8 +115,13 @@ void BMI::add_to_training_cache(int id, int judgment){
 
 void BMI::record_judgment_batch(vector<pair<string, int>> _judgments){
     for(const auto &judgment: _judgments){
-        size_t id = documents->get_index(judgment.first);
-        add_to_training_cache(id, judgment.second);
+        auto doc_index = documents->get_index(judgment.first);
+        if (doc_index != documents->NPOS) {
+            size_t id = documents->get_index(judgment.first);
+            add_to_training_cache(id, judgment.second);
+        } else {
+            cerr << "Document with ID " << judgment.first << " not found" << endl;
+        }
     }
 
     if(!async_mode){
@@ -221,3 +226,7 @@ vector<pair<uint32_t, float>> BMI::get_top_terms(string doc_id, int num_top_term
     vector< pair<uint32_t, float> > top_terms = documents->top_terms(idx, w, num_top_terms);
     return top_terms;
 }
+
+unique_ptr<BMI::StratumInfo> BMI::get_stratum_info(){
+    return nullptr;
+} 

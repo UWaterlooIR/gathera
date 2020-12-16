@@ -32,7 +32,7 @@
           <div class="tab-pane fade active show" id="pills-custom-topic" role="tabpanel">
             <div class="row">
               <div class="col-md-12 mt-3">
-                    <form method="POST" action="{% url 'core:home' %}">
+                    <form method="POST" action="{% url 'core:home' %} " enctype="multipart/form-data">
                     {% csrf_token %}
                     {% crispy form_custom %}
                     </form>

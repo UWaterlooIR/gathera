@@ -83,6 +83,7 @@ class SessionForm(forms.ModelForm):
                                  required=True,
                                  help_text=SessionPredefinedTopicForm.Meta.help_texts.get('strategy'))
     show_full_document_content = forms.BooleanField(required=False)
+    judgments_file = forms.FileField(required=False, label='Optional seed judgments (csv file)')
 
     def __init__(self, *args, **kwargs):
         super(SessionForm, self).__init__(*args, **kwargs)
@@ -105,6 +106,7 @@ class SessionForm(forms.ModelForm):
                 css_class='d-none',
                 css_id="topic-show_full_document_content"
             ),
+            'judgments_file',
             StrictButton(u'Create session',
                          name=self.submit_name,
                          type="submit",
@@ -136,7 +138,7 @@ class ShareSessionForm(forms.ModelForm):
     disallow_search = forms.BooleanField(required=False,
                                          label="Hide search from user")
     disallow_CAL = forms.BooleanField(required=False,
-                                      label="Hide CAL from user")
+                                      label="Hide Discovery from user")
 
     def __init__(self, user, *args, **kwargs):
         super(ShareSessionForm, self).__init__(*args, **kwargs)

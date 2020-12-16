@@ -1,15 +1,9 @@
 from config.settings.base import TIME_ZONE
 import json
 import logging
-import random
-import string
 
-from allauth.account.adapter import get_adapter
-from allauth.account.utils import perform_login
 from braces import views
 from django.contrib import messages
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.db.models import Case
 from django.db.models import Count
 from django.db.models import When
@@ -243,7 +237,6 @@ class SessionShareView(View):
 
 class GetDocAJAXView(views.CsrfExemptMixin,
                      views.LoginRequiredMixin,
-                     RetrievalMethodPermissionMixin,
                      views.JsonRequestResponseMixin,
                      views.AjaxResponseMixin, generic.View):
 
@@ -276,138 +269,3 @@ class GetDocAJAXView(views.CsrfExemptMixin,
             result[0]["additional_judging_criteria"] = exists.first().additional_judging_criteria
 
         return self.render_json_response(result)
-
-        # if not docid:
-        #     return self.render_json_response([])
-        # try:
-        #     document = DocEngine.get_documents([docid])
-        # except TimeoutError:
-        #     error_dict = {u"message": u"Timeout error. Please check status of servers."}
-        #     return self.render_timeout_request_response(error_dict)
-        #
-        # return self.render_json_response(document)
-
-
-class VisitAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
-                    views.JsonRequestResponseMixin,
-                    generic.View):
-    require_json = False
-
-    def post(self, request, *args, **kwargs):
-        try:
-            client_time = self.request_json.get(u"client_time")
-            page_title = self.request_json.get(u"page_title")
-            page_file = self.request_json.get(u"page_file")
-        except KeyError:
-            error_dict = {u"message": u"your input must include client_time,"
-                                      u"pag_file and page_title"}
-            return self.render_bad_request_response(error_dict)
-
-        context = {u"message": u"Your visit has been recorded"}
-        return self.render_json_response(context)
-
-
-class CtrlFAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
-                    views.JsonRequestResponseMixin,
-                    generic.View):
-    require_json = False
-
-    def post(self, request, *args, **kwargs):
-        try:
-            client_time = self.request_json.get(u"client_time")
-            search_field_value = self.request_json.get(u"search_field_value")
-            page_title = self.request_json.get(u"page_title")
-            extra_context = self.request_json.get(u"extra_context")
-        except KeyError:
-            error_dict = {u"message": u"your input must include client_time, "
-                                      u"extra_context and search_field_value"}
-            return self.render_bad_request_response(error_dict)
-
-        context = {u"message": u"Your event has been recorded"}
-        return self.render_json_response(context)
-
-
-class FindKeystrokeAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
-                            views.JsonRequestResponseMixin,
-                            generic.View):
-    require_json = False
-
-    def post(self, request, *args, **kwargs):
-        try:
-            client_time = self.request_json.get(u"client_time")
-            doc_id = self.request_json.get(u"doc_id")
-            page_title = self.request_json.get(u"page_title")
-            character = self.request_json.get(u"character")
-            isSearchbarFocused = self.request_json.get(u"isSearchbarFocused")
-            search_bar_value = self.request_json.get(u"search_bar_value")
-        except KeyError:
-            error_dict = {u"message": u"your input must include client_time,"
-                                      u" doc_id, character, isSearchbarFocused,"
-                                      u" page_title and search bar value."}
-            return self.render_bad_request_response(error_dict)
-
-        context = {u"message": u"Your visit has been recorded."}
-        return self.render_json_response(context)
-
-
-class MessageAJAXView(views.CsrfExemptMixin, views.LoginRequiredMixin,
-                      views.JsonRequestResponseMixin,
-                      generic.View):
-    """
-    Generic view to capture specific log messages from browser
-    """
-    require_json = False
-
-    def post(self, request, *args, **kwargs):
-        try:
-            client_time = self.request_json.get(u"client_time")
-            message = self.request_json.get(u"message")
-            action = self.request_json.get(u"action")
-            page_title = self.request_json.get(u"page_title")
-            extra_context = self.request_json.get(u'extra_context')
-        except KeyError:
-            error_dict = {u"message": u"your input must include client_time, "
-                                      u"message, ... etc"}
-            return self.render_bad_request_response(error_dict)
-
-        context = {u"message": u"Your log message with action '{}' "
-                               u"has been logged.".format(action)}
-
-        return self.render_json_response(context)
-
-
-class PracticeCompleteView(views.LoginRequiredMixin, generic.TemplateView):
-    def get(self, request, *args, **kwargs):
-        adapter = get_adapter(self.request)
-        adapter.logout(self.request)
-        return HttpResponseRedirect(reverse_lazy('account_login'))
-
-
-class PracticeView(generic.TemplateView):
-    def get(self, request, *args, **kwargs):
-        practice_group, created = Group.objects.get_or_create(name='practice')
-
-        # Create practice user and save to the database
-        lst = [random.choice(string.ascii_letters + string.digits) for n in range(5)]
-        randomstr = "".join(lst)
-        username = password = "{}_practice".format(randomstr)
-        User = get_user_model()
-        practice_user = User.objects.create_user(username,
-                                                 '{}@crazymail.com'.format(username),
-                                                 password)
-
-        practice_group.user_set.add(practice_user)
-        practice_group.save()
-
-        credentials = {
-            "username": username,
-            "password": password
-        }
-
-        user = get_adapter(self.request).authenticate(
-            self.request,
-            **credentials)
-        ret = perform_login(request, user,
-                            email_verification=False,
-                            redirect_url=reverse_lazy('core:home'))
-        return ret

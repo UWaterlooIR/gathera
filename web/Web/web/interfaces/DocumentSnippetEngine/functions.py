@@ -2,6 +2,7 @@ from config.settings.base import DOCUMENTS_URL
 from config.settings.base import PARA_URL
 
 import httplib2
+import requests
 
 try:
     # For c speedups
@@ -55,7 +56,8 @@ def get_documents(doc_ids, query=None, top_terms=None, orig_para_id=None):
             'title': title,
             'content': content.replace("\n", "<br/>"),
             'date': date,
-            'top_terms': top_terms.get(doc_id if orig_para_id is None else "{}.{}".format(doc_id, orig_para_id[idx]), None) if top_terms else None
+            'top_terms': top_terms.get(doc_id if orig_para_id is None else "{}.{}".format(doc_id, orig_para_id[idx]), None) if top_terms else None,
+            'ok': resp.status == 200
         }
         result.append(document)
 

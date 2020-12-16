@@ -1,11 +1,16 @@
+import csv
+import io
+
 from django.contrib import messages
 
 from web.CAL.exceptions import CALError
-from web.interfaces.CAL import functions as CALFunctions
 from web.core.forms import SessionForm
 from web.core.forms import SessionPredefinedTopicForm
 from web.core.models import Session
 from web.core.models import SharedSession
+from web.interfaces.CAL import functions as CALFunctions
+from web.interfaces.DocumentSnippetEngine import functions as DocEngine
+from web.judgment.models import Judgment
 from web.users.models import User
 
 NEW_SESSION_MESSAGE = 'Your session has been initialized and activated. ' \
@@ -25,6 +30,9 @@ def submit_new_predefined_topic_session_form(request):
         messages.add_message(request,
                              messages.SUCCESS,
                              success_message)
+    else:
+        messages.add_message(request, messages.ERROR, f'Ops! {form.errors}')
+    form.instance.begin_session_in_cal()
 
 
 def submit_new_session_form(request):
@@ -49,6 +57,69 @@ def submit_new_session_form(request):
                              success_message)
         request.user.current_session = session
         request.user.save()
+
+        if 'topic-judgments_file' in request.FILES:
+            judgments_dict, msg_type, msg = handle_judgments_file(request.FILES['topic-judgments_file'])
+
+            if judgments_dict:
+                Judgment.objects.bulk_create([
+                    Judgment(
+                        user=request.user,
+                        session=session,
+                        doc_id=doc_id,
+                        doc_title=doc_title,
+                        relevance=relevance,
+                        source="seed",
+                        is_seed=True,
+                        historyVerbose=[{
+                            "username": request.user.username,
+                            "source": "seed",
+                            "judged": True,
+                            "relevance": relevance
+                        }]
+                    ) for doc_id, (doc_title, relevance) in judgments_dict.items()
+                ])
+                request.user.save()
+            elif msg_type == messages.ERROR:
+                msg += " Session deleted."
+                session.delete()
+            messages.add_message(request, msg_type, msg)
+
+        session.begin_session_in_cal()
+
+
+def handle_judgments_file(file):
+    try:
+        if not file.name.endswith('.csv'):
+            return None, messages.ERROR, 'Please upload a file ending with .csv extension.'
+
+        judgments_file = io.TextIOWrapper(file.file, encoding='utf-8')
+        io_string = io.StringIO(judgments_file.read())
+        reader = csv.DictReader(io_string)
+        judgments = []
+        for row in reader:
+            if row['docno'] is None or row['judgment'] is None:
+                return None, messages.ERROR, 'Please make sure you upload a valid csv file.'
+            else:
+                judgments.append((row['docno'], row['judgment']))
+
+        judgments_dict = dict()
+        for j in judgments:
+            doc = DocEngine.get_documents([j[0]])[0]
+            if doc['ok']:
+                try:
+                    doc_title = doc['title']
+                    judgments_dict[j[0]] = (doc_title, Judgment.JudgingChoices(int(j[1])))
+                except ValueError:
+                    pass  # judgements with invalid relevance scores are ignored
+
+        return judgments_dict,\
+               messages.WARNING if len(judgments_dict) < len(judgments) else messages.SUCCESS,\
+               f"{len(judgments_dict)} out of {len(judgments)} seed judgments sent to CAL."
+    except IndexError:
+        return None, messages.ERROR, "Judgments file is incorrectly formatted."
+    except UnicodeDecodeError:
+        return None, messages.ERROR, "Judgments file has incorrect encoding."
 
 
 def activate_session_submit_form(request):
@@ -187,8 +258,6 @@ def revoke_shared_session_submit_form(request):
                              messages.ERROR,
                              message)
         return
-
-    return
 
 
 def delete_session_submit_form(request):

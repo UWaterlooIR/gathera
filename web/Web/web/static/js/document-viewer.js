@@ -1,6 +1,6 @@
 /* docView.js, (c) 2016 - 2020 Mustafa Abualsaud - http://www.mustafa-s.com */
 
-var docView = function () {
+var docView = function() {
 
   var self = this;
   this.version = '0.1.0';
@@ -17,7 +17,7 @@ var docView = function () {
     getDocumentIDsToJudgeURL: null, // required
     sendDocumentJudgmentURL: null, // required
     getDocumentURL: null, // required
-    postLogURL: null,
+    getSCALInfoURL: null, // required for discovery page
 
     // options
     hideFullDocument: false,
@@ -30,6 +30,8 @@ var docView = function () {
     fetchPreviouslyJudgedDocsOnInit: false,
     singleDocumentMode: false,
     searchMode: false,
+    reviewMode: false,
+    embedTweet: false, // only for tweet data. Needs twitter's widget.js to be loaded (https://platform.twitter.com/widgets.js).
     mainJudgingCriteriaName: "Relevant", // adjective of criteria
 
     // Specific to search
@@ -49,14 +51,18 @@ var docView = function () {
     documentShowFullDocumentButtonSelector: "#docViewDocShowFullDocumentButton",
     documentBodySelector: "#docViewDocBody",
     documentCloseButtonSelector: "#docViewDocCloseButton",
+    documentJudgingCriteriaButtonGroupSelector: ".judging-criteria-btn-group",
     documentHRelButtonSelector: ".docViewDocHRelButton",
     documentRelButtonSelector: ".docViewDocRelButton",
+    docViewNextDocButtonSelector: ".docViewNextDocButton",
+    docViewPreviousDocButtonSelector: ".docViewPreviousDocButton",
     documentNonRelButtonSelector: ".docViewDocNonRelButton",
     documentAdditionalJudgingCriterionSelector: ".additionalJudgingCriterion",
     previouslyReviewedListSelector: ".previouslyReviewedList",
     previouslyReviewedListSpinnerSelector: ".previouslyReviewedListSpinner",
     searchItemSelector: ".searchItemSelector",
     documentModalSelector: "#documentModal",
+    sortReviewedDocumentsSelector: ".docViewSortReviewListByRelButton",
 
     // Colors
     highlyRelevantColor: "#84c273",
@@ -74,12 +80,20 @@ var docView = function () {
 
     // others
     prevReviewedDocumentItemClass: "prev-reviewed-doc-item",
+
+    // event callbacks
+    beforeDocumentLoad: null,
+    afterDocumentLoad: null,
+    afterDocumentJudge: null,
+    afterErrorShown: null,
+    afterCALFailedToReceiveJudgment: null
   };
 
   /*************
    * VARIABLES *
    *************/
   this.currentDocID = null;
+  this.currentDocIndex = -1;
   this.viewStack = [];
   this.previouslyJudgedDocs = {};
   this.previouslyJudgedDocsStack = [];
@@ -135,7 +149,7 @@ docView.prototype = {
     validateSelector(options.documentTabSelector, true, "documentTabSelector");
 
     // Don't touch these settings
-    var s = ["beforeDocumentLoad", "afterDocumentLoad", "afterDocumentJudge", "afterErrorShown"];
+    var s = ["beforeDocumentLoad", "afterDocumentLoad", "afterDocumentJudge", "afterErrorShown", "afterCALFailedToReceiveJudgment"];
 
     for (var k in s) {
       if (settings.hasOwnProperty(s[k])) {
@@ -153,6 +167,18 @@ docView.prototype = {
           sendJudgment(rel_val, options.searchMode ? null : refreshDocumentView)
         });
       }
+    }
+
+    function _linkNextDocButton(elm) {
+      $(elm).on("click", function () { gotoNextDocument() });
+    }
+
+    function _linkPreviousDocButton(elm) {
+      $(elm).on("click", function () { gotoPreviousDocument() });
+    }
+
+    function _linkSortByRelevanceButton(elm) {
+      $(elm).on("click", function () { getDocumentsToJudge(refreshDocumentView); populatePrevReviewedDocuments() });
     }
 
     // start linking selectors and collect info on configurable additional judging criteria
@@ -211,6 +237,10 @@ docView.prototype = {
         })
       });
 
+      _linkNextDocButton($(options.docViewNextDocButtonSelector));
+      _linkPreviousDocButton($(options.docViewPreviousDocButtonSelector));
+      _linkSortByRelevanceButton($(options.sortReviewedDocumentsSelector));
+
     });
 
     if (!options.singleDocumentMode && !options.searchMode) {
@@ -262,10 +292,24 @@ docView.prototype = {
       fetchDocument(docid, _showDocumentCallback);
     }
 
+    function gotoNextDocument() {
+      let currentDocIndex = parent.currentDocIndex;
+      if (currentDocIndex < parent.viewStack.length - 1) {
+        viewPreviouslyJudgedDocument(parent.viewStack[currentDocIndex + 1]);
+      }
+    }
+
+    function gotoPreviousDocument() {
+      let currentDocIndex = parent.currentDocIndex;
+      if (currentDocIndex > 0) {
+        viewPreviouslyJudgedDocument(parent.viewStack[currentDocIndex - 1]);
+      }
+    }
+
     /**
-     * Views top of the view stack document
+     * Views top of the view stack document. Or,if in review mode, view the doc at NextDocIndex
      */
-    function refreshDocumentView() {
+    function refreshDocumentView(nextDocIndex=0) {
       // Show loading
       showLoading();
       if (parent.viewStack.length === 0) {
@@ -277,11 +321,19 @@ docView.prototype = {
         $(options.docViewSelector).trigger("updated");
         return;
       }
-      let docid = parent.viewStack[0];
-      parent.viewStack.shift(); // remove it from viewStack
+
+      parent.currentDocIndex = nextDocIndex
+      let docid = parent.viewStack[nextDocIndex];
+      if (!options.reviewMode) {
+        parent.viewStack.shift(); // remove it from viewStack
+      }
       // Show document
       showDocument(docid);
       $(options.docViewSelector).trigger("updated");
+      if (options.getSCALInfoURL !== null){
+          getSCALInfo()
+      }
+
     }
 
     /**
@@ -289,21 +341,23 @@ docView.prototype = {
      * @param docid
      */
     function viewPreviouslyJudgedDocument(docid) {
-
       const currentDocid = parent.currentDocID;
       // If its the same document currently shown, don't do anything
       if (currentDocid === docid) {
         return;
       }
       // If the current doc not already reviewed, add non-reviewed document back to stack
-      if (currentDocid !== null && (!(currentDocid in parent.previouslyJudgedDocs) || parent.previouslyJudgedDocs[currentDocid]["relevance"] === null)) {
+      if (!options.reviewMode &&currentDocid !== null && (!(currentDocid in parent.previouslyJudgedDocs) || parent.previouslyJudgedDocs[currentDocid]["relevance"] === null)) {
         parent.viewStack.unshift(currentDocid);
       }
 
       // Add the prev reviewed document to the beginning of the stack
-      parent.viewStack.unshift(docid);
-
-      refreshDocumentView();
+      if (!options.reviewMode) {
+        parent.viewStack.unshift(docid);
+        refreshDocumentView();
+      } else {
+        refreshDocumentView(parent.viewStack.indexOf(docid));
+      }
     }
 
     function closePreviouslyReviewedDocument() {
@@ -321,9 +375,10 @@ docView.prototype = {
       let color = null;
       if (docid in parent.previouslyJudgedDocs) {
         color = relToColor(parent.previouslyJudgedDocs[docid]["relevance"]);
-        if (!(options.singleDocumentMode || options.searchMode)) {
+        if (!(options.singleDocumentMode || options.searchMode || options.reviewMode)) {
           showCloseButton();
         }
+        updateActiveJudgingButton(docid, parent.previouslyJudgedDocs[docid]["relevance"]);
       } else {
         hideCloseButton();
         color = options.otherColor;
@@ -383,6 +438,7 @@ docView.prototype = {
       updateTitle("Loading...", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       //updateMessage("");
       updateDocID(null);
+      updateMeta("");
       updateSnippet("Loading...", {"font": options.secondaryTitleFont, "color": options.secondaryColor});
       updateBody("Loading...", {"font": options.secondaryTitleFont, "color": options.secondaryColor});
       hideCloseButton();
@@ -396,6 +452,7 @@ docView.prototype = {
         "color": options.projectPrimaryColor
       });
       updateMessage("No document has been selected. Please click on a document to view its content.");
+      updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
@@ -405,6 +462,7 @@ docView.prototype = {
       updateDocumentIndicator("", options.otherColor);
       updateTitle("Please wait..", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
       updateMessage("There are no more documents to judge. Please wait or try refreshing the page.");
+      updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
@@ -412,11 +470,17 @@ docView.prototype = {
 
     function showMaxJudgmentReached() {
       updateDocumentIndicator("", options.otherColor);
-      updateTitle("No more documents", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
-      updateMessage("There are no more documents to judge. Please wait or try refreshing the page.");
+      updateTitle("Max number of judgments reached", {"font": options.secondaryTitleFont, "color": options.projectPrimaryColor});
+      updateMessage("You have reached the max number of judgments for this session. You will be redirected to the home page shortly.");
+      updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
+
+      window.setTimeout(function(){
+        window.location.replace(window.location.origin);
+      }, 2000);
+
     }
 
 
@@ -424,6 +488,7 @@ docView.prototype = {
       updateDocumentIndicator("", options.dangerColor);
       updateTitle("Error...", {"font": options.secondaryTitleFont, "color": options.dangerColor});
       updateMessage(err_msg, {"font": options.secondaryTitleFont, "color": options.dangerColor});
+      updateMeta("");
       updateDocID(null);
       hideCloseButton();
       hideDocTab();
@@ -435,7 +500,19 @@ docView.prototype = {
       updateStyles(elm, styles);
     }
 
+      function updateSCALInfo(result) {
+        if (result) {
+          let temp = [result['stratum_number'], result['stratum_size'], result['sample_size'], (parent.viewStack.length + 1).toString()]
+          Array.from(document.getElementById('scal-info').getElementsByTagName('small')).forEach((span, i) => {
+            span.innerHTML = temp[i]
+          })
+        }
+      }
+
     function updateMeta(content) {
+      if (isURL(content) === true){
+        content = `<a href="${content}" target="_blank">${content}</a>`;
+      }
       const elm = $(options.documentMetaSelector);
       elm.html(content);
     }
@@ -450,6 +527,38 @@ docView.prototype = {
       const elm = $(options.documentSnippetSelector);
       elm.html(content).removeClass();
       updateStyles(elm, styles);
+    }
+
+    function embedTweet(tweetid) {
+      const parent = $(options.documentBodySelector);
+      const elm = generate_embedded_tweet_elm();
+      parent.append(elm);
+      // needs twitter's widgets.js to be loaded
+      try {
+        twttr.widgets.createTweet(
+          tweetid,
+          elm.find("#embedded_tweet")[0],
+          {}).then(function (el) {
+            elm.find(".embeddedTweetSpinner").remove();
+          }
+        );
+      } catch (e) {
+        elm.find(".embeddedTweetSpinner").remove();
+        elm.find("#embedded_tweet").html(e).addClass('text-danger');
+        console.error(e);
+      }
+    }
+
+    function updateActiveJudgingButton(docid, rel) {
+      const btn_group = $(options.documentJudgingCriteriaButtonGroupSelector + `[data-doc-id='${docid}']`);
+      btn_group.children().removeClass("active");
+      if (rel === 2){
+        btn_group.find(options.documentHRelButtonSelector).addClass("active");
+      }else if (rel === 1){
+        btn_group.find(options.documentRelButtonSelector).addClass("active");
+      }else if (rel === 0){
+        btn_group.find(options.documentNonRelButtonSelector).addClass("active");
+      }
     }
 
     function updateDocumentIndicator(title, color) {
@@ -468,14 +577,25 @@ docView.prototype = {
 
     function updateDocID(docid) {
       parent.currentDocID = docid;
+      if (options.reviewMode) {
+        parent.currentDocIndex = parent.viewStack.indexOf(docid);
+      }
+
       const elm = $(options.documentIDSelector);
       if (docid) {
         elm.html(docid);
-        $(options.docViewSelector).data('doc-id', docid);
+        $(options.docViewSelector).data('doc-id', docid).attr("data-doc-id", docid);
       } else {
         elm.html("");
-        $(options.docViewSelector).data('doc-id', '');
+        $(options.docViewSelector).data('doc-id', '').attr("data-doc-id", '');
       }
+      updateButtonGroupDocidAssociation(docid);
+    }
+
+    function updateButtonGroupDocidAssociation(docid) {
+      const btn_group = $(options.documentJudgingCriteriaButtonGroupSelector + ":not('.SERP')");
+      btn_group.attr("data-doc-id", docid);
+      btn_group.children().removeClass("active");
     }
 
     function clearAdditionalJudgingCriteria() {
@@ -519,7 +639,7 @@ docView.prototype = {
       const div_elm = generate_prev_reviewed_doc_div_elm(docid, title, rel);
       // Check if docid is already in prev reviewed docs stack, if so, pop it
       const stack_index = parent.previouslyJudgedDocsStack.indexOf(docid);
-      if (stack_index !== -1) {
+      if (stack_index !== -1 && !options.reviewMode) {
         parent.previouslyJudgedDocsStack.splice(stack_index, 1);
         // remove the div associated with the docid
         $("." + options.prevReviewedDocumentItemClass).each(function () {
@@ -533,11 +653,15 @@ docView.prototype = {
         viewPreviouslyJudgedDocument($(this).data("doc-id").toString())
       });
 
-      // add to top of the list view/stack
-      $(options.previouslyReviewedListSelector).prepend(div_elm);
-      parent.previouslyJudgedDocsStack.push(docid);
-
-
+      if (!options.reviewMode || stack_index === -1) {
+        // add to top of the list view/stack
+        $(options.previouslyReviewedListSelector).prepend(div_elm);
+        parent.previouslyJudgedDocsStack.push(docid);
+      } else {
+        // update indicator
+        const current = $("." + options.prevReviewedDocumentItemClass + `[data-doc-id='${docid}']`);
+        current.children().eq(0).css('border-color', relToColor(rel));
+      }
     }
 
     function highlightTerm(term, score) {
@@ -587,14 +711,38 @@ docView.prototype = {
       });
     }
 
+      function getSCALInfo(callback) {
+        const url = options.getSCALInfoURL;
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function (result) {
+            updateSCALInfo(result)
+            if (typeof callback === "function") {
+              callback();
+            }
+          },
+          error: function (_) {
+            updateSCALInfo({
+              "stratum_number": "NA",
+              "sample_size": "NA",
+              "stratum_size": "NA",
+            });
+          }
+        });
+      }
+
     function populatePrevReviewedDocuments(callback) {
       const url = options.getPrevDocumentsJudgedURL;
       $.ajax({
         url: url,
         method: 'GET',
         success: function (result) {
-          $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
-          parent.previouslyJudgedDocsStack = [];
+          $(options.previouslyReviewedListSelector).empty();
+            parent.previouslyJudgedDocsStack = [];
+            parent.previouslyJudgedDocs = {};
+            $(options.previouslyReviewedListSpinnerSelector).addClass("d-none");
+
           for (let i = 0; i < result.length; i++) {
             let item = result[result.length - 1 - i];
             parent.previouslyJudgedDocs[item["doc_id"]] = {
@@ -721,7 +869,7 @@ docView.prototype = {
         'doc_CAL_snippet': "",
         'doc_search_snippet': docSnippet,
         'relevance': rel,
-        'source': "SERP",
+        'source': "search_SERP",
         'client_time': now,
         'search_query': null,
         'ctrl_f_terms_input': $("#search_content").val(),
@@ -732,7 +880,7 @@ docView.prototype = {
         'historyItem': {
           "username": options.username,
           "timestamp": now,
-          "source": "SERP",
+          "source": "search_SERP",
           "queryID": options.queryID,
           "query": options.query,
           "judged": true,
@@ -745,10 +893,14 @@ docView.prototype = {
         method: 'POST',
         data: JSON.stringify(data),
         success: function (result) {
-          if (result['is_max_judged_reached']) {
+          updateActiveJudgingButton(docid, rel);if (result['is_max_judged_reached']) {
             showMaxJudgmentReached();
-            return;
-          }
+            return;}
+
+              if(result["CALFailedToReceiveJudgment"]){
+                parent.afterCALFailedToReceiveJudgment(docid, rel);
+              }
+
           sendLog(LOG_EVENT.JUDGMENT_END, {
             docId: docId,
             rel: rel
@@ -769,6 +921,7 @@ docView.prototype = {
     }
 
     function sendJudgment(rel, callback) {
+      var current_docview_stack_size = parent.viewStack.length;
       if (!(options.singleDocumentMode || options.searchMode)) {
         window.scrollTo(0, 0);
       }
@@ -786,7 +939,7 @@ docView.prototype = {
       const currentSnippet = getCurrentDocSnippet();
       updateOrCreatePreviouslyReviewedListItem(docId, currentTitle, rel);
 
-      if (!options.singleDocumentMode && !options.searchMode) {
+      if (!options.singleDocumentMode && !options.searchMode && !options.reviewMode) {
         clearDocumentView();
       } else {
         updateDocumentIndicator(relToTitle(rel), relToColor(rel));
@@ -811,6 +964,7 @@ docView.prototype = {
         'ctrl_f_terms_input': $("#search_content").val(),
         'csrfmiddlewaretoken': options.csrfmiddlewaretoken,
         'page_title': document.title,
+          'current_docview_stack_size': current_docview_stack_size,
 
         // history item
         'historyItem': {
@@ -834,16 +988,20 @@ docView.prototype = {
         method: 'POST',
         data: JSON.stringify(data),
         success: function (result) {
-          if (!options.singleDocumentMode && !options.searchMode) {
+          if (!options.singleDocumentMode && !options.searchMode&& !options.reviewMode) {
             updateViewStack(result["next_docs"]);
-          }
+          }else{
+                updateActiveJudgingButton(docid, rel);
+              }
           if (result['is_max_judged_reached']) {
             showMaxJudgmentReached();
-            //disableJudgments();
+
             return;
           }
 
-          if (parent.currentDocID === null) {
+          if(result["CALFailedToReceiveJudgment"]){
+                parent.afterCALFailedToReceiveJudgment(docid, rel);
+              }if (parent.currentDocID === null) {
             if (typeof callback === "function") {
               callback();
             }
@@ -886,6 +1044,9 @@ docView.prototype = {
       }
       if (typeof data.content === "string") {
         updateBody(data.content, {"color": options.primaryColor});
+        if (options.embedTweet){
+          embedTweet(docId); // docid is the tweet id.
+        }
       }
       if (typeof data.date === "string") {
         updateMeta(data.date);
@@ -903,11 +1064,22 @@ docView.prototype = {
         }
       }
 
+      // unbold the previous document
+      const previous = $("." + options.prevReviewedDocumentItemClass + `[data-is-current='true']`);
+      previous.removeClass("bold");
+      previous.attr("data-is-current", "false");
+
+      //bold the current document
+      const current = $("." + options.prevReviewedDocumentItemClass + `[data-doc-id='${docid}']`);
+      current.addClass("bold");
+      current.attr("data-is-current", "true");
+
       let prevRel;
       if (data.rel !== undefined && typeof data.rel === "number") {
         const color = relToColor(data.rel);
         prevRel = checkIfDocumentPreviouslyJudged(docId);
         updateDocumentIndicator(relToTitle(data.rel), color);
+        updateActiveJudgingButton(docid, data.rel);
         updateAdditionalJudgingCriteriaValues(data.additional_judging_criteria);
       } else {
         prevRel = checkIfDocumentPreviouslyJudged(docId);
@@ -957,7 +1129,7 @@ docView.prototype = {
           parent.documentCacheStore.set(doc.doc_id, doc);
         }
         // make sure stack doesn't include previously judged documents or current doc
-        if ((!(doc.doc_id in parent.previouslyJudgedDocs) || (parent.previouslyJudgedDocs[doc.doc_id]["relevance"] === null)) && doc.doc_id !== parent.currentDocID) {
+        if (((!(doc.doc_id in parent.previouslyJudgedDocs) || (parent.previouslyJudgedDocs[doc.doc_id]["relevance"] === null)) && doc.doc_id !== parent.currentDocID) || options.reviewMode){
           docids.push(doc.doc_id);
         }
       }
@@ -967,12 +1139,28 @@ docView.prototype = {
     function generate_prev_reviewed_doc_div_elm(docid, title, rel) {
       const rel_color = relToColor(rel);
       return $(`
-        <a href="#" class="d-flex mb-1 text-muted ${options.prevReviewedDocumentItemClass}" style="min-height: 1rem;" data-doc-id="${docid}">
+        <a href="#" class="d-flex mb-1 text-muted ${options.prevReviewedDocumentItemClass}" style="min-height: 1rem;" data-doc-id="${docid}" data-is-current="false">
             <div class="align-self-center align-self-stretch p-1" style="border-width: 0.15rem!important; border-style: none none none solid; border-color: ${rel_color};"></div>
             <div class="align-self-center text-truncate">
                 <div class="docView-default-font-family text-truncate">${title}</div>
             </div>
         </a>
+      `);
+    }
+
+    function generate_embedded_tweet_elm() {
+      return $(`
+      <div class="card border-0">
+        <div class="card-body py-4 px-0">
+          <div class="d-flex w-50 justify-content-between font-sans text-primary mb-3 border-bottom highlight-exclude unselectable" unselectable="on">
+            <small class="highlight-exclude">Embedded tweet</small>
+          </div>
+          <div class="mx-auto embeddedTweetSpinner mt-2 pl-4">
+            <div class="la-ball-circus text-secondary"><div></div><div></div><div></div><div></div><div></div></div>
+          </div>
+          <div id="embedded_tweet"></div>
+        </div>
+      </div>
       `);
     }
 
@@ -1046,6 +1234,15 @@ docView.prototype = {
       return "";
     }
 
+    function isURL(str) {
+      var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+        '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+      return !!pattern.test(str);
+    }
 
     return this._init();
   },
@@ -1095,6 +1292,12 @@ docView.prototype = {
     "use strict";
     return this.triggerEvent("afterDocumentJudge", [docid, rel]);
   },
+
+  afterCALFailedToReceiveJudgment: function(docid, rel) {
+    "use strict";
+    return this.triggerEvent("afterCALFailedToReceiveJudgment", [docid, rel]);
+  },
+
 
   afterErrorShown: function () {
     "use strict";

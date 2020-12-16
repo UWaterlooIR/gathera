@@ -29,6 +29,7 @@ urlpatterns = [
     path('search/', include('web.search.urls', namespace='search')),
     path('topic/', include('web.topic.urls', namespace='topic')),
     path('judgment/', include('web.judgment.urls', namespace='judgment')),
+    path('review/', include('web.review.urls', namespace='review')),
 
     # Logger
     path(r'logger/', LoggerView.as_view(), name='logger'),

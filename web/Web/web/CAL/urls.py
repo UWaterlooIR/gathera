@@ -15,4 +15,6 @@ urlpatterns = [
          name='get_docs'),
     path('get_docs_ids/', views.DocAJAXView.as_view(),
          name='get_docs_ids'),
+    path('get_scal_info/', views.SCALInfoView.as_view(),
+         name='get_scal_info'),
 ]

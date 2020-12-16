@@ -1,12 +1,12 @@
 from config.settings.base import AUTH_USER_MODEL as User
 import uuid
 
+from django.apps import apps
 from django.db import models
 
 from web.CAL.exceptions import CALError
 from web.interfaces.CAL import functions as CALFunctions
 from web.topic.models import Topic
-from django.apps import apps
 
 
 class Session(models.Model):
@@ -24,6 +24,8 @@ class Session(models.Model):
 
     # max number of judgments you wish for this task. 0 or negative to have no max.
     max_number_of_judgments = models.IntegerField(null=False, blank=False)
+    max_number_of_judgments_reached = models.BooleanField(default=False)
+
     strategy = models.CharField(max_length=64,
                                 choices=STRATEGY_CHOICES,
                                 null=False,
@@ -42,16 +44,17 @@ class Session(models.Model):
                                       editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            try:
-                CALFunctions.add_session(str(self.uuid),
-                                         self.topic.seed_query,
-                                         self.strategy)
-            except (CALError, ConnectionRefusedError, Exception) as e:
-                # TODO: log error
-                pass
-        super(Session, self).save(*args, **kwargs)
+    def begin_session_in_cal(self):
+        try:
+            judgments = self.judgment_set.all()
+            judgments_list = [(j.doc_id, j.relevance) for j in judgments]
+            CALFunctions.add_session(str(self.uuid),
+                                     self.topic.seed_query,
+                                     self.strategy,
+                                     judgments_list)
+        except (CALError, ConnectionRefusedError, Exception) as e:
+            # TODO: log error
+            pass
 
     def is_summary(self):
         return "para" in self.strategy

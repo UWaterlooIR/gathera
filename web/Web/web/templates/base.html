@@ -15,6 +15,7 @@
       <!-- Other -->
       <link href="{% static 'css/pace.css' %}" rel="stylesheet">
       <link href="{% static 'css/font-awesome-all.css' %}" rel="stylesheet">
+      <link href="{% static 'css/loadawesome.css' %}" rel="stylesheet">
       {% include "raven-config.html" %}
       <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
       <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
@@ -37,6 +38,8 @@
           document.write(`<img alt="${input}" title="${input}" width=${width} height=${height} class="${css}" src="data:image/svg+xml;base64, ${svg} ">`);
         }
       </script>
+
+
       {% block extra_head %}{% endblock %}
 
   </head>
@@ -65,7 +68,7 @@
           <a class="nav-item nav-link {% if 'CAL' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'CAL:main' %}">Discovery</a>
           {% endif %}
 
-          <a class="nav-item nav-link {% if 'Review' in request.resolver_match.app_names %}text-primary{% endif %}" href="#">Review</a>
+          <a class="nav-item nav-link {% if 'review' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'review:main' %}">Review</a>
         </div>
         {% endif %}
         <ul class="nav navbar-nav flex-fill justify-content-center align-self-center center-text pl-5 pr-5 order-2 {%block navbar-hidesmall %}d-none d-sm-block{%endblock%}">
@@ -202,6 +205,8 @@
     <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
 
     <script>
+        // initilize toasts
+        $('.toast').toast()
 
         // Adds border-bottom to navbar when scroll
         $(window).scroll(function () {
@@ -246,14 +251,36 @@
       $(document).on("click", "#notificationDetails", function () {
             $("#notificationModalSpinner").removeClass("d-none");
             $("#notificationsModalError").addClass("d-none");
+            $(".notification_table").addClass("d-none");
+            $("#notificationModalList").empty();
 
             // fetch notification details
             $.ajax({
                 url: '{% url 'notifications:live_unread_notification_list' %}',
                 method: 'GET',
                 success: function (result) {
-                  console.log(result);
-                  $("#notificationModalList").html(JSON.stringify(result, null, 2));
+                  if (result !== undefined && result["unread_count"] !== 0){
+                    $(".notification_table").removeClass("d-none");
+                    result["unread_list"].forEach(function (entry) {
+                      let elm = `
+                          <tr class="notification-details">
+                          <td class="align-middle">
+                            <span class="text-monospace text-primary small pr-2">${entry["timestamp"]}</span>
+                          </td>
+                          <td class="align-middle">${entry["description"]}</td>
+                          <td class="text-center align-middle">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" value="" id="defaultCheck2" disabled>
+                              <label class="form-check-label" for="defaultCheck2">
+
+                              </label>
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                      $("#notificationModalList").append(elm);
+                    });
+                  }
                   $("#notificationModalSpinner").addClass("d-none");
                 },
                 error: function (result) {
@@ -380,6 +407,9 @@
                     $("#sharedWithTab").removeClass("d-none");
                     // Update shared with list
                     $("#sessionSharedWithList").html("");
+                    if (shared_with_obj.length === 0){
+                      $("#sharedWithTab").addClass("d-none");
+                    }
                     for (let i = 0; i < shared_with_obj.length; i++){
                       const shared_with_obj_i = shared_with_obj[i];
                       $("#sessionSharedWithList").append(templateSharedToUser(

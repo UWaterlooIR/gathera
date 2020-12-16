@@ -1,26 +1,25 @@
-import copy
-import math
-
-from config.settings.base import SEARCH_ENGINE
 from config.settings.base import DEFAULT_NUM_DISPLAY
-
+from config.settings.base import SEARCH_ENGINE
+import copy
 import json
 import logging
-from django.shortcuts import render
+import math
+
 from braces import views
-
 from django.http import HttpResponse
-
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse_lazy
 from django.utils.module_loading import import_string
 from django.views import generic
 
 from web.core.mixin import RetrievalMethodPermissionMixin
 from web.interfaces.DocumentSnippetEngine import functions as DocEngine
 from web.interfaces.SearchEngine.base import SearchInterface
+from web.search import helpers
 from web.search.models import Query
 from web.search.models import SearchResult
 from web.search.models import SERPClick
-from web.search import helpers
 
 SearchEngine: SearchInterface = import_string(SEARCH_ENGINE)
 logger = logging.getLogger(__name__)
@@ -37,7 +36,6 @@ class SimpleSearchView(views.LoginRequiredMixin,
             query=query,
             session=self.request.user.current_session,
         )
-
 
         sr, sr_was_created = SearchResult.objects.get_or_create(
             username=self.request.user,
@@ -63,6 +61,9 @@ class SimpleSearchView(views.LoginRequiredMixin,
         return page_number, num_display, offset
 
     def get(self, request, *args, **kwargs):
+        if not self.request.user.current_session:
+            return HttpResponseRedirect(reverse_lazy('core:home'))
+
         query = request.GET.get('query', None)
         if query:
             page_number, num_display, offset = self.get_params()
@@ -107,7 +108,6 @@ class SimpleSearchView(views.LoginRequiredMixin,
         return render(request, self.template_name, context)
 
 
-
 class SearchButtonView(views.CsrfExemptMixin,
                        views.LoginRequiredMixin,
                        RetrievalMethodPermissionMixin,
@@ -130,32 +130,3 @@ class SearchButtonView(views.CsrfExemptMixin,
         return self.render_json_response(context)
 
 
-class SearchGetDocAJAXView(views.CsrfExemptMixin,
-                           views.LoginRequiredMixin,
-                           RetrievalMethodPermissionMixin,
-                           views.JsonRequestResponseMixin,
-                           views.AjaxResponseMixin, generic.View):
-    require_json = False
-
-    def render_timeout_request_response(self, error_dict=None):
-        if error_dict is None:
-            error_dict = self.error_response_dict
-        json_context = json.dumps(
-            error_dict,
-            cls=self.json_encoder_class,
-            **self.get_json_dumps_kwargs()
-        ).encode('utf-8')
-        return HttpResponse(
-            json_context, content_type=self.get_content_type(), status=502)
-
-    def get_ajax(self, request, *args, **kwargs):
-        docid = request.GET.get('docid')
-        if not docid:
-            return self.render_json_response([])
-        try:
-            document = DocEngine.get_documents([docid])
-        except TimeoutError:
-            error_dict = {u"message": u"Timeout error. Please check status of servers."}
-            return self.render_timeout_request_response(error_dict)
-
-        return self.render_json_response(document)

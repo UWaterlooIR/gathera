@@ -5,8 +5,10 @@ import logging
 import urllib.parse
 
 import httplib2
+import requests
 
 from web.CAL.exceptions import CALServerError
+from web.CAL.exceptions import CALServerSessionNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -65,32 +67,35 @@ def check_docid_exists(session, doc_id):
         raise CALServerError(resp['status'])
 
 
-def add_session(session, seed_query, mode):
+def add_session(session, seed_query, mode, seed_judgments = []):
     """
     Adds session to CAL backend server
     :param session:
     :param seed_query
     :param mode
     """
-    h = httplib2.Http()
-    url = "http://{}:{}/CAL/begin"
+    url = f"http://{CAL_SERVER_IP}:{CAL_SERVER_PORT}/CAL/begin"
 
     body = {'session_id': str(session),
             'seed_query': seed_query,
             'judgments_per_iteration': 1,
             'async': True,
-            'mode': mode}
-    post_body = '&'.join('%s=%s' % (k, v) for k, v in body.items())
+            'mode': mode,
+            }
 
-    resp, content = h.request(url.format(CAL_SERVER_IP,
-                                         CAL_SERVER_PORT),
-                              body=post_body,
-                              headers={'Content-Type': 'application/json; charset=UTF-8'},
-                              method="POST")
-    if resp and resp['status'] != '200':
-        return False
+    if seed_judgments:
+        body['seed_judgments']=','.join([j[0] + ':' + str(j[1]) for j in seed_judgments])
+
+    post_body = '&'.join('%s=%s' % (k, v) for k, v in body.items())
+    resp, content = response = requests.post(url,
+                                  data=post_body,
+                                  headers={'Content-Type': 'application/json; charset=UTF-8'},
+                                )
+
+    if resp.ok:
+        return True
     else:
-        raise CALServerError(resp['status'])
+        raise CALServerError(resp.status_code)
 
 
 def delete_session(session):
@@ -136,5 +141,47 @@ def get_documents(session, num_docs):
         content = json.loads(content.decode('utf-8'))
 
         return content['docs'], content['top-terms']
+    elif resp and resp['status'] == '404':
+        raise CALServerSessionNotFoundError(resp['status'])
+    else:
+        raise CALServerError(resp['status'])
+
+
+def restore_session(session_id, seed_query, seed_documents, session_strategy):
+    """
+    :param session_id:
+    :param seed_query:
+    :param seed_documents: Must be a queryset of the the model Judgment
+    :param session_strategy:
+    :return: request response
+    """
+    url = f"http://{CAL_SERVER_IP}:{CAL_SERVER_PORT}/CAL/begin"
+    seed_docs = ','.join([d.doc_id + ':' + str(d.relevance) for d in seed_documents])
+
+    data = 'session_id={}&seed_query={}&seed_judgments={}&mode={}'.format(
+        session_id, seed_query, seed_docs, session_strategy)
+
+    return requests.post(url, data=data)
+
+
+def get_scal_info(session):
+    """
+    :param session: current session
+    :return: return JSON object
+    """
+    h = httplib2.Http()
+    url = "http://{}:{}/CAL/get_stratum_info?"
+
+    parameters = {'session_id': str(session)}
+    parameters = urllib.parse.urlencode(parameters)
+    resp, content = h.request(url.format(CAL_SERVER_IP,
+                                         CAL_SERVER_PORT) + parameters,
+                              method="GET")
+    if resp and resp['status'] == '200':
+        content = json.loads(content.decode('utf-8'))
+        if not content:
+            return None
+        else:
+            return content['info']
     else:
         raise CALServerError(resp['status'])

@@ -1,5 +1,3 @@
-from django.db.models import Q
-
 from web.judgment.models import Judgment
 
 

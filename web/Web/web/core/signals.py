@@ -1,5 +1,5 @@
-from django.db.models.signals import post_delete, post_save
-from django.db.models.signals import post_init
+from django.db.models.signals import post_delete
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from notifications.signals import notify
 
@@ -41,4 +41,5 @@ def post_save_shared_session(sender, instance, **kwargs):
     notify.send(sender=shared_by_user,
                 recipient=shared_with_user,
                 verb='shared',
+                description=f'{shared_by_user} shared a new session "{instance.refers_to.topic.title}" with you.',
                 action_object=instance)

@@ -17,10 +17,29 @@ class RetrievalMethodPermissionMixin(object):
 
     def __init__(self):
         self.disallow_message = 'Sorry, you are not allowed to ' \
-                                'use {} in this shared session.'
+                                'use {} in this session.'
 
     def dispatch(self, request, *args, **kwargs):
         current_session_obj = request.user.current_session
+
+        if not current_session_obj:
+            messages.add_message(request,
+                                 messages.ERROR,
+                                 "Sorry, you need to activate a session first.")
+            return HttpResponseRedirect(reverse_lazy('core:home'))
+
+        if "scal" in request.user.current_session.strategy and "search" in request.resolver_match.app_names:
+            messages.add_message(request,
+                                 messages.ERROR,
+                                 self.disallow_message.format("search"))
+            return HttpResponseRedirect(reverse_lazy('core:home'))
+
+        if current_session_obj.max_number_of_judgments_reached and "search" not in request.resolver_match.app_names:
+            messages.add_message(request,
+                                 messages.ERROR,
+                                 "Sorry, you have reached the max number of judgments "
+                                 "allowed for this session.")
+            return HttpResponseRedirect(reverse_lazy('core:home'))
 
         if current_session_obj and current_session_obj.username != request.user:
             try:

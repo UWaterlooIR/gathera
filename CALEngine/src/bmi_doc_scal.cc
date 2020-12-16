@@ -14,7 +14,12 @@ BMI_doc_scal::BMI_doc_scal(Seed _seed,
     R = 0;
     judgments_per_iteration = B;
     for(auto &seed_judgment: seed_judgments){
-        add_to_training_cache(documents->get_index(seed_judgment.first), seed_judgment.second);
+        auto doc_index = documents->get_index(seed_judgment.first);
+        if (doc_index != documents->NPOS) {
+            add_to_training_cache(documents->get_index(seed_judgment.first), seed_judgment.second);
+        } else {
+            cerr << "Document with ID " << seed_judgment.first << " not found" << endl;
+        }
     }
     perform_iteration();
     stratums.push_back(vector<pair<int, float>>());
@@ -66,4 +71,8 @@ void BMI_doc_scal::record_judgment_batch(vector<pair<string, int>> _judgments){
         }
         B = B + ceil(B/10.0);
     }
+}
+
+unique_ptr<BMI::StratumInfo> BMI_doc_scal::get_stratum_info(){
+    return make_unique<StratumInfo>(stratums.size(), stratums.back().size(), ceil(B*N/(float)T));
 }

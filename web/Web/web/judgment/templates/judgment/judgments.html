@@ -24,12 +24,12 @@
               <tbody>
               {% for row in judgments %}
               <tr
-                id="doc_{{row.doc_id}}_card"
-                data-doc-id="{{ row.doc_id }}"
-                data-title="{{ row.doc_title|safe }}"
-                data-toggle="modal" data-target="#documentModal"
-                class="searchItemSelector"
-                style="cursor: pointer;"
+                  id="doc_{{row.doc_id}}_card"
+                  data-doc-id="{{ row.doc_id }}"
+                  data-title="{{ row.doc_title|safe }}"
+                  data-toggle="modal" data-target="#documentModal"
+                  class="searchItemSelector"
+                  style="cursor: pointer;"
               >
                 <th scope="row">
                   <code><span class="text-primary small">{{ row.doc_id }}</span></code>
@@ -58,10 +58,8 @@
       <div class="card-block">
         <h2 class="text-dark mb-4">Operations</h2>
 
-        <a id="import_csv" href="#" class="btn btn-outline-primary btn-sm mb-3 btn-block" data-toggle="modal"
-           data-target="#importModal">Import judgments</a>
-        <a id="export_csv" href="#" class="btn btn-outline-primary btn-sm mb-3 btn-block" data-toggle="modal"
-           data-target="#exportModal">Export to csv</a>
+        <a id="import_csv" href="#" class="btn btn-outline-primary btn-sm mb-3 btn-block" data-toggle="modal" data-target="#importModal">Import judgments</a>
+        <a id="export_csv" href="#" class="btn btn-outline-primary btn-sm mb-3 btn-block" data-toggle="modal" data-target="#exportModal">Export to csv</a>
       </div>
     </div>
   </div>
@@ -73,8 +71,7 @@
         <div class="modal-header">
           <div class="d-flex flex-column flex-grow-1 ">
             <h5 class="modal-title text-primary">Import judgments</h5>
-            <h6 class="text-muted">Please reformat your CSV file to have columns, <code>docno</code>, and
-              <code>judgment</code>.</h6>
+            <h6 class="text-muted">Please reformat your CSV file to have columns, <code>docno</code>, and <code>judgment</code>.</h6>
           </div>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -82,15 +79,15 @@
         </div>
         <form method="POST" enctype="multipart/form-data" id="import_csv_form">
           <div class="modal-body">
-            <p>Example of accepted CSV file:</p>
-            <pre class="small text-muted">
+              <p>Example of accepted CSV file:</p>
+                    <pre class="small text-muted">
                       docno, judgment
                       mydocid1, 1,
                       mydocid2, 0,
                       mydocid3, 2</pre>
 
-            {% csrf_token %}
-            {% crispy upload_form %}
+              {% csrf_token %}
+              {% crispy upload_form %}
 
           </div>
 
@@ -111,8 +108,7 @@
         <div class="modal-header">
           <div class="d-flex flex-column flex-grow-1 ">
             <h5 class="modal-title text-primary">Export judgments</h5>
-            <h6 class="text-muted">Judgments will be exported in csv format, with columns, <code>docno</code>, <code>judgment</code>,
-              and <code>user</code>.</h6>
+            <h6 class="text-muted">Judgments will be exported in csv format, with columns, <code>docno</code>, <code>judgment</code>, and <code>user</code>.</h6>
           </div>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -121,8 +117,8 @@
         <form method="GET" id="export_csv_form">
           {% csrf_token %}
           <div class="modal-body">
-            <p>Example of exported CSV file:</p>
-            <pre class="small text-muted">
+              <p>Example of exported CSV file:</p>
+                <pre class="small text-muted">
                   docno, judgment, user
                   mydocid1, 1, myusername
                   mydocid2, 0, myusername
@@ -131,9 +127,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-            <button class="btn btn-outline-secondary" id="export_csv_button" name="export_csv" value="export_csv"
-                    type="submit">Export to CSV
-            </button>
+            <button class="btn btn-outline-secondary" id="export_csv_button" name="export_csv" value="export_csv" type="submit">Export to CSV</button>
           </div>
         </form>
       </div>
@@ -144,64 +138,74 @@
   {% include 'modals/document_modal.html' %}
   <!-- Judging criteria modal -->
   {% include 'modals/additional_judging_criteria_modal.html' %}
+  <!-- Discovery failed to receive judgment toast -->
+  {% include 'toasts/discovery_failed_to_receive_judgment.html' %}
 
 </div>
 
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://unpkg.com/runtime-memcache@2.0.0"></script>
-<script src="{% static 'js/moment.min.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
-<script src="{% static 'js/logger.js' %}"></script>
-<script src="{% static 'js/document-viewer.js' %}"></script>
-<script src="{% static 'js/highlight.js' %}"></script>
+    <script src="https://unpkg.com/runtime-memcache@2.0.0"></script>
+    <script src="{% static 'js/moment.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+    <script src="{% static 'js/document-viewer.js' %}"></script>
+    <script src="{% static 'js/highlight.js' %}"></script>
 
-<script>
+    <script>
 
-  const dv = new docView();
-  dv.init({
-    username: '{{ request.user }}',
-    singleDocumentMode: true,
-    judgingSourceName: "judgmentsPage",
-    searchMode: true,
-    getDocumentsToJudgeURL: "{% url 'CAL:get_docs' %}",
-    getPrevDocumentsJudgedURL: "{% url 'judgment:get_latest' number_of_docs_to_show=50 %}",
-    getDocumentIDsToJudgeURL: "{% url 'CAL:get_docs_ids' %}",
-    sendDocumentJudgmentURL: "{% url 'judgment:post_judgment' %}",
-    getDocumentURL: "{% url 'core:get_single_doc' %}?docid=",
-    fetchPreviouslyJudgedDocsOnInit: false,
-    mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',
-    csrfmiddlewaretoken: "{{ csrf_token }}",
+        var dv = new docView();
+        dv.init({
+          username: '{{ request.user }}',
+          singleDocumentMode: true,
+          judgingSourceName: "judgmentsPage",
+          searchMode: true,
+          getDocumentsToJudgeURL: '{% url 'CAL:get_docs' %}',
+          getPrevDocumentsJudgedURL: '{% url 'judgment:get_latest' number_of_docs_to_show=50 %}',
+          getDocumentIDsToJudgeURL: '{% url 'CAL:get_docs_ids' %}',
+          sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
+          getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
+          fetchPreviouslyJudgedDocsOnInit: false,
+          mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',
+          csrfmiddlewaretoken: "{{ csrf_token }}",
 
-    afterDocumentJudge: function (docid, rel) {
-      // update document indicator in SERP
-      let newColor = "";
-      let relText = "";
-      switch (rel) {
-        case 0:
-          newColor = "badge-nonRelevant";
-          relText = "Non-{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}"
-          break;
-        case 1:
-          newColor = "badge-relevant";
-          relText = "{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}";
-          break;
-        case 2:
-          newColor = "badge-highlyRelevant";
-          relText = "Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}";
-          break;
-      }
-      $(`#doc_${docid}_judgment_badge`).attr('class', `badge ${newColor}`);
-      $(`#doc_${docid}_judgment_badge`).text(relText);
-      console.log(`badge ${newColor}`);
-    },
+          afterDocumentJudge: function(docid, rel) {
+            // update document indicator in SERP
+            let newColor = "";
+            let relText = "";
+            switch (rel) {
+              case 0:
+                newColor = "badge-nonRelevant"; relText = "Non-{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}"
+                break;
+              case 1:
+                newColor = "badge-relevant"; relText = "{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}";
+                break;
+              case 2:
+                newColor = "badge-highlyRelevant"; relText = "Highly {% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}";
+                break;
+            }
+            $(`#doc_${docid}_judgment_badge`).attr('class', `badge ${newColor}`);
+            $(`#doc_${docid}_judgment_badge`).text(relText);
+            console.log(`badge ${newColor}`);
+          },
 
-    afterDocumentLoad: function (docid) {
-      // Perform keyword search if necessary
-      searchForKeyword();
-    }
-  });
+          afterDocumentLoad: function (docid) {
+            // Perform keyword search if necessary
+            searchForKeyword();
+          },
 
-</script>
+          afterCALFailedToReceiveJudgment: function(docid, rel) {
+            $('#toast_CALFailedToReceiveJudgment').toast('dispose');
+            $(".CALFailedToReceiveJudgmentSpinner").removeClass("d-none");
+            $("#CALFailedToReceiveJudgment_toast_body").addClass("d-none");
+            $("#toast_CALFailedToReceiveJudgment_docid").html(docid);
+            setInterval(function(){
+              $("#CALFailedToReceiveJudgment_toast_body").removeClass("d-none");
+              $(".CALFailedToReceiveJudgmentSpinner").addClass("d-none");
+            },500);
+            $('#toast_CALFailedToReceiveJudgment').toast('show');
+          }
+        });
+
+    </script>
 {% endblock %}

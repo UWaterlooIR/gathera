@@ -7,9 +7,6 @@ app_name = "search"
 urlpatterns = [
     path('', views.SimpleSearchView.as_view(),
          name='main'),
-    path('get_single_doc/',
-         views.SearchGetDocAJAXView.as_view(),
-         name='get_doc'),
 
 
     # Ajax views
