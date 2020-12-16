@@ -377,7 +377,6 @@ docView.prototype = {
         updateAdditionalJudgingCriteriaValues(prevJudgedDocObj["additional_judging_criteria"]);
       }
       updateDocumentIndicator(relToTitle(prevJudgedDocRel), color);
-      return prevJudgedDocRel;
     }
 
     function updateAdditionalJudgingCriteriaValues(criteria_value_map) {
