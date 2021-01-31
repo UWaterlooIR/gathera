@@ -13,6 +13,7 @@ from django.http import StreamingHttpResponse
 from django.urls import reverse_lazy
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
+from interfaces.DocumentSnippetEngine import highlighter
 
 from web.CAL.exceptions import CALError
 from web.interfaces.CAL import functions as CALFunctions
@@ -61,6 +62,7 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
             found_ctrl_f_terms_in_summary = self.request_json.get(u"found_ctrl_f_terms_in_summary", None)
             found_ctrl_f_terms_in_full_doc = self.request_json.get(u"found_ctrl_f_terms_in_full_doc", None)
             current_docview_stack_size = self.request_json.get(u"current_docview_stack_size", None)
+            highlight = self.request_json.get(u"highlight_next_batch", False)
         except KeyError:
             error_dict = {u"message": u"POST input missing important fields"}
 
@@ -170,6 +172,14 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
                     documents = DocEngine.get_documents_with_snippet(doc_ids_hack,
                                                                      seed_query,
                                                                      top_terms)
+
+                if highlight:
+                    for d in documents:
+                        d["highlight"] = highlighter.generate_highlight(
+                            text=d["content"],
+                            query=seed_query
+                        )
+
                 context[u"next_docs"] = documents
             except TimeoutError:
                 context["CALFailedToReceiveJudgment"] = True

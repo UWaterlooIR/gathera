@@ -34,6 +34,7 @@ var docView = function() {
     reviewMode: false,
     embedTweet: false, // only for tweet data. Needs twitter's widget.js to be loaded (https://platform.twitter.com/widgets.js).
     mainJudgingCriteriaName: "Relevant", // adjective of criteria
+    enableExcerptHighlight: true,
 
     // Specific to search
     queryID: null,
@@ -527,6 +528,11 @@ docView.prototype = {
     function updateSnippet(content, styles) {
       const elm = $(options.documentSnippetSelector);
       elm.html(content).removeClass();
+      if (content !== ""){
+        elm.parent().parent().removeClass("d-none");
+      }else{
+        elm.parent().parent().addClass("d-none");
+      }
       updateStyles(elm, styles);
     }
 
@@ -694,7 +700,10 @@ docView.prototype = {
      * Calls server to request documents to judge.
      */
     function getDocumentsToJudge(callback) {
-      const url = options.allowDocumentCaching ? options.getDocumentsToJudgeURL : options.getDocumentIDsToJudgeURL;
+      let url = options.allowDocumentCaching ? options.getDocumentsToJudgeURL : options.getDocumentIDsToJudgeURL;
+      if (options.enableExcerptHighlight){
+        url = url + "?highlight=true";
+      }
       $.ajax({
           url: url,
           method: 'GET',
@@ -976,6 +985,10 @@ docView.prototype = {
           },
       };
 
+      if (options.enableExcerptHighlight){
+        data["highlight_next_batch"] = true
+      }
+
       if ($(`#doc_${docid}_card`).length){
         data["doc_search_snippet"] = $(`#doc_${docid}_card`).data("snippet");
       }
@@ -1051,6 +1064,8 @@ docView.prototype = {
       }
       if (typeof data.snippet === "string"){
         updateSnippet(data.snippet, {"color": options.primaryColor});
+      }else if (typeof data.highlight === "string"){
+        updateSnippet(data.highlight, {"color": options.primaryColor});
       }
       if (options.showTopTerms && isDict(data.top_terms)){
         for (let term in data.top_terms){
@@ -1183,7 +1198,11 @@ docView.prototype = {
     }
 
     function getDocumentURL(docid) {
-      return options.getDocumentURL + docid;
+      let url = options.getDocumentURL + docid;
+      if (options.enableExcerptHighlight){
+        url = url + "&highlight=true";
+      }
+      return url
     }
 
     function isDict(v) {

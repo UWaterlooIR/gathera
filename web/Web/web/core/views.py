@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.views import View
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
+from interfaces.DocumentSnippetEngine import highlighter
 
 import pytz
 from web.core.forms import ShareSessionForm
@@ -246,6 +247,8 @@ class GetDocAJAXView(views.CsrfExemptMixin,
         try:
             doc_id = request.GET.get('docid')
             doc_id = str(doc_id)
+            highlight = request.GET.get("highlight", False)
+            highlight = str(highlight) == "true"
         except KeyError:
             return JsonResponse({"message": "Docid was not passed."}, status=400)
 
@@ -267,5 +270,11 @@ class GetDocAJAXView(views.CsrfExemptMixin,
         if exists:
             result[0]["rel"] = exists.first().relevance
             result[0]["additional_judging_criteria"] = exists.first().additional_judging_criteria
+
+        if highlight:
+            result[0]["highlight"] = highlighter.generate_highlight(
+                text=result[0]["content"],
+                query=seed_query
+            )
 
         return self.render_json_response(result)

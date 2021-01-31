@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
+from interfaces.DocumentSnippetEngine import highlighter
 
 from web.CAL.exceptions import CALError
 from web.CAL.exceptions import CALServerSessionNotFoundError
@@ -83,6 +84,10 @@ class DocAJAXView(views.CsrfExemptMixin,
     def get_ajax(self, request, *args, **kwargs):
         session = self.request.user.current_session
         seed_query = self.request.user.current_session.topic.seed_query
+
+        highlight = request.GET.get("highlight", False)
+        highlight = str(highlight) == "true"
+
         try:
             docids_to_judge, top_terms = CALFunctions.get_documents(str(session.uuid), 10)
             if not docids_to_judge:
@@ -110,6 +115,13 @@ class DocAJAXView(views.CsrfExemptMixin,
                 documents = DocEngine.get_documents_with_snippet(doc_ids_hack,
                                                                  seed_query,
                                                                  top_terms)
+
+            if highlight:
+                for d in documents:
+                    d["highlight"] = highlighter.generate_highlight(
+                        text=d["content"],
+                        query=seed_query
+                    )
 
             return self.render_json_response(documents)
         except TimeoutError:
