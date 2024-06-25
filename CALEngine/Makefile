@@ -1,5 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -pthread --std=c++14 -lfcgi -lfcgi++ -larchive
+DEBUG=1
 ifeq ($(DEBUG), 1)
     CXXFLAGS += -g3 -O0 -DDEBUG
 else
@@ -9,6 +10,9 @@ endif
 OBJ_DIR ?= obj
 SRC_DIRS ?= src
 TEST_DIRS ?= tests
+
+# need to specify where to find the fcgi library, change for your system
+LDFLAGS=-L/project/rrg-smucker/smucker/installs/lib
 
 # Modify BIN_SRCS to add targets
 BIN_SRCS := $(SRC_DIRS)/bmi_fcgi.cc $(SRC_DIRS)/bmi_cli.cc $(SRC_DIRS)/corpus_parser.cc
@@ -29,7 +33,7 @@ DEP_FLAGS = -MMD -MP
 all: $(BIN_TARGETS)
 
 $(BIN_TARGETS): % : $(OBJ_DIR)/$(SRC_DIRS)/%.cc.o $(OBJS)
-	$(CXX)  $(OBJS) $(OBJ_DIR)/$(SRC_DIRS)/$@.cc.o -o $@ $(CXXFLAGS)
+	$(CXX)  $(OBJS) $(OBJ_DIR)/$(SRC_DIRS)/$@.cc.o -o $@ $(CXXFLAGS) $(LDFLAGS)
 
 $(TEST_TARGETS): % : $(OBJ_DIR)/$(TEST_DIRS)/%.cc.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) $(OBJ_DIR)/$(TEST_DIRS)/$@.cc.o -o $(TEST_DIRS)/$@
