@@ -176,3 +176,4 @@ cython_debug/
 *.exe
 *.out
 *.app
+/data/docs/

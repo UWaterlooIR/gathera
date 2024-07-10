@@ -35,6 +35,7 @@ string get_tempfile(){
 int main(int argc, char **argv){
     AddFlag("--in", "Input corpus archive", string(""));
     AddFlag("--out", "Output feature file", string(""));
+    AddFlag("--out-directory", "Output directory for map", string(""));
     // Todo: merge df info to bin file
     AddFlag("--out-df", "Output document frequency file", string(""));
     AddFlag("--type", "Output file format:  bin (default) or svmlight", string("bin"));
@@ -203,7 +204,8 @@ int main(int argc, char **argv){
 
     // Write the token ID to actual token map
     ofstream id_map_file;
-    id_map_file.open("/data/id_token_map.txt");
+    out_filename = CMD_LINE_STRINGS["--out-directory"] + "/id_token_map.txt";
+    id_map_file.open(out_filename);
     cerr << "Writing " << id_tokens.size() << " tokens" << endl;
     for (auto it : id_tokens) {
         id_map_file << it.first << " " << it.second << endl;
