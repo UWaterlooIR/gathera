@@ -447,6 +447,10 @@ void log_view(const FCGX_Request & request, const vector<pair<string, string>> &
     write_response(request, 200, "text/plain", SESSIONS[session_id]->get_log());
 }
 
+void status_working_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
+    write_response(request, 200, "application/json", "{\"working\": true}");
+}
+
 // Handler for /docid_exists
 void docid_exists_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
     string session_id, doc_id;
@@ -569,6 +573,10 @@ void process_request(const FCGX_Request & request) {
     }else if(action == "log"){
         if(method == "GET"){
             log_view(request, params);
+        }
+    }else if(action == "status_working"){
+        if(method == "GET"){
+            status_working_view(request, params);
         }
     }
 }
