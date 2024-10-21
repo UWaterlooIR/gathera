@@ -3,6 +3,7 @@ from config.settings.base import PARA_URL
 
 import httplib2
 import requests
+import re
 
 try:
     # For c speedups
@@ -21,11 +22,32 @@ def get_date(content):
     return ""
 
 
+def cleanhtml(raw_html):
+    CLEANR = re.compile('<.*?>') 
+    cleantext = re.sub(CLEANR, '', raw_html)
+    return cleantext
+
 def get_subject(content):
     for line in content.split('\n'):
-        if line.strip()[:7] == "Subject":
-            return line.split(':', 1)[1].strip()
+        if line.strip()[1:6] == "title":
+            return cleanhtml(line.strip())
     return ""
+
+
+def remove_initial_non_alphanumeric(content):
+    i=0
+    if content == None:
+        return content
+    while i < len(content):
+        if content[i:i+2] == '\n':
+            i += 3
+        elif content[i:i+4] == '<br>':
+            i += 5
+        elif content[i] == " ":
+            i += 1
+        else:
+            return content[i:]
+
 
 
 def get_documents(doc_ids, query=None, top_terms=None, orig_para_id=None):
@@ -40,22 +62,21 @@ def get_documents(doc_ids, query=None, top_terms=None, orig_para_id=None):
         url = '{}/{}'.format(DOCUMENTS_URL, doc_id)
         resp, content = h.request(url,
                                   method="GET")
-        content = content.decode('utf-8', 'ignore')
+        content = remove_initial_non_alphanumeric(content.decode('utf-8', 'ignore'))
         date = get_date(content)
-        title = get_subject(content)
+        title = remove_initial_non_alphanumeric(get_subject(content))
         if len(content) == 0:
-            if len(title) == 0:
+            if not title or len(title) == 0:
                 title = '<i class="text-warning">The document title is empty</i>'
             content = '<i class="text-warning">The document content is empty</i>'
         else:
-            if len(title) == 0:
+            if not title or len(title) == 0:
                 title = content[:32]
-        if 'Users:' in content:
-            content = content[:content.index('Users:')]        
+        print(title)
         document = {
             'doc_id': doc_id,
             'title': title,
-            'content': content.replace("\n", "<br/>"),
+            'content': content,
             'date': date,
             'top_terms': top_terms.get(doc_id if orig_para_id is None else "{}.{}".format(doc_id, orig_para_id[idx]), None) if top_terms else None,
             'ok': resp.status == 200
@@ -86,7 +107,7 @@ def get_documents_with_snippet(doc_ids, query=None, top_terms=None):
             para_id = doc_para_id['doc_id'] + '.' + doc_para_id['para_id']
             resp, content = h.request(url.format(PARA_URL, para_id),
                                       method="GET")
-            doc['snippet'] = content.decode('utf-8', 'ignore').replace("\n", "<br />")
+            doc['snippet'] = content.decode('utf-8', 'ignore')
         except:
             doc['snippet'] = u''
     return result
