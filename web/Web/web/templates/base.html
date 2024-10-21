@@ -65,7 +65,9 @@
 
           {% if activated_shared_session and activated_shared_session.disallow_CAL %}
           {% else %}
-          <a class="nav-item nav-link {% if 'CAL' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'CAL:main' %}">Discovery</a>
+            {% if is_cal_allowed %}
+                <a class="nav-item nav-link {% if 'CAL' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'CAL:main' %}">Discovery</a>
+            {% endif %}
           {% endif %}
 
           <a class="nav-item nav-link {% if 'review' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'review:main' %}">Review</a>
