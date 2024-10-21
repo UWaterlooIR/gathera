@@ -139,7 +139,6 @@ class JudgmentAJAXView(views.CsrfExemptMixin,
                    u"is_max_judged_reached": False,
                    u"positive_judgements": total_positive_judgments_for_session,
                    u"is_positive_judgements_reached": False if total_positive_judgments_for_session < 5 else True, }
-                   u"is_max_judged_reached": False}
         error_message = None
 
         # This will take care of incomplete judgments (e.g. updating additional judging
