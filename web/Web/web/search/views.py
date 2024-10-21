@@ -14,6 +14,7 @@ from django.utils.module_loading import import_string
 from django.views import generic
 
 from web.core.mixin import RetrievalMethodPermissionMixin
+from web.core.models import LogEvent
 from web.interfaces.DocumentSnippetEngine import functions as DocEngine
 from web.interfaces.SearchEngine.base import SearchInterface
 from web.search import helpers
@@ -46,6 +47,18 @@ class SimpleSearchView(views.LoginRequiredMixin,
             defaults={
                 "SERP":SERP
             },
+        )
+
+        LogEvent.objects.create(
+            user=self.request.user,
+            session=self.request.user.current_session,
+            action='SEARCH',
+            data={
+                'query': query,
+                'SERP': SERP,
+                'page_number': page_number,
+                'num_display': num_display,
+            }
         )
 
         return query_instance, sr

@@ -2,3 +2,5 @@
 *.log
 pip-log.txt
 npm-debug.log*
+/.idea/
+/staticfiles/

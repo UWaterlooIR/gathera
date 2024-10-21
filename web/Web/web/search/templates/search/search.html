@@ -108,20 +108,23 @@
             $(`#doc_${docid}_SERP_indicator`).attr('style', `border-color:${newColor}`);
             sendLog(LOG_EVENT.JUDGMENT_END, {
               docId: docid,
-              rel: rel
+              rel: rel,
+              track_backend: false,
             })
           },
 
           beforeDocumentLoad: function (docid) {
             sendLog(LOG_EVENT.SERP_SELECT, {
-              docId: docid
+              docId: docid,
+              track_backend: true,
             })
           },
 
           afterDocumentLoad: function (docid, rel) {
             sendLog(LOG_EVENT.JUDGMENT_START, {
               docId: docid,
-              rel: rel
+              rel: rel,
+              track_backend: true,
             })
             // Perform keyword search if necessary
             searchForKeyword();
@@ -130,7 +133,8 @@
           afterDocumentClose: function (docid) {
             sendLog(LOG_EVENT.JUDGMENT_END, {
               docId: docid,
-              rel: null
+              rel: null,
+              track_backend: true,
             })
           },
 
@@ -183,7 +187,8 @@
             $("#search_result").addClass("d-none");
             $("#search-result-spinner").removeClass("d-none");
             sendLog(LOG_EVENT.SEARCH_ATTEMPT, {
-              query: $("#search_input").val()
+              query: $("#search_input").val(),
+              track_backend: true,
             })
             $(this).submit();
         });

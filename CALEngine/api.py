@@ -29,7 +29,7 @@ def set_url(url):
     URL = url
 
 
-def begin_session(session_id, seed_query, async=False, mode="doc", seed_documents=[], judgments_per_iteration=1):
+def begin_session(session_id, seed_query, asyncs=False, mode="doc", seed_documents=[], judgments_per_iteration=1):
     """ Creates a bmi session
 
     Args:
@@ -50,7 +50,7 @@ def begin_session(session_id, seed_query, async=False, mode="doc", seed_document
     data = {
         'session_id': str(session_id),
         'seed_query': seed_query,
-        'async': str(async).lower(),
+        'async': str('async').lower(),
         'mode': mode,
         'judgments_per_iteration': str(judgments_per_iteration)
     }
@@ -63,7 +63,7 @@ def begin_session(session_id, seed_query, async=False, mode="doc", seed_document
     if resp.get('error', '') == 'session already exists':
         raise SessionExistsException("Session %s already exists" % session_id)
 
-
+# begin_session('test', 'test', asyncs=True, mode='doc', seed_documents=[('doc1', 1), ('doc2', -1)])
 def get_docs(session_id, max_count=1):
     """ Get documents to judge
 

@@ -6,7 +6,7 @@ from django.contrib import messages
 from web.CAL.exceptions import CALError
 from web.core.forms import SessionForm
 from web.core.forms import SessionPredefinedTopicForm
-from web.core.models import Session
+from web.core.models import Session, LogEvent
 from web.core.models import SharedSession
 from web.interfaces.CAL import functions as CALFunctions
 from web.interfaces.DocumentSnippetEngine import functions as DocEngine
@@ -27,6 +27,18 @@ def submit_new_predefined_topic_session_form(request):
         f.save()
         request.user.current_session = form.instance
         request.user.save()
+        LogEvent.objects.create(
+            user=request.user,
+            session=form.instance,
+            action='CREATE_SESSION_PREDEFINED_TOPIC',
+            data={
+                'topic': form.instance.topic.title,
+                'max_number_of_judgments': form.cleaned_data['max_number_of_judgments'],
+                'strategy': form.cleaned_data['strategy'],
+                'show_full_document_content': form.cleaned_data['show_full_document_content'],
+                'show_debugging_content': form.cleaned_data['show_debugging_content'],
+            }
+        )
         messages.add_message(request,
                              messages.SUCCESS,
                              success_message)
@@ -53,6 +65,19 @@ def submit_new_session_form(request):
             strategy=strategy,
             show_full_document_content=show_full_document_content,
             show_debugging_content=show_debugging_content
+        )
+        print(f"Session created: {session}")
+        LogEvent.objects.create(
+            user=request.user,
+            session=session,
+            action='CREATE_SESSION',
+            data={
+                'topic': form.instance.title,
+                'max_number_of_judgments': max_number_of_judgments,
+                'strategy': strategy,
+                'show_full_document_content': show_full_document_content,
+                'show_debugging_content': show_debugging_content
+            }
         )
         messages.add_message(request,
                              messages.SUCCESS,

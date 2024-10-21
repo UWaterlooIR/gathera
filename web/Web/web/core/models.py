@@ -45,9 +45,16 @@ class Session(models.Model):
     # last activity timestamp
     last_activity = models.FloatField(default=None, null=True, blank=True)
 
+    last_activity_timestamp = models.DateTimeField(default=None, null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True,
                                       editable=False)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+    def __str__(self):
+        return f'{self.username}-{self.topic.title}-{self.topic.seed_query}'[:25]
+
 
     def begin_session_in_cal(self):
         try:
@@ -70,9 +77,6 @@ class Session(models.Model):
     def __unicode__(self):
         return "<User:{}, Num:{}>".format(self.username, self.topic.number)
 
-    def __str__(self):
-        return self.__unicode__()
-
 
 class SharedSession(models.Model):
 
@@ -92,3 +96,43 @@ class SharedSession(models.Model):
 
     def __str__(self):
         return self.__unicode__()
+
+
+class SessionTimer(models.Model):
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name='timers')
+    start_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    time_spent = models.FloatField(null=True, blank=True)
+
+
+    def save(self, *args, **kwargs):
+        old_time = self.time_spent if self.time_spent else 0
+        if self.end_time:
+            self.time_spent = (self.end_time - self.start_time).total_seconds()
+        time_delta = self.time_spent - old_time
+        self.session.timespent += time_delta
+        self.session.save()
+        super().save(*args, **kwargs)
+
+    def __unicode__(self):
+        return "<Session:{}>".format(self.session)
+
+    def __str__(self):
+        return self.__unicode__()
+
+
+
+class LogEvent(models.Model):
+    """
+    Model for logging user actions
+    """
+    created_at = models.DateTimeField(auto_now_add=True,
+                                      editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    action = models.CharField(max_length=256)
+    data = models.TextField(null=True, blank=True)
+
+    # class Meta:
+    #     abstract = True
+    #     ordering = ['-created_at']

@@ -25,4 +25,4 @@ class Topic(models.Model):
         return "{} {}".format(self.number, self.title)
 
     def __str__(self):
-        return self.__unicode__()
+        return f'{self.title}-{self.seed_query}'
