@@ -326,6 +326,8 @@ docView.prototype = {
      * Views top of the view stack document. Or,if in review mode, view the doc at NextDocIndex
      */
     function refreshDocumentView(nextDocIndex = 0) {
+      $("#docViewDocShowFullDocumentButton").show();
+      $("#FullDocumentBody").hide();
       // Show loading
       showLoading();
       if (parent.viewStack.length === 0) {
