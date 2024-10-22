@@ -213,5 +213,40 @@
             });
 
 
+        function show_full_doc(){
+          // hide button
+          $("#docViewDocShowFullDocumentButton").hide();
+          // show full document
+          $("#FullDocumentBody").show();
+          var now = + new Date();
+          var current_doc_snippet = $("#docViewDocSnippet").html();
+          var current_doc_title = $("#docViewDocTitle").html();
+          var current_doc_id = $("#docViewDocID").html();
+
+          show_full_doc_button_clicked = true;
+
+
+
+          sendLog(LOG_EVENT.OPEN_FULL_DOC, {
+            action: 'trig_show_full_doc',
+            message: 'Show full document button is clicked and document is shown',
+            doc_id: current_doc_id,
+            doc_title: current_doc_title,
+            doc_CAL_snippet: current_doc_snippet,
+            extra_context: {
+                'show_full_doc_button_clicked': show_full_doc_button_clicked
+            },
+            is_cal: false,
+            client_time: now,
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+            page_title: document.title,
+            track_backend: true,
+          })
+        }
+
+        $('#documentModal').on('hidden.bs.modal', function () {
+          $("#docViewDocShowFullDocumentButton").show();
+          $("#FullDocumentBody").hide();
+        })
     </script>
 {% endblock %}
