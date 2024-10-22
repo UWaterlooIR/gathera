@@ -58,16 +58,10 @@
       <div class="collapse navbar-collapse d-flex flex-column flex-md-row align-items-end align-right align-self-center" id="navbars">
         {% if request.user.is_authenticated and request.user.current_session %}
         <div class="navbar-nav order-2 order-md-1 align-self-md-center">
-          {% if activated_shared_session and activated_shared_session.disallow_search %}
-          {% else %}
-          <a class="nav-item nav-link {% if 'search' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'search:main' %}">Search</a>
-          {% endif %}
 
           {% if activated_shared_session and activated_shared_session.disallow_CAL %}
           {% else %}
-            {% if is_cal_allowed %}
-                <a class="nav-item nav-link {% if 'CAL' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'CAL:main' %}">Discovery</a>
-            {% endif %}
+            <a class="nav-item nav-link {% if 'CAL' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'CAL:main' %}">Discovery</a>
           {% endif %}
 
           <a class="nav-item nav-link {% if 'review' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'review:main' %}">Review</a>

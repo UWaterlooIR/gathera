@@ -16,8 +16,6 @@ def shared_session_processor(request):
     context = {"current_session_owner": False}
     current_session_obj = request.user.current_session
     if current_session_obj:
-        judgments_for_session = Judgment.objects.filter(session=current_session_obj)
-        positive_judgments = judgments_for_session.filter(relevance__in=[1, 2]).count()
         if current_session_obj.username != request.user:
             try:
                 shared_session_obj = SharedSession.objects.get(
@@ -32,7 +30,6 @@ def shared_session_processor(request):
 
         context["current_session_owner"] = True
         context["share_session_form"] = ShareSessionForm(user=request.user)
-        context["is_cal_allowed"] = False if positive_judgments < 5 else True
 
     return context
 

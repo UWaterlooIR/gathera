@@ -74,51 +74,50 @@ class SimpleSearchView(views.LoginRequiredMixin,
         return page_number, num_display, offset
 
     def get(self, request, *args, **kwargs):
-        if not self.request.user.current_session:
-            return HttpResponseRedirect(reverse_lazy('core:home'))
+        return HttpResponseRedirect(reverse_lazy('core:home'))
 
-        query = request.GET.get('query', None)
-        if query:
-            page_number, num_display, offset = self.get_params()
-            SERP = SearchEngine.search(query, offset=offset, size=num_display)
-            q, sr = self.log_query(query, SERP, page_number, num_display)
-
-            query_id = q.query_id
-            serp_id = sr.id
-
-            prev_clicks = SERPClick.objects.filter(username=self.request.user).values_list('docno', flat=True).distinct()
-            prev_clicks = list(prev_clicks)
-
-            SERP["hits"] = helpers.join_judgments(SERP["hits"],
-                                                  [hit["docno"] for hit in SERP["hits"]],
-                                                  self.request.user,
-                                                  self.request.user.current_session)
-
-            is_last_page = len(SERP["hits"]) != num_display
-
-            context = {
-                "isQueryPage": True,
-                "queryID": query_id,
-                "serpID": serp_id,
-                "query": query,
-                "prevClickedUrlsDuringSession": prev_clicks,
-                "SERP": SERP,
-                "pagination": {
-                    "is_first_page": page_number == 1,
-                    "page_number": page_number,
-                    "page_range": range(max(1, page_number - 4),
-                                        ((page_number + 4) if not is_last_page else page_number) + 1),
-                    "is_last_page": is_last_page
-                }
-            }
-        else:
-            context = {
-                "isQueryPage": False,
-                "queryID": "NA",
-                "query": "",
-            }
-
-        return render(request, self.template_name, context)
+        # query = request.GET.get('query', None)
+        # if query:
+        #     page_number, num_display, offset = self.get_params()
+        #     SERP = SearchEngine.search(query, offset=offset, size=num_display)
+        #     q, sr = self.log_query(query, SERP, page_number, num_display)
+        #
+        #     query_id = q.query_id
+        #     serp_id = sr.id
+        #
+        #     prev_clicks = SERPClick.objects.filter(username=self.request.user).values_list('docno', flat=True).distinct()
+        #     prev_clicks = list(prev_clicks)
+        #
+        #     SERP["hits"] = helpers.join_judgments(SERP["hits"],
+        #                                           [hit["docno"] for hit in SERP["hits"]],
+        #                                           self.request.user,
+        #                                           self.request.user.current_session)
+        #
+        #     is_last_page = len(SERP["hits"]) != num_display
+        #
+        #     context = {
+        #         "isQueryPage": True,
+        #         "queryID": query_id,
+        #         "serpID": serp_id,
+        #         "query": query,
+        #         "prevClickedUrlsDuringSession": prev_clicks,
+        #         "SERP": SERP,
+        #         "pagination": {
+        #             "is_first_page": page_number == 1,
+        #             "page_number": page_number,
+        #             "page_range": range(max(1, page_number - 4),
+        #                                 ((page_number + 4) if not is_last_page else page_number) + 1),
+        #             "is_last_page": is_last_page
+        #         }
+        #     }
+        # else:
+        #     context = {
+        #         "isQueryPage": False,
+        #         "queryID": "NA",
+        #         "query": "",
+        #     }
+        #
+        # return render(request, self.template_name, context)
 
 
 class SearchButtonView(views.CsrfExemptMixin,

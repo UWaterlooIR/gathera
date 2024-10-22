@@ -138,18 +138,6 @@
             })
           },
 
-          afterMaxSearchEffort: function(docid, rel) {
-            console.log("Max search effort reached for document " + docid);
-            $('#toast_reachedMaxSearchEffort').toast('dispose');
-            $(".reachedMaxSearchEffortSpinner").removeClass("d-none");
-            $("#reachedMaxSearchEffort_toast_body").addClass("d-none");
-            setInterval(function(){
-              $("#reachedMaxSearchEffort_toast_body").removeClass("d-none");
-              $(".reachedMaxSearchEffortSpinner").addClass("d-none");
-            },500);
-            $('#toast_reachedMaxSearchEffort').toast('show');
-          },
-
           afterCALFailedToReceiveJudgment: function(docid, rel) {
             $('#toast_CALFailedToReceiveJudgment').toast('dispose');
             $(".CALFailedToReceiveJudgmentSpinner").removeClass("d-none");
