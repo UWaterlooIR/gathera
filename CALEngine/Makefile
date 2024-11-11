@@ -11,7 +11,7 @@ SRC_DIRS ?= src
 TEST_DIRS ?= tests
 
 # Modify BIN_SRCS to add targets
-BIN_SRCS := $(SRC_DIRS)/bmi_fcgi.cc $(SRC_DIRS)/bmi_cli.cc $(SRC_DIRS)/corpus_parser.cc
+BIN_SRCS := $(SRC_DIRS)/bmi_fcgi.cc $(SRC_DIRS)/bmi_cli.cc $(SRC_DIRS)/corpus_parser.cc $(SRC_DIRS)/corpus_processor.cc
 BIN_OBJS := $(BIN_SRCS:%=$(OBJ_DIR)/%.o)
 BIN_TARGETS := $(notdir $(basename $(BIN_SRCS)))
 

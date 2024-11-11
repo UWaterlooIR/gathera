@@ -2,6 +2,7 @@
 """
 
 import requests
+import os
 import json
 from json import JSONDecodeError
 
@@ -19,7 +20,6 @@ class InvalidJudgmentException(Exception):
 
 URL = 'http://scspc538.cs.uwaterloo.ca:9002/CAL'
 
-
 def set_url(url):
     """ Set API endpoint
     """
@@ -28,14 +28,49 @@ def set_url(url):
         url = url[:-1]
     URL = url
 
+def setup(dataset_name='atome4', seed_documents=[], delimiter='<|CAL_DOC_END|>'):
+    """
+        Setup CAL using a list of documents as input
 
-def begin_session(session_id, seed_query, async=False, mode="doc", seed_documents=[], judgments_per_iteration=1):
+        Args:
+            seed_documents([(str, str), ]): List of tuples of document ids and their corresponding contents
+            delimiter(str): used to parse document contents. The default is '<|CAL_DOC_END|>'
+            dataset_name(str): used to construct the paths of doc and para features. The default is 'athome4'
+        
+        Returns:
+            json response
+    """
+    data_dir = 'data/'
+    doc_features = '{}{}_sample.bin'.format(data_dir, dataset_name)
+    para_features = '{}{}_para_sample.bin'.format(data_dir, dataset_name)
+
+    try:
+        os.makedirs(data_dir)
+    except FileExistsError:
+        # directory already exists
+        print(data_dir, " directory exits")
+        pass
+
+    data = {
+        'doc_features': doc_features,
+        'para_features': para_features,
+        'delimiter': delimiter,
+    }
+    if len(seed_documents) > 0:
+        data['seed_documents'] = delimiter.join(['%s<|CAL_SEP|>%s' % (doc_id, doc_content) for doc_id, doc_content in seed_documents])
+
+    data = '&'.join(['%s=%s' % (k,v) for k,v in data.items()])
+    resp = requests.post(URL+'/setup', data=data).json()
+    return resp
+
+
+def begin_session(session_id, seed_query, async_mode=False, mode="doc", seed_documents=[], judgments_per_iteration=1):
     """ Creates a bmi session
 
     Args:
         session_id (str): unique session id
         seed_query (str): seed query string
-        async (bool): If set to True, the server retrains in background whenever possible
+        async_mode (bool): If set to True, the server retrains in background whenever possible
         mode (str): For example, "para" or "doc"
         seed_documents ([(str, int), ]): List of tuples containing document_id (str) and its relevance (int)
         judgments_per_iteration (int): Batch size; -1 for default bmi
@@ -50,7 +85,7 @@ def begin_session(session_id, seed_query, async=False, mode="doc", seed_document
     data = {
         'session_id': str(session_id),
         'seed_query': seed_query,
-        'async': str(async).lower(),
+        'async_mode': str(async_mode).lower(),
         'mode': mode,
         'judgments_per_iteration': str(judgments_per_iteration)
     }

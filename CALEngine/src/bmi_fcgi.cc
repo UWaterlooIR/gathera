@@ -3,10 +3,13 @@
 #include <string>
 #include <thread>
 #include <fcgio.h>
+#include <stdio.h>
+#include <cstdlib>
 #include "utils/simple-cmd-line-helper.h"
 #include "bmi_para.h"
 #include "bmi_para_scal.h"
 #include "bmi_doc_scal.h"
+#include "corpus_processor.h"
 #include "features.h"
 #include "utils/feature_parser.h"
 #include "utils/utils.h"
@@ -89,6 +92,40 @@ void write_response(const FCGX_Request & request, int status, string content_typ
     cerr<<"Wrote response: "<<content<<endl;
 }
 
+// split seed string into vector of seed documents.
+bool split_documents(const string &str, const string& delimiter, vector<pair<string, string>>&seed_documents){
+    size_t last = 0, next = 0;
+    string document;
+
+    string id_doc_sep ("<|CAL_SEP|>");
+
+    while(last < str.size() && (next = str.find(delimiter, last)) != string::npos){
+        string doc_pair = str.substr(last, next-last);
+        if(doc_pair.find(id_doc_sep) == string::npos){
+            return false;
+        }
+        try{
+            auto sep = doc_pair.find(id_doc_sep);
+            seed_documents.push_back(
+                    {doc_pair.substr(0, sep), doc_pair.substr(sep+id_doc_sep.size())}
+            );
+        } catch (const invalid_argument& ia){
+            return true;
+        }
+        last = next + delimiter.size();
+    }
+    if (last >= str.size())
+        return true;
+    
+    string last_pair = str.substr(last);
+    if(last_pair.find(id_doc_sep) == string::npos){
+        return false;
+    }
+    auto sep = last_pair.find(id_doc_sep);
+    seed_documents.push_back({last_pair.substr(0, sep), last_pair.substr(sep+id_doc_sep.size())});
+    return true;
+}
+
 bool parse_seed_judgments(const string &str, vector<pair<string, int>> &seed_judgments){
     size_t cur_idx = 0;
     while(cur_idx < str.size()){
@@ -111,6 +148,46 @@ bool parse_seed_judgments(const string &str, vector<pair<string, int>> &seed_jud
         }
     }
     return true;
+}
+
+// Handler for API endpoint setup
+void setup_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
+    vector<pair<string, string>> seed_documents;
+    string doc_features, para_features, delimiter;
+    for(auto kv: params){
+        if (kv.first == "doc_features"){
+            doc_features = kv.second;
+        } else if (kv.first == "para_features"){
+            para_features = kv.second;
+        } else if (kv.first == "delimiter") {
+            delimiter = kv.second;
+        } else if(kv.first == "seed_documents"){
+            //seed_documents.emplace_back(make_pair("docid1", "lala"));
+            if(!split_documents(kv.second, delimiter, seed_documents)){
+                write_response(request, 400, "application/json", "{\"error\": \"Invalid format for seed_documents\"}");
+                return;
+            }
+        }
+    }
+
+    // call corpus parser
+    try {
+        parse_documents(seed_documents, doc_features, para_features);
+    } catch (const invalid_argument& ia) {
+        write_response(request, 400, "application/json", "{\"error\": \"Invalid document parsing\"}");
+        return;
+    }    
+    
+    char command[100];
+    sprintf(command, "spawn-fcgi -p 8002 -n -- bmi_fcgi --doc-features %s --para-features %s", doc_features.data(), para_features.data());
+
+    if (system(command)){
+        puts ("Building bmi_fcgi is successful");
+    } else {
+        exit(EXIT_FAILURE);
+    }
+
+    write_response(request, 200, "application/json", "{\"BMI Setup\": \"success\"}");
 }
 
 // Handler for API endpoint /begin
@@ -139,7 +216,7 @@ void begin_session_view(const FCGX_Request & request, const vector<pair<string, 
                 write_response(request, 400, "application/json", "{\"error\": \"Invalid judgments_per_iteration\"}");
                 return;
             }
-        }else if(kv.first == "async"){
+        }else if(kv.first == "async_mode"){
             if(kv.second == "true" || kv.second == "True"){
                 async_mode = true;
             }else if(kv.second == "false" || kv.second == "False"){
@@ -534,7 +611,11 @@ void process_request(const FCGX_Request & request) {
 
     log_request(request, params);
 
-    if(action == "begin"){
+    if (action == "setup"){
+        if(method == "POST"){
+            setup_view(request, params);
+        }
+    }else if(action == "begin"){
         if(method == "POST"){
             begin_session_view(request, params);
         }
