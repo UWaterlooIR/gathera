@@ -1,3 +1,4 @@
+#include <experimental/filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -14,7 +15,9 @@
 #include "utils/feature_parser.h"
 #include "utils/utils.h"
 
+namespace fs = std::experimental::filesystem;
 using namespace std;
+
 unordered_map<string, unique_ptr<BMI>> SESSIONS;
 unique_ptr<Dataset> documents = nullptr;
 unique_ptr<ParagraphDataset> paragraphs = nullptr;
@@ -162,29 +165,58 @@ void setup_view(const FCGX_Request & request, const vector<pair<string, string>>
         } else if (kv.first == "delimiter") {
             delimiter = kv.second;
         } else if(kv.first == "seed_documents"){
-            //seed_documents.emplace_back(make_pair("docid1", "lala"));
             if(!split_documents(kv.second, delimiter, seed_documents)){
                 write_response(request, 400, "application/json", "{\"error\": \"Invalid format for seed_documents\"}");
                 return;
             }
         }
     }
+    const string data_dir = "data_internal";
+    fs::path path = data_dir;
+    fs::create_directory(data_dir);
+    doc_features = path / doc_features;
+    para_features = path / para_features;
+    const string id_term_map_path = path / "id_token_map.txt";
 
     // call corpus processor
     try {
-        parse_documents(seed_documents, doc_features, para_features);
+        parse_documents(seed_documents, doc_features, para_features, id_term_map_path);
     } catch (const invalid_argument& ia) {
         write_response(request, 400, "application/json", "{\"error\": \"Invalid document parsing\"}");
         return;
     }    
-    
-    char command[100];
-    sprintf(command, "spawn-fcgi -p 8002 -n -- bmi_fcgi --doc-features %s --para-features %s", doc_features.data(), para_features.data());
+    cerr<<"Loading document features on memory"<<endl;
+    {
+        unique_ptr<FeatureParser> feature_parser = make_unique<BinFeatureParser>(doc_features);
+        documents = Dataset::build(feature_parser.get());
+        cerr<<"Read "<<documents->size()<<" docs"<<endl;
+    }
+    if(para_features.length() > 0){
+        cerr<<"Loading paragraph features on memory"<<endl;
+        {
+            unique_ptr<FeatureParser> feature_parser = make_unique<BinFeatureParser>(para_features);
+            paragraphs = ParagraphDataset::build(feature_parser.get(), *documents);
+            cerr<<"Read "<<paragraphs->size()<<" paragraphs"<<endl;
+        }
+    }
 
-    if (system(command)){
-        puts ("Building bmi_fcgi is successful");
-    } else {
-        exit(EXIT_FAILURE);
+     // Load tokens map
+    if(id_term_map_path.length() > 0){
+        cerr<<"Loading id-tokens map on memory"<<endl;
+        {
+            ifstream id_map_file;
+            id_map_file.open(id_term_map_path);
+            string line;
+            while (getline(id_map_file, line)){
+                istringstream iss(line);
+                uint32_t token_id;
+                string token;
+                if (!(iss >> token_id >> token)) { break; } // error
+                id_tokens[token_id] = token;
+            }
+            id_map_file.close();
+            cerr<<"Read "<< id_tokens.size() << " id-tokens entries"<<endl;
+        }
     }
 
     write_response(request, 200, "application/json", "{\"BMI Setup\": \"success\"}");

@@ -46,16 +46,15 @@ inline void trim(string &str){
  */
 inline vector<string> get_paragraphs(const string& document) {
     vector<string> paragraphs;
-    istringstream stream(document);
-    string paragraph;
-
     // Split paragraphs by \n\n
-    while (getline(stream, paragraph, '\n')) {
-        if (paragraph.empty()) {
-            paragraphs.push_back("");
-        } else {
-            paragraphs.back() += paragraph + "\n";
-        }
+    const char* delimiter = "\n\n";
+
+    size_t start = 0;
+    size_t end = 0;
+
+    while ((end = document.find(delimiter, start)) != std::string::npos) {
+        paragraphs.push_back(document.substr(start, end - start));
+        start = end + 2; // Skip the double newline
     }
 
     vector<string> final_paragraphs;
@@ -74,7 +73,6 @@ inline vector<string> get_paragraphs(const string& document) {
             cur_para = {trimmed_para};
         }
     }
- 
     if (!cur_para.empty() && accumulate(cur_para.begin(), cur_para.end(), string()).length() < 100 && !final_paragraphs.empty()) {
         final_paragraphs.back() += "\n\n" + accumulate(cur_para.begin(), cur_para.end(), string("\n\n"));
     } else if (!cur_para.empty()) {
@@ -95,7 +93,7 @@ inline unordered_map <string, string> process_documents(const vector<pair<string
     return paragraphs;
 }
  
-void parse_documents(const vector<pair<string, string>>& documents, const string &out_filename, const string &para_out_filename){
+void parse_documents(const vector<pair<string, string>>& documents, const string &out_filename, const string &para_out_filename, const string& id_term_map_path){
     string pass1_filename = get_tempfile();
     unordered_map<string, uint32_t> token_ids;
     vector<double> idf(1);
@@ -166,7 +164,6 @@ void parse_documents(const vector<pair<string, string>>& documents, const string
 
     fp_1 = make_unique<BinFeatureParser>(pass1_filename);
     fw_2 = make_unique<BinFeatureWriter>(out_filename, dictionary);
- 
     unique_ptr<SfSparseVector> spv;
     unordered_map<uint32_t, string> id_tokens;
  
@@ -185,7 +182,6 @@ void parse_documents(const vector<pair<string, string>>& documents, const string
             }
         }
         sum = sqrt(sum);
- 
         for(auto &f: features){
             f.value_ /= sum;
         }
@@ -198,6 +194,15 @@ void parse_documents(const vector<pair<string, string>>& documents, const string
     }
     cerr<<endl;
     fw_2->finish();
+
+    // Write the token ID to actual token map
+    ofstream id_map_file;
+    id_map_file.open(id_term_map_path);
+    cerr << "Writing " << id_tokens.size() << " tokens" << endl;
+    for (auto it : id_tokens) {
+        id_map_file << it.first << " " << it.second << endl;
+    }
+    id_map_file.close();
  
     cerr<<"Generating Paragraph features"<<endl;
     unordered_map<string, string> paragraphs = process_documents(documents);
