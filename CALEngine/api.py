@@ -18,7 +18,8 @@ class DocNotFoundException(Exception):
 class InvalidJudgmentException(Exception):
     pass
 
-URL = 'http://scspc538.cs.uwaterloo.ca:9002/CAL'
+# URL = 'http://scspc538.cs.uwaterloo.ca:9002/CAL'
+URL = 'http://localhost:9001/CAL'
 
 def set_url(url):
     """ Set API endpoint
@@ -40,16 +41,8 @@ def setup(dataset_name='atome4', seed_documents=[], delimiter='<|CAL_DOC_END|>')
         Returns:
             json response
     """
-    data_dir = 'data/'
-    doc_features = '{}{}_sample.bin'.format(data_dir, dataset_name)
-    para_features = '{}{}_para_sample.bin'.format(data_dir, dataset_name)
-
-    try:
-        os.makedirs(data_dir)
-    except FileExistsError:
-        # directory already exists
-        print(data_dir, " directory exits")
-        pass
+    doc_features = '{}_sample.bin'.format(dataset_name)
+    para_features = '{}_para_sample.bin'.format(dataset_name)
 
     data = {
         'doc_features': doc_features,
