@@ -47,7 +47,7 @@ inline void trim(string &str){
 inline vector<string> get_paragraphs(const string& document) {
     vector<string> paragraphs;
     // Split paragraphs by \n\n
-    const char* delimiter = "\n\n";
+    const char* delimiter = "\r\n\r\n";
 
     size_t start = 0;
     size_t end = 0;
@@ -69,14 +69,14 @@ inline vector<string> get_paragraphs(const string& document) {
         if (accumulate(cur_para.begin(), cur_para.end(), string()).length() <= 100) {
             cur_para.push_back(trimmed_para);
         } else {
-            final_paragraphs.push_back(accumulate(cur_para.begin(), cur_para.end(), string("\n\n")));
+            final_paragraphs.push_back(accumulate(cur_para.begin(), cur_para.end(), string(delimiter)));
             cur_para = {trimmed_para};
         }
     }
     if (!cur_para.empty() && accumulate(cur_para.begin(), cur_para.end(), string()).length() < 100 && !final_paragraphs.empty()) {
-        final_paragraphs.back() += "\n\n" + accumulate(cur_para.begin(), cur_para.end(), string("\n\n"));
+        final_paragraphs.back() += delimiter + accumulate(cur_para.begin(), cur_para.end(), string(delimiter));
     } else if (!cur_para.empty()) {
-        final_paragraphs.push_back(accumulate(cur_para.begin(), cur_para.end(), string("\n\n")));
+        final_paragraphs.push_back(accumulate(cur_para.begin(), cur_para.end(), string(delimiter)));
     }
     return final_paragraphs;
 }

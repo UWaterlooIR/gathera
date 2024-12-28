@@ -1,8 +1,8 @@
 """ Python bindings for bmi_fcgi
 """
 
+import base64
 import requests
-import os
 import json
 from json import JSONDecodeError
 
@@ -29,9 +29,38 @@ def set_url(url):
         url = url[:-1]
     URL = url
 
-def setup(dataset_name='atome4', seed_documents=[], delimiter='<|CAL_DOC_END|>'):
+def setup(dataset_name='atome4', seed_document_id="", seed_document_content="", is_complete=False):
     """
-        Setup CAL using a list of documents as input
+        Setup CAL using one document as input
+
+        Args:
+            dataset_name(str): used to construct the paths of doc and para features. The default is 'athome4'
+            seed_document_id: the document id 
+            seed_document_content: the document content
+            is_complete: boolean to mark the end of post requests
+        
+        Returns:
+            json response
+    """
+    doc_features = '{}_sample.bin'.format(dataset_name)
+    para_features = '{}_para_sample.bin'.format(dataset_name)
+
+    data = {
+        'doc_features': doc_features,
+        'para_features': para_features,
+        'document_id': seed_document_id,
+        'is_complete': is_complete,
+        'document_content': base64.b64encode(seed_document_content).decode('ascii'),
+    }
+    data = '&'.join(['%s=%s' % (k,v) for k,v in data.items()])
+
+    resp = requests.post(URL+'/setup', data=data).json()
+    return resp
+
+
+def bulk_setup(dataset_name='atome4', seed_documents=[], delimiter='<|CAL_DOC_END|>'):
+    """
+        Setup CAL using a list of documents as input (up to 340 documents max from athome4)
 
         Args:
             seed_documents([(str, str), ]): List of tuples of document ids and their corresponding contents
@@ -50,10 +79,11 @@ def setup(dataset_name='atome4', seed_documents=[], delimiter='<|CAL_DOC_END|>')
         'delimiter': delimiter,
     }
     if len(seed_documents) > 0:
-        data['seed_documents'] = delimiter.join(['%s<|CAL_SEP|>%s' % (doc_id, doc_content) for doc_id, doc_content in seed_documents])
+        data['seed_documents'] = delimiter.join(
+            ['%s<|CAL_SEP|>%s' % (doc_id, base64.b64encode(doc_content).decode('ascii')) for doc_id, doc_content in seed_documents])
 
     data = '&'.join(['%s=%s' % (k,v) for k,v in data.items()])
-    resp = requests.post(URL+'/setup', data=data).json()
+    resp = requests.post(URL+'/bulk_setup', data=data).json()
     return resp
 
 
