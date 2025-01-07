@@ -70,13 +70,13 @@ using std::map;
 using std::string;
 
 // Global maps containing commandline flags.
-map<string, bool> CMD_LINE_BOOLS;
-map<string, float> CMD_LINE_FLOATS;
-map<string, int> CMD_LINE_INTS;
-map<string, string> CMD_LINE_STRINGS;
-map<string, string> CMD_LINE_DESCRIPTIONS;
+inline map<string, bool> CMD_LINE_BOOLS;
+inline map<string, float> CMD_LINE_FLOATS;
+inline map<string, int> CMD_LINE_INTS;
+inline map<string, string> CMD_LINE_STRINGS;
+inline map<string, string> CMD_LINE_DESCRIPTIONS;
 
-void AddFlag(const string& flag_name,
+inline void AddFlag(const string& flag_name,
 	     const string& description,
 	     bool default_value) {
   if (CMD_LINE_DESCRIPTIONS.find(flag_name) != CMD_LINE_DESCRIPTIONS.end()) {
@@ -87,7 +87,7 @@ void AddFlag(const string& flag_name,
   CMD_LINE_BOOLS[flag_name] = default_value;
 }
 
-void AddFlag(const string& flag_name,
+inline void AddFlag(const string& flag_name,
 	     const string& description,
 	     float default_value) {
   if (CMD_LINE_DESCRIPTIONS.find(flag_name) != CMD_LINE_DESCRIPTIONS.end()) {
@@ -98,7 +98,7 @@ void AddFlag(const string& flag_name,
   CMD_LINE_FLOATS[flag_name] = default_value;
 }
 
-void AddFlag(const string& flag_name,
+inline void AddFlag(const string& flag_name,
 	     const string& description,
 	     int default_value) {
   if (CMD_LINE_DESCRIPTIONS.find(flag_name) != CMD_LINE_DESCRIPTIONS.end()) {
@@ -109,7 +109,7 @@ void AddFlag(const string& flag_name,
   CMD_LINE_INTS[flag_name] = default_value;
 }
 
-void AddFlag(const string& flag_name,
+inline void AddFlag(const string& flag_name,
 	     const string& description,
 	     string default_value) {
   if (CMD_LINE_DESCRIPTIONS.find(flag_name) != CMD_LINE_DESCRIPTIONS.end()) {
@@ -120,7 +120,7 @@ void AddFlag(const string& flag_name,
   CMD_LINE_STRINGS[flag_name] = default_value;
 }
 
-void ShowHelp() {
+inline void ShowHelp() {
   std::cout << "Command line flag options: " << std::endl;
   for (map<string,string>::iterator iter = CMD_LINE_DESCRIPTIONS.begin();
        iter != CMD_LINE_DESCRIPTIONS.end();
@@ -132,7 +132,7 @@ void ShowHelp() {
   exit(0);
 }
 
-bool ParseBoolFlag(char** argv, int* i) {
+inline bool ParseBoolFlag(char** argv, int* i) {
   if (CMD_LINE_BOOLS.find(argv[*i]) != CMD_LINE_BOOLS.end()) {
     CMD_LINE_BOOLS[argv[*i]] = true;
     ++(*i);
@@ -141,7 +141,7 @@ bool ParseBoolFlag(char** argv, int* i) {
   return false;
 }
 
-bool ParseGeneralFlag(int argc,
+inline bool ParseGeneralFlag(int argc,
 		      char** argv,
 		      int* i) {
   if (CMD_LINE_FLOATS.find(argv[*i]) != CMD_LINE_FLOATS.end() ||
@@ -181,7 +181,7 @@ bool ParseGeneralFlag(int argc,
   return false;
 }
 
-void ParseFlags(int argc, char** argv) {
+inline void ParseFlags(int argc, char** argv) {
   if (argc == 1) ShowHelp();
 
   int i = 1;

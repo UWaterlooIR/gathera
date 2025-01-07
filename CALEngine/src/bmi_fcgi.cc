@@ -1,17 +1,24 @@
+#include <experimental/filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <fcgio.h>
+#include <stdio.h>
+#include <cstdlib>
 #include "utils/simple-cmd-line-helper.h"
+#include "utils/base64.h"
 #include "bmi_para.h"
 #include "bmi_para_scal.h"
 #include "bmi_doc_scal.h"
+#include "corpus_processor.h"
 #include "features.h"
 #include "utils/feature_parser.h"
 #include "utils/utils.h"
 
+namespace fs = std::experimental::filesystem;
 using namespace std;
+
 unordered_map<string, unique_ptr<BMI>> SESSIONS;
 unique_ptr<Dataset> documents = nullptr;
 unique_ptr<ParagraphDataset> paragraphs = nullptr;
@@ -89,6 +96,46 @@ void write_response(const FCGX_Request & request, int status, string content_typ
     cerr<<"Wrote response: "<<content<<endl;
 }
 
+// split seed string into vector of seed documents.
+bool split_documents(const string &str, const string& delimiter, vector<pair<string, string>>&seed_documents){
+    size_t last = 0, next = 0;
+    string doc_content;
+
+    string id_doc_sep ("<|CAL_SEP|>");
+
+    while(last < str.size() && (next = str.find(delimiter, last)) != string::npos){
+        string doc_pair = str.substr(last, next-last);
+        if(doc_pair.find(id_doc_sep) == string::npos){
+            return false;
+        }
+        try{
+            auto sep = doc_pair.find(id_doc_sep);
+            macaron::Base64::Decode(doc_pair.substr(sep+id_doc_sep.size()), doc_content);
+            seed_documents.push_back(
+                    {doc_pair.substr(0, sep), doc_content}
+            );
+        } catch (const invalid_argument& ia){
+            return true;
+        }
+        last = next + delimiter.size();
+    }
+    if (last >= str.size())
+        return true;
+    
+    string last_pair = str.substr(last);
+    if(last_pair.find(id_doc_sep) == string::npos){
+        return false;
+    }
+    auto sep = last_pair.find(id_doc_sep);
+    macaron::Base64::Decode(last_pair.substr(sep+id_doc_sep.size()), doc_content);
+    seed_documents.push_back({last_pair.substr(0, sep), doc_content});
+    for (auto pair:seed_documents){
+        cerr<<"Filename: "<<pair.first<<endl;
+        cerr<<"Doc: \n"<<pair.second<<endl;
+    }
+    return true;
+}
+
 bool parse_seed_judgments(const string &str, vector<pair<string, int>> &seed_judgments){
     size_t cur_idx = 0;
     while(cur_idx < str.size()){
@@ -111,6 +158,130 @@ bool parse_seed_judgments(const string &str, vector<pair<string, int>> &seed_jud
         }
     }
     return true;
+}
+
+void update_document_loader(vector<pair<string, string>> seed_documents, const FCGX_Request & request,
+    const string& doc_features, const string& para_features, const string& id_term_map_path){
+
+    // call corpus processor
+    try {
+        parse_documents(seed_documents, doc_features, para_features, id_term_map_path);
+    } catch (const invalid_argument& ia) {
+        write_response(request, 400, "application/json", "{\"error\": \"Invalid document parsing\"}");
+        return;
+    }    
+    cerr<<"Loading document features on memory: "<<doc_features<<endl;
+    {
+        unique_ptr<FeatureParser> feature_parser = make_unique<BinFeatureParser>(doc_features);
+        documents = Dataset::build(feature_parser.get());
+        cerr<<"Read "<<documents->size()<<" docs"<<endl;
+    }
+    if(para_features.length() > 0){
+        cerr<<"Loading paragraph features on memory: "<<para_features<<endl;
+        {
+            unique_ptr<FeatureParser> feature_parser = make_unique<BinFeatureParser>(para_features);
+            paragraphs = ParagraphDataset::build(feature_parser.get(), *documents);
+            cerr<<"Read "<<paragraphs->size()<<" paragraphs"<<endl;
+        }
+    }
+
+     // Load tokens map
+    if(id_term_map_path.length() > 0){
+        cerr<<"Loading id-tokens map on memory"<<endl;
+        {
+            ifstream id_map_file;
+            id_map_file.open(id_term_map_path);
+            string line;
+            while (getline(id_map_file, line)){
+                istringstream iss(line);
+                uint32_t token_id;
+                string token;
+                if (!(iss >> token_id >> token)) { break; } // error
+                id_tokens[token_id] = token;
+            }
+            id_map_file.close();
+            cerr<<"Read "<< id_tokens.size() << " id-tokens entries"<<endl;
+        }
+    }
+    write_response(request, 200, "application/json", "{\"BMI Setup\": \"success\"}");
+}
+
+// Handler for API setup endpoint (1 document per request)
+void setup_view_large(const FCGX_Request & request, const vector<pair<string, string>> &params){
+    string doc_features, para_features, document_id, document_content;
+    bool is_complete = false;
+    for(auto kv: params){
+        cerr<< kv.first<<endl;
+        if (kv.first == "doc_features"){
+            doc_features = kv.second;
+        } else if (kv.first == "para_features"){
+            para_features = kv.second;
+        } else if (kv.first == "document_id") {
+            document_id = kv.second;
+        } else if (kv.first == "document_content"){
+            // decode document content from hexadecimal
+            macaron::Base64::Decode(kv.second, document_content);
+        } else if (kv.first == "is_complete"){
+            is_complete = (kv.second == "True");
+        }
+    }
+    const string data_internal = "data_internal";
+    fs::create_directory(data_internal);
+
+    const string doc_store = "data_internal/docs_db";
+    fs::path doc_store_path = doc_store;
+    fs::create_directory(doc_store);
+
+    std::ofstream out(doc_store_path / document_id);
+    out << document_content;
+    out.close();
+
+    if (!is_complete){
+        write_response(request, 200, "application/json", "{\"BMI Setup\": \"successfully saved 1 document\"}");
+    } else {
+        vector<pair<string, string>> seed_documents;
+        for(const auto & entry : fs::directory_iterator(doc_store)){
+            std::ifstream t(entry.path().string());
+            std::stringstream buffer;
+            buffer << t.rdbuf();
+            std::size_t found = entry.path().string().find_last_of("/\\");
+            string doc_id =  entry.path().string().substr(found+1);
+            seed_documents.emplace_back(make_pair(doc_id, buffer.str()));
+        }
+        fs::path path = data_internal;
+        doc_features = path / doc_features;
+        para_features = path / para_features;
+        const string id_term_map_path = path / "id_token_map.txt";
+        update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
+    }
+}
+
+// Handler for API setup endpoint for bulk processing (multiple documents per request)
+void setup_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
+    vector<pair<string, string>> seed_documents;
+    string doc_features, para_features, delimiter;
+    for(auto kv: params){
+        if (kv.first == "doc_features"){
+            doc_features = kv.second;
+        } else if (kv.first == "para_features"){
+            para_features = kv.second;
+        } else if (kv.first == "delimiter") {
+            delimiter = kv.second;
+        } else if(kv.first == "seed_documents"){
+            if(!split_documents(kv.second, delimiter, seed_documents)){
+                write_response(request, 400, "application/json", "{\"error\": \"Invalid format for seed_documents\"}");
+                return;
+            }
+        }
+    }
+    const string data_dir = "data_internal";
+    fs::path path = data_dir;
+    fs::create_directory(data_dir);
+    doc_features = path / doc_features;
+    para_features = path / para_features;
+    const string id_term_map_path = path / "id_token_map.txt";
+
+    update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
 }
 
 // Handler for API endpoint /begin
@@ -139,7 +310,7 @@ void begin_session_view(const FCGX_Request & request, const vector<pair<string, 
                 write_response(request, 400, "application/json", "{\"error\": \"Invalid judgments_per_iteration\"}");
                 return;
             }
-        }else if(kv.first == "async"){
+        }else if(kv.first == "async_mode"){
             if(kv.second == "true" || kv.second == "True"){
                 async_mode = true;
             }else if(kv.second == "false" || kv.second == "False"){
@@ -534,7 +705,15 @@ void process_request(const FCGX_Request & request) {
 
     log_request(request, params);
 
-    if(action == "begin"){
+    if (action == "bulk_setup"){
+        if(method == "POST"){
+            setup_view(request, params);
+        }
+    } else if (action == "setup"){
+        if(method == "POST"){
+            setup_view_large(request, params);
+        }
+    }else if(action == "begin"){
         if(method == "POST"){
             begin_session_view(request, params);
         }
