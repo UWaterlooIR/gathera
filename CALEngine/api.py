@@ -1,6 +1,7 @@
 """ Python bindings for bmi_fcgi
 """
 
+import base64
 import requests
 import json
 from json import JSONDecodeError
@@ -17,8 +18,8 @@ class DocNotFoundException(Exception):
 class InvalidJudgmentException(Exception):
     pass
 
-URL = 'http://scspc538.cs.uwaterloo.ca:9002/CAL'
-
+# URL = 'http://scspc538.cs.uwaterloo.ca:9002/CAL'
+URL = 'http://localhost:9001/CAL'
 
 def set_url(url):
     """ Set API endpoint
@@ -28,14 +29,71 @@ def set_url(url):
         url = url[:-1]
     URL = url
 
+def setup(dataset_name='atome4', seed_document_id="", seed_document_content="", is_complete=False):
+    """
+        Setup CAL using one document as input
 
-def begin_session(session_id, seed_query, async=False, mode="doc", seed_documents=[], judgments_per_iteration=1):
+        Args:
+            dataset_name(str): used to construct the paths of doc and para features. The default is 'athome4'
+            seed_document_id: the document id 
+            seed_document_content: the document content
+            is_complete: boolean to mark the end of post requests
+        
+        Returns:
+            json response
+    """
+    doc_features = '{}_sample.bin'.format(dataset_name)
+    para_features = '{}_para_sample.bin'.format(dataset_name)
+
+    data = {
+        'doc_features': doc_features,
+        'para_features': para_features,
+        'document_id': seed_document_id,
+        'is_complete': is_complete,
+        'document_content': base64.b64encode(seed_document_content).decode('ascii'),
+    }
+    data = '&'.join(['%s=%s' % (k,v) for k,v in data.items()])
+
+    resp = requests.post(URL+'/setup', data=data).json()
+    return resp
+
+
+def bulk_setup(dataset_name='atome4', seed_documents=[], delimiter='<|CAL_DOC_END|>'):
+    """
+        Setup CAL using a list of documents as input (up to 340 documents max from athome4)
+
+        Args:
+            seed_documents([(str, str), ]): List of tuples of document ids and their corresponding contents
+            delimiter(str): used to parse document contents. The default is '<|CAL_DOC_END|>'
+            dataset_name(str): used to construct the paths of doc and para features. The default is 'athome4'
+        
+        Returns:
+            json response
+    """
+    doc_features = '{}_sample.bin'.format(dataset_name)
+    para_features = '{}_para_sample.bin'.format(dataset_name)
+
+    data = {
+        'doc_features': doc_features,
+        'para_features': para_features,
+        'delimiter': delimiter,
+    }
+    if len(seed_documents) > 0:
+        data['seed_documents'] = delimiter.join(
+            ['%s<|CAL_SEP|>%s' % (doc_id, base64.b64encode(doc_content).decode('ascii')) for doc_id, doc_content in seed_documents])
+
+    data = '&'.join(['%s=%s' % (k,v) for k,v in data.items()])
+    resp = requests.post(URL+'/bulk_setup', data=data).json()
+    return resp
+
+
+def begin_session(session_id, seed_query, async_mode=False, mode="doc", seed_documents=[], judgments_per_iteration=1):
     """ Creates a bmi session
 
     Args:
         session_id (str): unique session id
         seed_query (str): seed query string
-        async (bool): If set to True, the server retrains in background whenever possible
+        async_mode (bool): If set to True, the server retrains in background whenever possible
         mode (str): For example, "para" or "doc"
         seed_documents ([(str, int), ]): List of tuples containing document_id (str) and its relevance (int)
         judgments_per_iteration (int): Batch size; -1 for default bmi
@@ -50,7 +108,7 @@ def begin_session(session_id, seed_query, async=False, mode="doc", seed_document
     data = {
         'session_id': str(session_id),
         'seed_query': seed_query,
-        'async': str(async).lower(),
+        'async_mode': str(async_mode).lower(),
         'mode': mode,
         'judgments_per_iteration': str(judgments_per_iteration)
     }

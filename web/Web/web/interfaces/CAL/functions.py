@@ -1,5 +1,6 @@
 from config.settings.base import CAL_SERVER_IP
 from config.settings.base import CAL_SERVER_PORT
+import os
 import json
 import logging
 import urllib.parse
@@ -87,6 +88,47 @@ def add_session(session, seed_query, mode, seed_judgments = []):
         body['seed_judgments']=','.join([j[0] + ':' + str(j[1]) for j in seed_judgments])
 
     post_body = '&'.join('%s=%s' % (k, v) for k, v in body.items())
+    resp, content = response = requests.post(url,
+                                  data=post_body,
+                                  headers={'Content-Type': 'application/json; charset=UTF-8'},
+                                )
+
+    if resp.ok:
+        return True
+    else:
+        raise CALServerError(resp.status_code)
+
+
+def setup(dataset_name, seed_documents = [], delimiter='<|CAL_DOC_END|>'):
+    """
+    Setup CAL backend server
+    :param seed_documents:
+    :param dataset_name
+    :param delimiter
+    """
+    url = f"http://{CAL_SERVER_IP}:{CAL_SERVER_PORT}/CAL/setup"
+
+    data_dir = '../../../../../../data/'
+    doc_features = '{}{}_sample.bin'.format(data_dir, dataset_name)
+    para_features = '{}{}_para_sample.bin'.format(data_dir, dataset_name)
+
+    try:
+        os.makedirs(data_dir)
+    except FileExistsError:
+        # directory already exists
+        print(data_dir, " directory exits")
+        pass
+
+    body = {
+        'doc_features': doc_features,
+        'para_features': para_features,
+        'delimiter': delimiter,
+    }
+    if seed_documents:
+        body['seed_documents'] = delimiter.join(['%s<|CAL_SEP|>%s' % (doc_id, doc_content) for doc_id, doc_content in seed_documents])
+
+    post_body = '&'.join(['%s=%s' % (k,v) for k,v in body.items()])
+
     resp, content = response = requests.post(url,
                                   data=post_body,
                                   headers={'Content-Type': 'application/json; charset=UTF-8'},

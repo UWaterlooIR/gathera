@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -pthread --std=c++14 -lfcgi -lfcgi++ -larchive
+CXXFLAGS = -Wall -pthread --std=c++14 -lfcgi -lfcgi++ -larchive -lstdc++fs
 ifeq ($(DEBUG), 1)
     CXXFLAGS += -g3 -O0 -DDEBUG
 else
