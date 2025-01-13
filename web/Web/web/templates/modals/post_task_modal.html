@@ -1,0 +1,48 @@
+{% load crispy_forms_tags %}
+
+<div class="modal" id="postTaskModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header pb-0">
+        <div class="modal-title text-primary d-flex flex-grow-1 ">
+          <div class="d-flex flex-column flex-grow-1 ">
+          <h5 class="text-primary">Post Task Questionnaire</h5>
+          </div>
+
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <div class="row">
+            <div class="col-md-12 mt-3">
+              <div class="list-group mt-4 pb-4">
+                    <div class=" border-0 p-0">
+
+                        <div class="d-flex w-100 justify-content-between">
+
+                          <p class="mb-2">Topic title: {{ user.current_session.topic.title }}</p>
+                          {% if user.current_session.topic.number %}<small>#{{ user.current_session.topic.number }}</small>{% endif %}
+                        </div>
+                        {% if user.current_session.topic.description %}<p class="mb-1">Topic
+                          Description: {{ user.current_session.topic.description }}</p>{% endif %}
+                    {% if user.current_session.topic.narrative %}<p class="mb-1">Topic
+                          Narrative: {{ user.current_session.topic.narrative }}</p>{% endif %}
+                    </div>
+                </div>
+                <form method="POST" action="{% url 'core:home' %} " enctype="multipart/form-data">
+                  {% csrf_token %}
+                  {% crispy form_post_task %}
+                </form>
+            </div>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

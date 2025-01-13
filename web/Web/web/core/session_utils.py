@@ -4,9 +4,10 @@ import io
 from django.contrib import messages
 
 from web.CAL.exceptions import CALError
-from web.core.forms import SessionForm
+from web.core.forms import SessionForm, PreTaskQuestionnaireForm, PostTaskQuestionnaireForm, \
+    PostExperimentQuestionnaireForm
 from web.core.forms import SessionPredefinedTopicForm
-from web.core.models import Session, LogEvent
+from web.core.models import Session, LogEvent, ExperimentForm
 from web.core.models import SharedSession
 from web.interfaces.CAL import functions as CALFunctions
 from web.interfaces.DocumentSnippetEngine import functions as DocEngine
@@ -15,6 +16,46 @@ from web.users.models import User
 
 NEW_SESSION_MESSAGE = 'Your session has been initialized and activated. ' \
                       'Choose a retrieval method to start searching.'
+
+
+def submit_task_questionnaire_form(request, form_type):
+    if form_type == 'pre_task':
+        form = PreTaskQuestionnaireForm(request.POST)
+    elif form_type == 'post_task':
+        form = PostTaskQuestionnaireForm(request.POST)
+    else:
+        form = PostExperimentQuestionnaireForm(request.POST)
+    if form.is_valid():
+        messages.add_message(request,
+                             messages.SUCCESS,
+                             'Your responses have been recorded.')
+        e = ExperimentForm(
+            user=request.user,
+            form_type=form_type,
+            form_data=form.cleaned_data,
+        )
+        if not "submit-post-experiment-questionnaire-form" in request.POST:
+            e.session = request.user.current_session
+        e.save()
+        # activate the next session
+        if form_type == 'post_task':
+            current_session = request.user.current_session
+            session_order = request.user.current_session.session_order
+            total_session_timer = current_session.timespent
+            if (current_session.max_time is not None and total_session_timer >=
+                current_session.max_time and session_order is not None):
+                new_session_order = session_order + 1 if session_order is not None else 1
+                next_session = Session.objects.filter(username=request.user,
+                                                      session_order=new_session_order).first()
+                if next_session:
+                    request.user.current_session = next_session
+                    request.user.save()
+                    next_session.begin_session_in_cal()
+                messages.add_message(request,
+                             messages.SUCCESS,
+                             'We have activated the next task for you.')
+    else:
+        messages.add_message(request, messages.ERROR, f'Ops! {form.errors}')
 
 
 def submit_new_predefined_topic_session_form(request):

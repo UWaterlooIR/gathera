@@ -196,3 +196,201 @@ class ShareSessionForm(forms.ModelForm):
             'disallow_search',
             'disallow_CAL'
         )
+
+
+
+class PreTaskQuestionnaireForm(forms.Form):
+    """
+    Form for pre-task questionnaire
+
+    """
+    submit_name = 'submit-pre-task-questionnaire-form'
+    prefix = "pre-task"
+
+    topic_familiarity_choices = (
+        ('', '-----------'),
+        (1, 'Not at all'),
+        (2, 'A little'),
+        (3, 'Moderately'),
+        (4, 'Very'),
+        (5, 'Extremely'),
+    )
+
+    topic_familiarity = forms.ChoiceField(choices= topic_familiarity_choices,
+                                            label="How familiar are you with the subject of the "
+                                                  "topic given above?",
+                                            required=True)
+    topic_hardness = forms.ChoiceField(choices= topic_familiarity_choices,
+                                            label="How difficult do you think it will be to find "
+                                                  "relevant documents for this topic?",
+                                            required=True)
+    general_feedback = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}), label="Do you have any feedback you would like "
+                                                        "to provide on this topic?",
+        required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(PreTaskQuestionnaireForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            'topic_familiarity',
+            'topic_hardness',
+            'general_feedback',
+            StrictButton(u'Submit',
+                         name=self.submit_name,
+                         type="submit",
+                         css_class='btn btn-outline-secondary')
+        )
+
+
+class PostTaskQuestionnaireForm(forms.Form):
+    """
+    Form for post-task questionnaire
+
+    """
+    submit_name = 'submit-post-task-questionnaire-form'
+    prefix = "post-task"
+
+    topic_choices = (
+        ('', '-----------'),
+        (1, 'Not at all'),
+        (2, 'A little'),
+        (3, 'Moderately'),
+        (4, 'Very'),
+        (5, 'Extremely'),
+    )
+
+    mood_choices = (
+        ('', '-----------'),
+        (1, 'Frustrated'),
+        (2, 'Anxious'),
+        (3, 'Neutral'),
+        (4, 'Happy'),
+        (5, 'Excited'),
+    )
+
+
+    topic_difficulty = forms.ChoiceField(
+        choices= topic_choices,
+        label="How difficult was it to find relevant documents for this topic?",
+        required=True
+    )
+    confidence = forms.ChoiceField(
+        choices= topic_choices,
+        label="How confident are you in your judgments of the documents you have judged?",
+        required=True
+    )
+    mood = forms.ChoiceField(
+        choices= mood_choices,
+        label="How was your mood during the task?",
+        required=True,
+    )
+    general_feedback = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}),
+        label="Do you have any feedback/issues you would like to provide on this task?",
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(PostTaskQuestionnaireForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            'topic_difficulty',
+            'confidence',
+            'mood',
+            'general_feedback',
+            StrictButton(u'Submit',
+                         name=self.submit_name,
+                         type="submit",
+                         css_class='btn btn-outline-secondary')
+        )
+
+class PostExperimentQuestionnaireForm(forms.Form):
+
+    submit_name = 'submit-post-experiment-questionnaire-form'
+    prefix = "post-experiment"
+
+    topic_choices = (
+        ('', '-----------'),
+        (1, 'Not at all'),
+        (2, 'A little'),
+        (3, 'Moderately'),
+        (4, 'Very'),
+        (5, 'Extremely'),
+    )
+
+    mood_choices = (
+        ('', '-----------'),
+        (1, 'Frustrated'),
+        (2, 'Anxious'),
+        (3, 'Neutral'),
+        (4, 'Happy'),
+        (5, 'Excited'),
+    )
+
+    experience_choices = (
+        ('', '-----------'),
+        (1, 'Very dissatisfied'),
+        (2, 'Dissatisfied'),
+        (3, 'Unsure'),
+        (4, 'Satisfied'),
+        (5, 'Very satisfied'),
+    )
+
+    study_difficulty = forms.ChoiceField(
+        choices= topic_choices,
+        label="How would you rate the overall difficulty of the study?",
+        required=True
+    )
+    experience = forms.ChoiceField(
+        choices= experience_choices,
+        label="How was your overall experience?",
+        required=True
+    )
+    mood = forms.ChoiceField(
+        choices= mood_choices,
+        label="How was your overall mood during the study?",
+        required=True
+    )
+    general_feedback = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 2}),
+        label="Do you have any feedback/issues you would like to provide after finishing the "
+              "study?",
+        required=False
+    )
+
+    likeness = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 2}),
+        label="What did you like about the study?",
+        required=True
+    )
+
+    dislike = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 2}),
+        label="What did you dislike about the study?",
+        required=True
+    )
+
+    system = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 2}),
+        label="Which feature was the most useful in finding documents? Explain.",
+        required=True
+    )
+
+
+    def __init__(self, *args, **kwargs):
+        super(PostExperimentQuestionnaireForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout = Layout(
+            'study_difficulty',
+            'experience',
+            'mood',
+            'general_feedback',
+            'likeness',
+            'dislike',
+            'system',
+            StrictButton(u'Submit',
+                         name=self.submit_name,
+                         type="submit",
+                         css_class='btn btn-outline-secondary')
+        )

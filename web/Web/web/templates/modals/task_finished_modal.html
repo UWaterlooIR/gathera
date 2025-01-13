@@ -7,22 +7,22 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-     {% if request.user.current_session.session_order >= 5 %}
+     {% if experiment_completed %}
         <div class="modal-body">
-            <p>Congratulations! You have completed all the tasks. We will contact you with further
-              instructions
-              .</p>
+            <p>Congratulations! You have completed all the tasks. Please visit the homepage to
+              complete the post-experiment questionnaire.</p>
          </div>
         <div class="modal-footer">
-            <a class="btn btn-outline-primary" data-dismiss="modal" href="{% url 'core:home'%}">Close</a>
+            <a class="btn btn-outline-primary" data-dismiss="modal" href="{% url 'core:home'%}">Go to homepage</a>
         </div>
       {% else %}
         <div class="modal-body">
-             <p>Congratulations! You have completed the task. You can now proceed to the next session.</p>
+             <p>Congratulations! You have completed the task. Please visit the homepage to
+              complete the post-task questionnaire. Your next task will start as soon as you complete the questionnaire.
+             </p>
         </div>
         <div class="modal-footer">
-            <a class="btn btn-outline-primary" href="{% url 'core:home'%}">Start the next
-            session</a>
+            <a class="btn btn-outline-primary" href="{% url 'core:home'%}">Go to homepage</a>
         </div>
       {% endif %}
     </div>

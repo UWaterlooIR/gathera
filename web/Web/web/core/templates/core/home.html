@@ -3,65 +3,136 @@
 {% block home-nav-current-session-extra-class %}border-bottom{% endblock %}
 
 {% block home-main %}
-  <div class="row">
-      <div class="col-md-8">
-        <div class="card mt-4 border-0">
-          <div class="card-block">
-            {% if request.user.current_session %}
-            {% include 'cards/judgments_table_card.html' %}
-            {% else %}
-            {% include 'cards/sessions/no_session_create_card.html' %}
-            {% endif %}
-          </div>
-        </div>
-      </div>
-      {% if request.user.current_session %}
-      <div class="ml-auto col-md-4">
-        <h6 class="mt-4 text-primary">
-          Session details
-          <a class="badge float-right text-muted shadow-none session-details"
-             data-toggle="modal" data-target="#sessionModal" href="#"
-               data-is-shared-session={% if not current_session_owner %}"true"{% else %}"false"{% endif %}
-               data-session-id={% if user.current_session.username != user %}"{{ activated_shared_session.uuid }}"{% else %}"{{ user.current_session.uuid }}"{% endif %}
-               data-session-title="{{ user.current_session.topic.title }}"
-          ><i class="fas fa-info-circle"></i> Show more</a>
-        </h6>
-        <div class="list-group mt-4 pb-4 border-bottom">
-          <div class=" border-0 p-0">
-              <div class="d-flex w-100 justify-content-between">
-                <h6 class="mb-1">{{ user.current_session.topic.title }}</h6>
-                {% if user.current_session.topic.number %}<small>#{{ user.current_session.topic.number }}</small>{% endif %}
-              </div>
-              {% if user.current_session.topic.description %}<p class="mb-1">{{ user.current_session.topic.description }}</p>{% endif %}
-              <span class="small text-muted">Created by {{ user.current_session.username }} on {{ user.current_session.created_at }}</span>
-          </div>
-      </div>
-
-
-      <h6 class="mt-4 mb-3 text-primary">
-        Users <span class="badge badge-light">{{ collaborators|length }}</span>
-        <a class="badge float-right text-muted shadow-none"
-             data-toggle="modal" data-target="#shareSessionModal" href="#"
-          ><i class="fas fa-share"></i> Share</a>
-      </h6>
-
-      <div class="d-flex flex-row pb-4 border-bottom">
-        {% for collaborator in collaborators %}
-          {% if collaborator.profile_picture %}
-          {# TODO: Get their identicon #}
+  <div class="col-md-8">
+    <div class="card mt-4 border-0">
+      <div class="card-block">
+        {% if request.user.current_session %}
+          {% if experiment_completed and form_to_show == 'none' %}
+            <div class="alert alert-success" role="alert">
+              <h4 class="alert-heading">Experiment Completed!</h4>
+              <p>Congratulations! You have completed all the tasks. Please contact
+                amanaam@uwaterloo.ca regarding any questions or concerns. We will reach out
+                to you for your compensation. Thank you for your participation!</p>
+              .</p>
+            </div>
+          {% elif form_to_show == 'post_experiment' %}
+            <p class="mt-4">You have completed all the tasks. Please complete the post-experiment
+              questionnaire.</p>
+            <button type="button" class="btn btn-primary" data-toggle="modal"
+                    data-target="#postExperimentModal">
+              Post Experiment Questionnaire
+            </button>
           {% else %}
-            <script>createIdenticonImage('{{collaborator}}', 30, 30, "mr-1 border")</script>
+            <div class="ml-auto">
+              <p>
+                Please carefully read and understand the topic below before you start the task. For
+                this task, you will have the following tools at your disposal:
+              </p>
+              <ul>
+                {% if not request.user.current_session.disable_search %}
+                  <li class="pb-2"><em class="text-primary">Search:</em> Works like a regular
+                    search engine. You can use it to search for documents relevant to the given
+                    topic.
+                  </li>
+                {% endif %}
+                {% if not request.user.current_session.integrated_cal %}
+                  <li><em class="text-primary">Discovery:</em> Machine learning model that
+                    recommends relevant documents based on your document judgments. The model
+                    understands your notion of relevance through the documents you have judged
+                    and thus, gets better with time.
+                    {% if not request.user.current_session.disable_search %} Hence, it is
+                      recommended
+                      that you use search to find a few documents before switching to Discovery.
+                    {% endif %}
+                    <em class="text-danger bold" style="font-style: normal">
+                      {% if request.user.current_session.nudge_to_cal %}Important note: The
+                        CAL/Discovery model
+                        will be disabled for this task until you have found at least 5 relevant
+                        documents. {% endif %}</em>
+                  </li>
+                {% else %}
+                  <li><em class="text-primary">Discovery:</em> Machine learning model that
+                    recommends relevant documents based on your document judgments. The model
+                    understands your notion of relevance through the documents you have judged
+                    and thus gets better with time. Thus, it is recommended that you use search
+                    to find a few documents before using to Discovery.
+                    <em class="text-danger bold" style="font-style: normal">Important note: Once you
+                      search for a query, the CAL/Discovery model will appear at the top of the
+                      page alongside the search results.
+                      {% if request.user.current_session.nudge_to_cal %} The CAL/Discovery model
+                        will be disabled for this task until you have found at least 5 relevant
+                        documents. {% endif %}</em>
+                  </li>
+                {% endif %}
+              </ul>
+              <h6 class="mt-4 text-primary">
+                Topic Details
+                <a class="badge float-right text-muted shadow-none session-details"
+                   data-toggle="modal" data-target="#sessionModal" href="#"
+                   data-is-shared-session={% if not current_session_owner %}"true"{% else %}
+                     "false"{% endif %}
+                data-session-id={% if user.current_session.username != user %}"
+                {{ activated_shared_session.uuid }}"{% else %}"{{ user.current_session.uuid }}
+                "{% endif %}
+                data-session-title="{{ user.current_session.topic.title }}"
+                ><i class="fas fa-info-circle"></i> Show more</a>
+              </h6>
+              <div class="list-group mt-4 pb-4 border-bottom">
+                <div class=" border-0 p-0">
+
+                  <div class="d-flex w-100 justify-content-between">
+
+                    <p class="mb-2">Topic title: {{ user.current_session.topic.title }}</p>
+                    {% if user.current_session.topic.number %}
+                      <small>#{{ user.current_session.topic.number }}</small>{% endif %}
+                  </div>
+                  {% if user.current_session.topic.description %}<p class="mb-1">Topic
+                    Description: {{ user.current_session.topic.description }}</p>{% endif %}
+                  {% if user.current_session.topic.narrative %}<p class="mb-1">Topic
+                    Narrative: {{ user.current_session.topic.narrative }}</p>{% endif %}
+                </div>
+              </div>
+
+              {% if form_to_show == 'pre_task' %}
+                <button type="button" class="btn btn-primary" data-toggle="modal"
+                        data-target="#preTaskModal">
+                  Pre Task Questionnaire
+                </button>
+              {% endif %}
+              {% if form_to_show == 'post_task' %}
+                <p class="mt-4">You have completed your current task. Please complete the post
+                  task questionnaire to continue to the next task.</p>
+                <button type="button" class="btn btn-primary" data-toggle="modal"
+                        data-target="#postTaskModal">
+                  Post Task Questionnaire
+                </button>
+              {% endif %}
+
+
+
+
+              {% if current_session_owner %}
+                {#      <h6 class="mt-4 text-primary">#}
+                {#        Manage session#}
+                {#      </h6>#}
+              {% endif %}
+
+            </div>
           {% endif %}
-        {% endfor %}
+        {% else %}
+          {% include 'cards/sessions/no_session_create_card.html' %}
+        {% endif %}
       </div>
-
-      {% if current_session_owner %}
-{#      <h6 class="mt-4 text-primary">#}
-{#        Manage session#}
-{#      </h6>#}
-      {% endif %}
-
     </div>
-      {% endif %}
   </div>
+
+  <div class="card-block mt-4 border-0 col-md-8 m-3">
+    {% if request.user.current_session %}
+      {% include 'cards/judgments_table_card.html' %}
+
+    {% endif %}
+  </div>
+  {% include 'modals/pre_task_modal.html' %}
+  {% include 'modals/post_task_modal.html' %}
+  {% include 'modals/post_experiment_modal.html' %}
 {% endblock %}

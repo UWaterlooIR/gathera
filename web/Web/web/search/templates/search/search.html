@@ -86,9 +86,9 @@
 
         function scroll_to_cal() {
           $('#toast_reachedMaxSearchEffort').toast('dispose');
+          {# TODO: Fix scroll on every time only scroll when page is down #}
           var body = $("html, body");
-          body.stop().animate({scrollTop:0}, 500, 'swing');
-          console.log('scrolled')
+          body.stop().animate({scrollTop:0}, 200, 'swing');
         }
 
         var dv = new docView();
@@ -353,9 +353,6 @@
                 var docSnippet = $('#docViewDocSnippetCALModal').html();
                 var docBody = $('#docViewDocBodyCALModal').prop('innerText');
                 var docID = $('#docViewDocIDCALModal').text();
-
-                // Populate the modal with the fetched data
-                // Assuming your modal has elements with ids 'modalDocIndicator', 'modalDocTitle', 'modalDocMeta', 'modalDocMessage', 'modalDocWrapper', 'modalDocSnippet', 'modalDocBody', and 'modalDocID'
                 $('#modalDocIndicator').text(docIndicator);
                 $('#modalDocTitle').text(docTitle);
                 $('#modalDocMeta').text(docMeta);
@@ -364,11 +361,7 @@
                 $('#modalDocSnippet').html(docSnippet);
                 $('#modalDocBody').html(docBody);
                 $('#modalDocID').text(docID);
-
                 console.log(docBody);
-
-                // Show the modal
-                // Assuming your modal has id 'fullDocModal'
 
             });
         });

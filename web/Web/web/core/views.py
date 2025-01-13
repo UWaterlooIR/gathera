@@ -17,11 +17,11 @@ from django.views import generic
 from interfaces.DocumentSnippetEngine import functions as DocEngine
 
 import pytz
-from web.core.forms import ShareSessionForm
+from web.core.forms import ShareSessionForm, PreTaskQuestionnaireForm
 from web.core.mixin import RetrievalMethodPermissionMixin
 from web.core.models import Session
 from web.core.models import SharedSession
-from web.core.session_utils import activate_session_submit_form
+from web.core.session_utils import activate_session_submit_form, submit_task_questionnaire_form
 from web.core.session_utils import delete_session_submit_form
 from web.core.session_utils import revoke_shared_session_submit_form
 from web.core.session_utils import share_session_submit_form
@@ -82,6 +82,12 @@ class Home(views.LoginRequiredMixin, generic.TemplateView):
 
         if "submit-session-predefine-topic-form" in request.POST:
             submit_new_predefined_topic_session_form(request)
+        elif "submit-post-experiment-questionnaire-form" in request.POST:
+            submit_task_questionnaire_form(request, 'post_experiment')
+        elif "submit-post-task-questionnaire-form" in request.POST:
+            submit_task_questionnaire_form(request, 'post_task')
+        elif "submit-pre-task-questionnaire-form" in request.POST:
+            submit_task_questionnaire_form(request, 'pre_task')
         elif "submit-session-form" in request.POST:
             submit_new_session_form(request)
         elif request.POST.get("share_sessionid"):

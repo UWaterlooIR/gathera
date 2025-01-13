@@ -15,7 +15,6 @@
           {% if request.user.current_session %}
           <a class="nav-link mx-4 px-2 py-3 text-muted {% block home-nav-judgments-extra-class %}{% endblock %}" href="{% url 'judgment:view' %}">Judgments</a>
           {% endif %}
-          <a class="nav-link mx-4 px-2 py-3 text-muted {% block home-nav-sessions-extra-class %}{% endblock %}" href="{% url 'core:sessions' %}">Other sessions</a>
         </div>
         {% endblock %}
     </nav>

@@ -56,7 +56,7 @@
       </button>
 
       <div class="collapse navbar-collapse d-flex flex-column flex-md-row align-items-end align-right align-self-center" id="navbars">
-        {% if request.user.is_authenticated and request.user.current_session %}
+        {% if request.user.is_authenticated and request.user.current_session and is_task_in_progress %}
         <div class="navbar-nav order-2 order-md-1 align-self-md-center">
           {% if activated_shared_session and activated_shared_session.disallow_search %}
           {% else %}
@@ -73,7 +73,7 @@
           {% endif %}
 
           <a class="nav-item nav-link {% if 'review' in request.resolver_match.app_names %}text-primary{% endif %}" href="{% url 'review:main' %}">Review</a>
-        <button class="btn btn-outline-secondary d-none d-md-inline" data-toggle="modal" data-target="#TimeSpentModal">Time Spent</button>
+
         </div>
         {% endif %}
         <ul class="nav navbar-nav flex-fill justify-content-center align-self-center center-text pl-5 pr-5 order-2 {%block navbar-hidesmall %}d-none d-sm-block{%endblock%}">
@@ -117,17 +117,16 @@
               <span class="d-md-none">Create</span>
               <i class="fas fa-caret-down"></i>
             </a>
+          {% if request.user.username == 'admin' %}
             <div class="dropdown-menu dropdown-menu-right">
-
-              <a class="dropdown-item align-items-center d-flex flex-row" data-toggle="modal" data-target="#createSessionModal" href="#">Create session</a>
-
+                <a class="dropdown-item align-items-center d-flex flex-row" data-toggle="modal" data-target="#createSessionModal" href="#">Create session</a>
               {% if request.user.is_authenticated and request.user.current_session and current_session_owner  %}
               <div class="dropdown-divider"></div>
               <span class="dropdown-item bg-transparent text-muted gray-text small py-0 mb-1">This session</span>
               <a class="dropdown-item align-items-center d-flex flex-row" data-toggle="modal" data-target="#shareSessionModal" href="#">Share</a>
               {% endif %}
-
             </div>
+          {% endif %}
           </li>
 
 
@@ -143,8 +142,9 @@
               <div class="dropdown-divider"></div>
 
               <a class="dropdown-item align-items-center d-flex flex-row" href="{% url 'judgment:view' %}">Judged Documents</a>
-              <a class="dropdown-item align-items-center d-flex flex-row" href="{% url 'core:sessions' %}">View Sessions</a>
-
+              {% if request.user.username == 'admin' %}
+                <a class="dropdown-item align-items-center d-flex flex-row" href="{% url 'core:sessions' %}">View Sessions</a>
+              {% endif %}
               <div class="dropdown-divider"></div>
               {% if request.user.is_authenticated and request.user|has_group:"practice" %}
               <a class="dropdown-item align-items-center d-flex flex-row" href="{% url 'core:practice_complete' %}"><i class="fas fa-sign-out-alt mr-3"></i> Exit practice</a>

@@ -9,23 +9,7 @@
           <h6 class="text-muted small sessionModalDetails d-none">Created <span id="session_created_at"></span></h6>
           </div>
 
-          <div class="d-flex align-items-center flex-grow-1 ">
-            <ul class="nav nav-pills nav-justified flex-column flex-md-row" id="sessionDetailsTabs" role="tablist">
-              <li class="nav-item align-self-center">
-                <a class="nav-link active" id="detailsTab" data-toggle="pill" href="#pills-details" role="tab">Details</a>
-              </li>
-              <li class="nav-item align-self-center" id="sharedWithTab">
-                <a class="nav-link" data-toggle="pill" href="#pills-shared-with" role="tab">Shared with</a>
-              </li>
-              <li class="nav-item align-self-center" id="actionsTab">
-                <form action="" method="POST">
-                  {% csrf_token %}
-                  <div id="sessionActionsTab">
-                  </div>
-                </form>
-              </li>
-            </ul>
-          </div>
+
 
         </div>
 
