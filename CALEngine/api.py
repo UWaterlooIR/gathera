@@ -1,7 +1,6 @@
 """ Python bindings for bmi_fcgi
 """
 
-import base64
 import requests
 import json
 from json import JSONDecodeError
@@ -29,14 +28,13 @@ def set_url(url):
         url = url[:-1]
     URL = url
 
-def setup(dataset_name='atome4', seed_document_id="", seed_document_content="", is_complete=False):
+def setup(dataset_name='atome4', documents={}, is_complete=False):
     """
         Setup CAL using one document as input
 
         Args:
             dataset_name(str): used to construct the paths of doc and para features. The default is 'athome4'
-            seed_document_id: the document id 
-            seed_document_content: the document content
+            documents: dictionary mapping from doc_id to doc_content (can contain multiple documents)
             is_complete: boolean to mark the end of post requests
         
         Returns:
@@ -48,43 +46,13 @@ def setup(dataset_name='atome4', seed_document_id="", seed_document_content="", 
     data = {
         'doc_features': doc_features,
         'para_features': para_features,
-        'document_id': seed_document_id,
+        'seed_documents': documents,
         'is_complete': is_complete,
-        'document_content': base64.b64encode(seed_document_content).decode('ascii'),
     }
-    data = '&'.join(['%s=%s' % (k,v) for k,v in data.items()])
 
-    resp = requests.post(URL+'/setup', data=data).json()
+    resp = requests.post(URL+'/setup', data=json.dumps(data))
     return resp
 
-
-def bulk_setup(dataset_name='atome4', seed_documents=[], delimiter='<|CAL_DOC_END|>'):
-    """
-        Setup CAL using a list of documents as input (up to 340 documents max from athome4)
-
-        Args:
-            seed_documents([(str, str), ]): List of tuples of document ids and their corresponding contents
-            delimiter(str): used to parse document contents. The default is '<|CAL_DOC_END|>'
-            dataset_name(str): used to construct the paths of doc and para features. The default is 'athome4'
-        
-        Returns:
-            json response
-    """
-    doc_features = '{}_sample.bin'.format(dataset_name)
-    para_features = '{}_para_sample.bin'.format(dataset_name)
-
-    data = {
-        'doc_features': doc_features,
-        'para_features': para_features,
-        'delimiter': delimiter,
-    }
-    if len(seed_documents) > 0:
-        data['seed_documents'] = delimiter.join(
-            ['%s<|CAL_SEP|>%s' % (doc_id, base64.b64encode(doc_content).decode('ascii')) for doc_id, doc_content in seed_documents])
-
-    data = '&'.join(['%s=%s' % (k,v) for k,v in data.items()])
-    resp = requests.post(URL+'/bulk_setup', data=data).json()
-    return resp
 
 
 def begin_session(session_id, seed_query, async_mode=False, mode="doc", seed_documents=[], judgments_per_iteration=1):
@@ -110,13 +78,11 @@ def begin_session(session_id, seed_query, async_mode=False, mode="doc", seed_doc
         'seed_query': seed_query,
         'async_mode': str(async_mode).lower(),
         'mode': mode,
-        'judgments_per_iteration': str(judgments_per_iteration)
+        'judgments_per_iteration': str(judgments_per_iteration),
+        'seed_judgments': seed_documents
     }
-    if len(seed_documents) > 0:
-        data['seed_judgments'] = ','.join(['%s:%d' % (doc_id, rel) for doc_id, rel in seed_documents])
 
-    data = '&'.join(['%s=%s' % (k,v) for k,v in data.items()])
-    r = requests.post(URL+'/begin', data=data)
+    r = requests.post(URL+'/begin', data=json.dumps(data))
     resp = r.json()
     if resp.get('error', '') == 'session already exists':
         raise SessionExistsException("Session %s already exists" % session_id)
@@ -186,12 +152,12 @@ def judge(session_id, doc_id, rel):
     else:
         rel = -1
 
-    data = '&'.join([
-        'session_id=%s' % str(session_id),
-        'doc_id=%s' % doc_id,
-        'rel=%d' % rel
-    ])
-    resp = requests.post(URL + '/judge', data=data).json()
+    data = {
+        'session_id': session_id,
+        'doc_id': doc_id,
+        'rel': rel
+    }
+    resp = requests.post(URL + '/judge', data=json.dumps(data)).json()
 
     if resp.get('error', '') == 'session not found':
         raise SessionNotFoundException('Session %s not found' % session_id)
@@ -244,8 +210,10 @@ def delete_session(session_id):
         SessionNotFoundException
     """
 
-    data = '&'.join(['session_id=%s' % str(session_id)])
-    resp = requests.delete(URL+'/delete_session', data=data).json()
+    data = {
+        'session_id': session_id,
+    }
+    resp = requests.delete(URL+'/delete_session', data=json.dumps(data)).json()
 
     if resp.get('error', '') == 'session not found':
         print(SessionNotFoundException('Session %s not found' % session_id))

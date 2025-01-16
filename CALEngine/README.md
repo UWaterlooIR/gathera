@@ -6,6 +6,7 @@
 * libarchive
 * g++
 * make
+* lohmann-json3-dev
 * spawn-fcgi (to run `bmi_fcgi`)
 
 ### Command Line Tool
