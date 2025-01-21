@@ -16,6 +16,7 @@
 #include "utils/utils.h"
 #include <nlohmann/json.hpp>
 #include <list>
+#include <filesystem>
 
 using json = nlohmann::json;
 
@@ -224,18 +225,53 @@ void update_document_loader(vector<pair<string, string>> seed_documents, const F
     write_response(request, 200, "application/json", "{\"BMI Setup\": \"success\"}");
 }
 
+void index_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
+    string docs_directory = "";
+  	for(auto kv: params){
+        cerr<< kv.first<<endl;
+        if (kv.first == "docs_directory"){
+            docs_directory = kv.second;
+        }
+    }
+
+    if (docs_directory.length() == 0){
+        write_response(request, 400, "application/json", "{\"error\": \"Invalid docs_directory\"}");
+        return;
+    }
+
+    string doc_features = docs_directory + ".bin";
+    string para_features = docs_directory + "_para.bin";
+	string data_internal = "data_internal/" + docs_directory;
+    fs::path doc_store_path = data_internal + "/docs";
+
+    if (!fs::exists(data_internal) or !fs::exists(doc_store_path) or fs::is_empty(doc_store_path)){
+        write_response(request, 400, "application/json", "{\"error\": \"Insufficient docs to index\"}");
+        return;
+    }
+
+    vector<pair<string, string>> seed_documents;
+    for(const auto & entry : fs::directory_iterator(doc_store_path)){
+        std::ifstream t(entry.path().string());
+        std::stringstream buffer;
+        buffer << t.rdbuf();
+        std::size_t found = entry.path().string().find_last_of("/\\");
+        string doc_id =  entry.path().string().substr(found+1);
+        seed_documents.emplace_back(make_pair(doc_id, buffer.str()));
+    }
+    fs::path path = data_internal;
+    doc_features = path / doc_features;
+    para_features = path / para_features;
+    const string id_term_map_path = path / "id_token_map.txt";
+    update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
+}
+
 // Handler for API setup endpoint (1 or more documents per request)
-void setup_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
-    string doc_features, para_features, document_id, document_content, docs_directory = "";
+void add_docs_to_collection_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
+    string document_id, document_content, docs_directory = "";
     vector<pair<string, string>> documents;
-    bool is_complete = false;
     for(auto kv: params){
         cerr<< kv.first<<endl;
-        if (kv.first == "doc_features"){
-            doc_features = kv.second;
-        } else if (kv.first == "para_features"){
-            para_features = kv.second;
-        } else if (kv.first == "seed_documents") {
+        if (kv.first == "seed_documents") {
           try{
             documents = parse_json_body(kv.second);
             }
@@ -243,17 +279,11 @@ void setup_view(const FCGX_Request & request, const vector<pair<string, string>>
                 write_response(request, 400, "application/json", "{\"error\": \"Invalid seed_documents\"}");
                 return;
             }
-        } else if (kv.first == "is_complete"){
-            is_complete = (kv.second == "True");
         } else if (kv.first == "docs_directory"){
             docs_directory = kv.second;
         }
     }
-    if (doc_features.length() == 0 || para_features.length() == 0){
-        write_response(request, 400, "application/json", "{\"error\": \"Non empty doc_features and para_features required\"}");
-        return;
-    }
-    if (documents.size() == 0 and not is_complete){
+    if (documents.size() == 0){
         write_response(request, 400, "application/json", "{\"error\": \"Invalid seed_documents\"}");
         return;
     }
@@ -262,46 +292,30 @@ void setup_view(const FCGX_Request & request, const vector<pair<string, string>>
         return;
     }
 
+    try {
+        string data_internal = "data_internal";
+    	fs::create_directory(data_internal);
 
-    string data_internal = "data_internal";
-    fs::create_directory(data_internal);
-
-	data_internal = "data_internal/" + docs_directory;
-	fs::create_directory(data_internal);
-
-
-    fs::path doc_store_path = data_internal + "/docs";
-    fs::create_directory(doc_store_path);
-
-    for(auto kv: documents){
-		std::ofstream out(doc_store_path / kv.first);
-    	out << kv.second;
-    	out.close();
-	}
+		data_internal = "data_internal/" + docs_directory;
+		fs::create_directory(data_internal);
 
 
-    if (!is_complete){
-        write_response(request, 200, "application/json", "{\"BMI Setup\": \"successfully saved documents\"}");
-    } else {
-		if (fs::is_empty(data_internal + "/docs")){
-			write_response(request, 400, "application/json", "{\"error\": \"Insufficient docs to index\"}");
-        	return;
-		}
-        vector<pair<string, string>> seed_documents;
-        for(const auto & entry : fs::directory_iterator(doc_store_path)){
-            std::ifstream t(entry.path().string());
-            std::stringstream buffer;
-            buffer << t.rdbuf();
-            std::size_t found = entry.path().string().find_last_of("/\\");
-            string doc_id =  entry.path().string().substr(found+1);
-            seed_documents.emplace_back(make_pair(doc_id, buffer.str()));
+    	fs::path doc_store_path = data_internal + "/docs";
+    	fs::create_directory(doc_store_path);
+
+    	for(auto kv: documents){
+			std::ofstream out(doc_store_path / kv.first);
+    		out << kv.second;
+    		out.close();
         }
-        fs::path path = data_internal;
-        doc_features = path / doc_features;
-        para_features = path / para_features;
-        const string id_term_map_path = path / "id_token_map.txt";
-        update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
+        write_response(request, 200, "application/json", "{\"BMI Setup\": \"successfully saved documents\"}");
+    	return;
+	}
+    catch (const invalid_argument& ia) {
+        write_response(request, 400, "application/json", "{\"error\": \"unable to save documents\"}");
+        return;
     }
+
 }
 
 
@@ -734,7 +748,7 @@ void delete_docs_view(const FCGX_Request & request, const vector<pair<string, st
             }
         }
     }
-	cerr << docs_to_delete.size() << endl;
+    try {
 	if (docs_to_delete.empty() && !delete_all){
         write_response(request, 400, "application/json", "{\"error\": \"Invalid docs_to_delete.\"}");
         return;
@@ -758,12 +772,62 @@ void delete_docs_view(const FCGX_Request & request, const vector<pair<string, st
         return;
     }
     for(auto doc_id: docs_to_delete){
-		string doc_path = data_internal + "/" + docs_directory + "/" + doc_id;
-        fs::remove(doc_path);
+		string doc_path = data_internal + "/" + docs_directory + "/docs/" + doc_id;
+        if (!fs::remove(doc_path)){
+            write_response(request, 400, "application/json", "{\"error\": \"failed to delete one or more documents\"}");
+            return;
+        }
     }
+    fs::remove(data_internal + "/" + docs_directory + "/" + docs_directory + ".bin");
+    fs::remove(data_internal + "/" + docs_directory + "/" + docs_directory + "_para.bin");
 	write_response(request, 200, "application/json", "{\"BMI Setup\": \"successfully deleted documents\"}");
-	return;
+	documents = nullptr;
+    return;
+    } catch (const invalid_argument& ia) {
+		cerr << "Error:" << ia.what() << endl;
+        write_response(request, 400, "application/json", "{\"error\": \"failed to delete one or more documents\"}");
+        return;
+    }
 }
+
+
+void get_available_collections_view(const FCGX_Request & request, const vector<pair<string, string>> &params) {
+    string data_internal = "data_internal";
+    vector<string> collections;
+    for(const auto & entry : fs::directory_iterator(data_internal)){
+        if (fs::is_directory(entry)){
+            collections.push_back(entry.path().filename());
+        }
+    }
+    json j = collections;
+    string collections_json = j.dump();
+    write_response(request, 200, "application/json", collections_json);
+}
+
+void get_total_docs_in_collection_view(const FCGX_Request & request, const vector<pair<string, string>> &params) {
+    string docs_directory = "";
+    for(auto kv: params){
+        if (kv.first == "docs_directory"){
+            docs_directory = kv.second;
+        }
+    }
+    if (docs_directory == ""){
+        write_response(request, 400, "application/json", "{\"error\": \"Invalid docs_directory\"}");
+        return;
+    }
+    string data_internal = "data_internal";
+    if (!fs::exists(data_internal + "/" + docs_directory)){
+        write_response(request, 400, "application/json", "{\"error\": \"Invalid docs_directory\"}");
+        return;
+    }
+    fs::path doc_store_path = data_internal + "/" + docs_directory + "/docs";
+    int total_docs = 0;
+    for(const auto & entry : fs::directory_iterator(doc_store_path)){
+        total_docs++;
+    }
+    write_response(request, 200, "application/json", "{\"total_docs\": " + to_string(total_docs) + "}");
+}
+
 
 void log_request(const FCGX_Request & request, const vector<pair<string, string>> &params){
     cerr<<string(FCGX_GetParam("RELATIVE_URI", request.envp))<<endl;
@@ -791,10 +855,28 @@ void process_request(const FCGX_Request & request) {
      }
 
     log_request(request, params);
-
-    if (action == "setup"){
+    if (action == "add_docs"){
         if(method == "POST"){
-            setup_view(request, params);
+            add_docs_to_collection_view(request, params);
+        }
+    }else if (action == "index"){
+        if(method == "GET"){
+            index_view(request, params);
+        }
+    }else if (action == "delete_docs") {
+      	if (method == "POST"){
+        	delete_docs_view(request, params);
+      	}
+    }else if (documents == nullptr){
+        write_response(request, 400, "application/json", "{\"error\": \"Indexing required\"}");
+        return;
+    }else if (action == "get_available_collections"){
+        if(method == "GET"){
+            get_available_collections_view(request, params);
+        }
+    }else if (action == "get_total_docs_in_collection"){
+        if(method == "GET"){
+            get_total_docs_in_collection_view(request, params);
         }
     }else if(action == "begin"){
         if(method == "POST"){
@@ -836,10 +918,7 @@ void process_request(const FCGX_Request & request) {
         if(method == "GET"){
             status_working_view(request, params);
         }
-    } else if (action == "delete_docs") {
-      	if (method == "POST")
-        	delete_docs_view(request, params);
-      	}
+    }
 }
 
 void fcgi_listener(){
