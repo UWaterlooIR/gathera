@@ -780,6 +780,7 @@ void delete_docs_view(const FCGX_Request & request, const vector<pair<string, st
     }
     fs::remove(data_internal + "/" + docs_directory + "/" + docs_directory + ".bin");
     fs::remove(data_internal + "/" + docs_directory + "/" + docs_directory + "_para.bin");
+    fs::remove(data_internal + "/" + docs_directory + "/id_token_map.txt");
 	write_response(request, 200, "application/json", "{\"BMI Setup\": \"successfully deleted documents\"}");
 	documents = nullptr;
     return;
