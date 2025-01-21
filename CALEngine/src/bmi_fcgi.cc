@@ -657,7 +657,13 @@ void log_view(const FCGX_Request & request, const vector<pair<string, string>> &
 }
 
 void status_working_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
+  if (documents != nullptr){
     write_response(request, 200, "application/json", "{\"working\": true}");
+    return;
+  } else {
+    write_response(request, 200, "application/json", "{\"working\": false}");
+    return;
+  }
 }
 
 // Handler for /docid_exists
@@ -864,6 +870,10 @@ void process_request(const FCGX_Request & request) {
         if(method == "GET"){
             index_view(request, params);
         }
+    }else if(action == "status_working"){
+        if(method == "GET"){
+            status_working_view(request, params);
+        }
     }else if (action == "delete_docs") {
       	if (method == "POST"){
         	delete_docs_view(request, params);
@@ -914,10 +924,6 @@ void process_request(const FCGX_Request & request) {
     }else if(action == "log"){
         if(method == "GET"){
             log_view(request, params);
-        }
-    }else if(action == "status_working"){
-        if(method == "GET"){
-            status_working_view(request, params);
         }
     }
 }
