@@ -875,13 +875,6 @@ void process_request(const FCGX_Request & request) {
         if(method == "GET"){
             status_working_view(request, params);
         }
-    }else if (action == "delete_docs") {
-      	if (method == "POST"){
-        	delete_docs_view(request, params);
-      	}
-    }else if (documents == nullptr){
-        write_response(request, 400, "application/json", "{\"error\": \"Indexing required\"}");
-        return;
     }else if (action == "get_available_collections"){
         if(method == "GET"){
             get_available_collections_view(request, params);
@@ -890,6 +883,13 @@ void process_request(const FCGX_Request & request) {
         if(method == "GET"){
             get_total_docs_in_collection_view(request, params);
         }
+    }else if (action == "delete_docs") {
+      	if (method == "POST"){
+        	delete_docs_view(request, params);
+      	}
+    }else if (documents == nullptr){
+        write_response(request, 400, "application/json", "{\"error\": \"Indexing required\"}");
+        return;
     }else if(action == "begin"){
         if(method == "POST"){
             begin_session_view(request, params);
