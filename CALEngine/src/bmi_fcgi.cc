@@ -931,7 +931,6 @@ void process_request(const FCGX_Request & request) {
 void fcgi_listener(){
     FCGX_Request request;
     FCGX_InitRequest(&request, 0, 0);
-    
 
     while (FCGX_Accept_r(&request) == 0) {
         process_request(request);
@@ -942,7 +941,6 @@ int main(int argc, char **argv){
     AddFlag("--doc-features", "Path of the file with list of document features", string(""));
     AddFlag("--para-features", "Path of the file with list of paragraph features", string(""));
     AddFlag("--df", "Path of the file with list of terms and their document frequencies", string(""));
-    AddFlag("--token-map", "Path of the file with list of terms and their token ids", string(""));
     AddFlag("--threads", "Number of threads to use for scoring", int(8));
     AddFlag("--start-without-indexing", "Start without indexing a corpus", int(0));
     AddFlag("--help", "Show Help", bool(false));
@@ -1009,31 +1007,19 @@ int main(int argc, char **argv){
     }
 
     // Load tokens map
-    string id_term_map_path = CMD_LINE_STRINGS["--token-map"];
-    // string id_term_map_path = "/data/id_token_map.txt";
-
-    
+    string id_term_map_path = "/data/id_token_map.txt";
     if(id_term_map_path.length() > 0){
         cerr<<"Loading id-tokens map on memory"<<endl;
         {
             TIMER_BEGIN(tokens_loader);
             ifstream id_map_file;
             id_map_file.open(id_term_map_path);
-
-            if (!id_map_file.is_open()) {
-                std::cerr << "Error opening file: " << id_term_map_path << std::endl;
-                return 1;
-            }
             string line;
             while (getline(id_map_file, line)){
                 istringstream iss(line);
                 uint32_t token_id;
                 string token;
-                // cerr
-                if (!(iss >> token_id >> token)) { 
-                    cerr<<"error"<<endl;
-                    break;
-                } // error
+                if (!(iss >> token_id >> token)) { break; } // error
                 id_tokens[token_id] = token;
             }
             id_map_file.close();
@@ -1043,8 +1029,6 @@ int main(int argc, char **argv){
     }
 
     FCGX_Init();
-
-    std::cout<<"Starting FastCGI server\n";
 
     vector<thread> fastcgi_threads;
     for(int i = 0;i < 50; i++){
