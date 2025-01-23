@@ -770,6 +770,7 @@ void delete_docs_view(const FCGX_Request & request, const vector<pair<string, st
     }
 	if (delete_all) {
         fs::remove_all( data_internal + "/" + docs_directory);
+        documents = nullptr;
 		write_response(request, 200, "application/json", "{\"BMI Setup\": \"successfully deleted documents\"}");
 		return;
     }
@@ -787,8 +788,8 @@ void delete_docs_view(const FCGX_Request & request, const vector<pair<string, st
     fs::remove(data_internal + "/" + docs_directory + "/" + docs_directory + ".bin");
     fs::remove(data_internal + "/" + docs_directory + "/" + docs_directory + "_para.bin");
     fs::remove(data_internal + "/" + docs_directory + "/id_token_map.txt");
+    documents = nullptr;
 	write_response(request, 200, "application/json", "{\"BMI Setup\": \"successfully deleted documents\"}");
-	documents = nullptr;
     return;
     } catch (const invalid_argument& ia) {
 		cerr << "Error:" << ia.what() << endl;
