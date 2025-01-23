@@ -861,7 +861,7 @@ void process_request(const FCGX_Request & request) {
         return;
         }
      }
-	valid_endpoints = [
+	list<string> valid_endpoints = [
        "add_docs", "index", "status_working", "get_available_collections",
        "get_total_docs_in_collection", "delete_docs", "begin", "get_docs", "get_stratum_docs",
        "get_stratum_info", "docid_exists", "judge", "get_ranklist", "delete_session", "log"
