@@ -226,11 +226,14 @@ void update_document_loader(vector<pair<string, string>> seed_documents, const F
 }
 
 void index_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
-    string docs_directory = "";
+    string docs_directory, webhook_url = "", "";
   	for(auto kv: params){
         cerr<< kv.first<<endl;
         if (kv.first == "docs_directory"){
             docs_directory = kv.second;
+        }
+        if (kv.first == "webhook_url"){
+            webhook_url = kv.second;
         }
     }
 
@@ -263,6 +266,13 @@ void index_view(const FCGX_Request & request, const vector<pair<string, string>>
     para_features = path / para_features;
     const string id_term_map_path = path / "id_token_map.txt";
     update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
+    // CAll webhook to inform that the documents are indexed
+    if (webhook_url.length() == 0){
+        number_of_docs = seed_documents.size();
+        string payload = "{\"docs_directory\": \"" + docs_directory + "\", \"number_of_docs\": " + to_string(number_of_docs) + "}";
+        string response = post_request(webhook_url, payload);
+        cerr << "Webhook response: " << response << endl;
+    }
 }
 
 // Handler for API setup endpoint (1 or more documents per request)
