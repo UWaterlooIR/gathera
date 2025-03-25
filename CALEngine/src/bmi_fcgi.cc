@@ -251,26 +251,35 @@ void index_view(const FCGX_Request & request, const vector<pair<string, string>>
         write_response(request, 400, "application/json", "{\"error\": \"Insufficient docs to index\"}");
         return;
     }
-
-    vector<pair<string, string>> seed_documents;
-    for(const auto & entry : fs::directory_iterator(doc_store_path)){
-        std::ifstream t(entry.path().string());
-        std::stringstream buffer;
-        buffer << t.rdbuf();
-        std::size_t found = entry.path().string().find_last_of("/\\");
-        string doc_id =  entry.path().string().substr(found+1);
-        seed_documents.emplace_back(make_pair(doc_id, buffer.str()));
-    }
-    fs::path path = data_internal;
-    doc_features = path / doc_features;
-    para_features = path / para_features;
-    const string id_term_map_path = path / "id_token_map.txt";
-    update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
-    // CAll webhook to inform that the documents are indexed
     if (webhook_url.length() == 0){
+        write_response(request, 400, "application/json", "{\"error\": \"Invalid webhook_url\"}");
+        return;
+    }
+    write_response(request, 200, "application/json", "{\"BMI indexing\": \"Indexing documents. Updates will be sent via webhook.\"}");
+    try {
+        vector<pair<string, string>> seed_documents;
+        for(const auto & entry : fs::directory_iterator(doc_store_path)){
+            std::ifstream t(entry.path().string());
+            std::stringstream buffer;
+            buffer << t.rdbuf();
+            std::size_t found = entry.path().string().find_last_of("/\\");
+            string doc_id =  entry.path().string().substr(found+1);
+            seed_documents.emplace_back(make_pair(doc_id, buffer.str()));
+        }
+        fs::path path = data_internal;
+        doc_features = path / doc_features;
+        para_features = path / para_features;
+        const string id_term_map_path = path / "id_token_map.txt";
+        update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
+        // CAll webhook to inform that the documents are indexed
         number_of_docs = seed_documents.size();
         string payload = "{\"docs_directory\": \"" + docs_directory + "\", \"number_of_docs\": " + to_string(number_of_docs) + "}";
         string response = post_request(webhook_url, payload);
+        cerr << "Webhook response: " << response << endl;
+    }
+    catch (const invalid_argument& ia) {
+        string error = "{\"error\": \"Indexing failed. Please try again\"}";
+        string response = post_request(webhook_url, error);
         cerr << "Webhook response: " << response << endl;
     }
 }
