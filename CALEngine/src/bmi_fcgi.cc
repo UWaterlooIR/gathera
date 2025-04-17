@@ -17,6 +17,10 @@
 #include <nlohmann/json.hpp>
 #include <list>
 #include <filesystem>
+#include <curl/curl.h>
+#include <thread>
+
+
 
 using json = nlohmann::json;
 
@@ -181,6 +185,7 @@ bool parse_seed_judgments(const string &str, vector<pair<string, int>> &seed_jud
 
 void update_document_loader(vector<pair<string, string>> seed_documents, const FCGX_Request & request,
     const string& doc_features, const string& para_features, const string& id_term_map_path){
+    cerr<<"calling corpus processor"<<endl;
 
     // call corpus processor
     try {
@@ -193,7 +198,7 @@ void update_document_loader(vector<pair<string, string>> seed_documents, const F
     {
         unique_ptr<FeatureParser> feature_parser = make_unique<BinFeatureParser>(doc_features);
         documents = Dataset::build(feature_parser.get());
-        cerr<<"Read "<<documents->size()<<" docs"<<endl;
+        cerr<<"Read "<<documents->size()<<" docs\r"<<endl;
     }
     if(para_features.length() > 0){
         cerr<<"Loading paragraph features on memory: "<<para_features<<endl;
@@ -222,11 +227,50 @@ void update_document_loader(vector<pair<string, string>> seed_documents, const F
             cerr<<"Read "<< id_tokens.size() << " id-tokens entries"<<endl;
         }
     }
-    write_response(request, 200, "application/json", "{\"BMI Setup\": \"success\"}");
+}
+
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+    ((std::string*)userp)->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+void post_request(const string &url, const string &payload){
+    CURL *curl;
+    CURLcode res;
+    std::string readBuffer;
+
+    // Initialize CURL
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+
+    if(curl) {
+        cerr << "Sending POST request to: " << url << endl;
+        cerr << "Payload: " << payload << endl;
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_slist_append(NULL, "Content-Type: application/json"));
+        res = curl_easy_perform(curl);
+        if(res != CURLE_OK) {
+            cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << endl;
+        }
+        else {
+            cerr << "payload: " << payload << endl;
+            cerr << "Response code: " << res << endl;
+            cerr << "Response data: " << readBuffer << endl;
+        }
+        curl_easy_cleanup(curl);
+    }
+    curl_global_cleanup();
+    return;
 }
 
 void index_view(const FCGX_Request & request, const vector<pair<string, string>> &params){
-    string docs_directory, webhook_url = "", "";
+    string docs_directory, webhook_url = "";
   	for(auto kv: params){
         cerr<< kv.first<<endl;
         if (kv.first == "docs_directory"){
@@ -255,33 +299,34 @@ void index_view(const FCGX_Request & request, const vector<pair<string, string>>
         write_response(request, 400, "application/json", "{\"error\": \"Invalid webhook_url\"}");
         return;
     }
+    fs::path path = data_internal;
+    doc_features = path / doc_features;
+    para_features = path / para_features;
+    const string id_term_map_path = path / "id_token_map.txt";
     write_response(request, 200, "application/json", "{\"BMI indexing\": \"Indexing documents. Updates will be sent via webhook.\"}");
-    try {
-        vector<pair<string, string>> seed_documents;
-        for(const auto & entry : fs::directory_iterator(doc_store_path)){
-            std::ifstream t(entry.path().string());
-            std::stringstream buffer;
-            buffer << t.rdbuf();
-            std::size_t found = entry.path().string().find_last_of("/\\");
-            string doc_id =  entry.path().string().substr(found+1);
-            seed_documents.emplace_back(make_pair(doc_id, buffer.str()));
+    std::thread([=]() {
+        try {
+            vector<pair<string, string>> seed_documents;
+            int count = 0;
+            for(const auto & entry : fs::directory_iterator(doc_store_path)){
+                std::ifstream t(entry.path().string());
+                std::stringstream buffer;
+                buffer << t.rdbuf();
+                std::size_t found = entry.path().string().find_last_of("/\\");
+                string doc_id =  entry.path().string().substr(found+1);
+                seed_documents.emplace_back(make_pair(doc_id, buffer.str()));
+                count++;
+            }
+            update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
+            string payload = "{\"dataset_name\": \"" + docs_directory + "\", \"number_of_docs\": " + to_string(count) + "}";
+            post_request(webhook_url, payload);
         }
-        fs::path path = data_internal;
-        doc_features = path / doc_features;
-        para_features = path / para_features;
-        const string id_term_map_path = path / "id_token_map.txt";
-        update_document_loader(seed_documents, request, doc_features, para_features, id_term_map_path);
-        // CAll webhook to inform that the documents are indexed
-        number_of_docs = seed_documents.size();
-        string payload = "{\"docs_directory\": \"" + docs_directory + "\", \"number_of_docs\": " + to_string(number_of_docs) + "}";
-        string response = post_request(webhook_url, payload);
-        cerr << "Webhook response: " << response << endl;
-    }
-    catch (const invalid_argument& ia) {
-        string error = "{\"error\": \"Indexing failed. Please try again\"}";
-        string response = post_request(webhook_url, error);
-        cerr << "Webhook response: " << response << endl;
-    }
+        catch (const invalid_argument& ia) {
+            string error = "{\"indexing_error\": \"Indexing failed. Please try again\"}";
+            post_request(webhook_url, error);
+        }
+    }).detach();
+    return;
 }
 
 // Handler for API setup endpoint (1 or more documents per request)
@@ -895,7 +940,7 @@ void process_request(const FCGX_Request & request) {
             add_docs_to_collection_view(request, params);
         }
     }else if (action == "index"){
-        if(method == "GET"){
+        if(method == "POST"){
             index_view(request, params);
         }
     }else if(action == "status_working"){

@@ -190,7 +190,7 @@ void parse_documents(const vector<pair<string, string>>& documents, const string
              [](const FeatureValuePair &a, const FeatureValuePair &b) -> bool { return a.id_ < b.id_; });
         fw_2->write(SfSparseVector(spv->doc_id, features));
         num_docs++;
-        cerr<<num_docs<<" documents processed\r"<<endl;
+        cerr<<num_docs<<" documents processed\r";
     }
     cerr<<endl;
     fw_2->finish();
