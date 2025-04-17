@@ -244,8 +244,6 @@ void post_request(const string &url, const string &payload){
     curl = curl_easy_init();
 
     if(curl) {
-        cerr << "Sending POST request to: " << url << endl;
-        cerr << "Payload: " << payload << endl;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
