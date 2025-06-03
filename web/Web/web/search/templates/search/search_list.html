@@ -90,31 +90,42 @@
     </div>
   </div>
 
-<nav class="my-5">
-  <ul class="pagination justify-content-center">
+  <nav class="my-5">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {{ pagination.is_first_page|yesno:'disabled,' }}">
+        <a class="page-link" href="{% url 'search:main'%}?query={{query.split|join:'+'}}&page_number=1">First</a>
+      </li>
       <li class="page-item {{ pagination.is_first_page|yesno:'disabled,' }}">
-      <a class="page-link" href="{% url 'search:main'%}?query={{query.split|join:'+'}}&page_number=1">First</a>
-    </li>
-    <li class="page-item {{ pagination.is_first_page|yesno:'disabled,' }}">
-      <a class="page-link" href="{% url 'search:main'%}?query={{query.split|join:'+'}}&page_number={{pagination.page_number|add:-1}}">Prev</a>
-    </li>
-    {% for i in pagination.page_range %}
-    <li class="page-item {% if pagination.page_number == i %} active {% endif %}">
-      <a class="page-link" href="{% url 'search:main'%}?query={{query.split|join:'+'}}&page_number={{i}}">
-        {{i}}
-        <span class="sr-only">(current)</span>
-      </a>
-    </li>
-    {% endfor %}
-    <li class="page-item {{ pagination.is_last_page|yesno:'disabled,' }}">
-        <a class="page-link" href="{% url 'search:main'%}?query={{query.split|join:'+'}}&page_number={{pagination.page_number|add:+1}}">Next</a>
-    </li>
+        <a class="page-link" href="{% url 'search:main'%}?query={{query.split|join:'+'}}&page_number={{pagination.page_number|add:-1}}">Prev</a>
+      </li>
+      {% for i in pagination.page_range %}
+      <li class="page-item {% if pagination.page_number == i %} active {% endif %}">
+        <a class="page-link" href="{% url 'search:main'%}?query={{query.split|join:'+'}}&page_number={{i}}">
+          {{i}}
+          <span class="sr-only">(current)</span>
+        </a>
+      </li>
+      {% endfor %}
+      <li class="page-item {{ pagination.is_last_page|yesno:'disabled,' }}">
+          <a class="page-link" href="{% url 'search:main'%}?query={{query.split|join:'+'}}&page_number={{pagination.page_number|add:+1}}">Next</a>
+      </li>
 
-  </ul>
-</nav>
+    </ul>
+  </nav>
 
 
   {% endif %}
 
-
+{% else %}
+<div class="row mt-5">
+  <div class="col-md-6 offset-md-3">
+    <h4 class="text-center gray-text">Instructions</h4>
+    <p class="gray-text">To search for documents, enter your query in the search bar above and press Enter or click the search icon.</p>
+    <p class="gray-text">You can use keywords, phrases, or a combination of both to find relevant documents.</p>
+    <p class="gray-text">
+      To return specific documents, you can use the document ID in the search bar.
+      For example, to find a document with ID 12345, simply type <code>/ids: 12345</code> in the search bar.
+      You can include multiple document IDs by separating them with commas or spaces, like this: <code>/ids: 12345, 67890</code>.
+  </p>
+  </div>
 {% endif %}
