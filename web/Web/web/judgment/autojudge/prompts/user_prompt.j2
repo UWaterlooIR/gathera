@@ -1,0 +1,38 @@
+Please assess the relevance of the following document to the given search query and topic.
+
+**Search Query:** {{ seed_query }}
+
+**Topic Description:** {{ topic_description }}
+
+**Document:** 
+Title: {{ doc_title }}
+{% if doc_snippet %}Snippet: {{ doc_snippet }} {%endif%}
+{% if doc_body %}Content: {{ doc_body }} {%endif%}
+
+
+
+{% if additional_context %}
+**Additional Context:**
+{% for key, value in additional_context.items() %}
+{% if value %}
+- {{ key|replace('_', ' ')|title }}: {{ value }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+**Task:**
+Please provide a detailed relevance assessment including:
+
+1. **Relevance Judgment**: Choose one of the following:
+   - "Highly Useful" - The document directly and comprehensively addresses the query/topic
+   - "Useful" - The document addresses the query/topic but may be partial or indirect
+   - "Not Useful" - The document does not meaningfully address the query/topic
+
+2. **Confidence Score**: Provide a confidence score between 0 and 1 (where 1 is completely confident)
+
+3. **Reasoning**: Provide a clear explanation of your judgment, including:
+   - How the document relates (or doesn't relate) to the query
+   - Key aspects that influenced your decision
+   - Any limitations or caveats to your assessment
+
+Please structure your response clearly with these three elements.

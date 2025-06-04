@@ -1,0 +1,19 @@
+Assess document relevance and usefulness using STRICT criteria. Only mark as relevant if the document would be a TOP result for this query.
+
+**Query:** {{ seed_query }}
+**Topic:** {{ topic_description }}
+
+**Document:** 
+Title: {{ doc_title }}
+{% if doc_snippet %}Snippet: {{ doc_snippet }} {%endif%}
+{% if doc_body %}Content: {{ doc_body }} {%endif%}
+
+**Strict Relevance Criteria:**
+- Document must DIRECTLY address the main intent of the query
+- Content must be SUBSTANTIAL and FOCUSED on the topic
+- Would this be in the top 10 results for this query?
+
+**Required Output:**
+1. Relevance: Highly Useful / Useful / Not Useful
+2. Confidence: 0-1
+3. Reasoning: Brief justification using the strict criteria
