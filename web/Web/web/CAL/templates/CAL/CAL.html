@@ -142,6 +142,8 @@
 
           </div>
 
+          {% include 'cards/auto_judge_card.html' %}
+
           <div id="highlighted_words">
             <h6 class="card-title text-secondary mt-4 unselectable" unselectable="on">Highlighted terms <span class="badge badge-secondary float-right">Beta</span></h6>
             <ul class="list-group" id="highlighted_terms_list"></ul>
@@ -256,6 +258,7 @@
           logDSInfoURL: '{% url 'CAL:ds_logging' %}',
           {% endif %}
           sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
+          sendDocumentForAutomaticJudgmentURL: '{% url 'judgment:post_automatic_judgment' %}',
           getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
           fetchPreviouslyJudgedDocsOnInit: true,
           mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',

@@ -40,7 +40,7 @@
 <div class="mb-4">
 
     <div class="row">
-        <div class="col-12 col-md-8">
+        <div class="col-12 col-md-7">
 
             <nav class="nav nav-pills">
                 <div class="d-flex px-3 py-2">
@@ -148,7 +148,7 @@
             </div>
         </div>
 
-        <div class="col-2 d-none d-sm-block">
+        <div class="col-3 d-none d-sm-block">
             <div class="sticky-top card border-0 mr-2" style="top:75px; z-index: 0;">
                 <div class="card-body p-0 mt-3">
                     <h6 class="card-title text-secondary mb-0 unselectable" unselectable="on">Judge Document</h6>
@@ -173,6 +173,8 @@
                                     class="fas fa-info-circle"></i></a></h6>
                         {% include 'cards/configurable_criteria_card.html' %}
                         {% endif %}
+
+                    {% include 'cards/auto_judge_card.html' %}
 
                     </div>
 
@@ -254,6 +256,7 @@
         getPrevDocumentsJudgedURL: '{% url 'judgment:get_all' %}',
         getDocumentIDsToJudgeURL: '{% url 'judgment:get_all' %}',
         sendDocumentJudgmentURL: '{% url 'judgment:post_judgment' %}',
+        sendDocumentForAutomaticJudgmentURL: '{% url 'judgment:post_automatic_judgment' %}',
         getDocumentURL: '{% url 'core:get_single_doc' %}?docid=',
         fetchPreviouslyJudgedDocsOnInit: true,
         mainJudgingCriteriaName: '{% if main_judging_criteria_name %}{{ main_judging_criteria_name }}{% else %}Relevant{% endif %}',

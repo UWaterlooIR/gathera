@@ -11,6 +11,8 @@ urlpatterns = [
          name='view'),
 
     # Ajax views
+    path('post_automatic_judgment/', views.AutoJudgmentAJAXView.as_view(),
+         name='post_automatic_judgment'),
     path('post_judgment/', views.JudgmentAJAXView.as_view(),
          name='post_judgment'),
     path('post_nojudgment/', views.NoJudgmentAJAXView.as_view(),

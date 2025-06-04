@@ -18,9 +18,52 @@ from web.CAL.exceptions import CALError
 from web.interfaces.CAL import functions as CALFunctions
 from web.judgment.forms import UploadForm, UploadDebuggingJudgmentsForm
 from web.judgment.models import Judgment, DebuggingJudgment
+from web.judgment.autojudge.llm import execute_llm_judgment
 
 logger = logging.getLogger(__name__)
 
+
+class AutoJudgmentAJAXView(views.CsrfExemptMixin,
+                          views.LoginRequiredMixin,
+                          views.JsonRequestResponseMixin,
+                          generic.View):
+    require_json = False
+
+    def post(self, request, *args, **kwargs):
+        try:
+            doc_id = self.request_json[u"doc_id"]
+            doc_title = self.request_json[u"doc_title"]
+            doc_search_snippet = self.request_json[u"doc_search_snippet"]
+            current_session = self.request.user.current_session
+            seed_query = current_session.topic.seed_query
+            description = current_session.topic.description
+
+            context = {
+                u"doc_id": doc_id,
+                u"message": u"Your auto judgment on {} has been received".format(doc_id),
+                u"llm_output": None,
+                u"llm_error": None,
+            }
+        except KeyError:
+            error_dict = {u"message": u"your input must include doc_id, doc_title, "
+                                      u"doc_search_snippet, etc.."}
+            return self.render_bad_request_response(error_dict)
+        
+        # Execute LLM judgment
+        try:
+            llm_response = execute_llm_judgment(
+                doc_title=doc_title,
+                doc_search_snippet=doc_search_snippet,
+                session=current_session,
+                seed_query=seed_query,
+                description=description,
+            )
+            context.update(llm_response)
+        except Exception as e:
+            logger.error(f"LLM judgment failed for {doc_id}: {e}")
+            context["llm_error"] = str(e)
+
+        return self.render_json_response(context)
 
 class JudgmentAJAXView(views.CsrfExemptMixin,
                        views.LoginRequiredMixin,

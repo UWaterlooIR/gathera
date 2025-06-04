@@ -50,3 +50,5 @@ uwsgi
 beautifulsoup4==4.4.0
 django-autocomplete-light==3.5.1
 django-notifications-hq==1.6.0
+openai==1.82.1
+jinja2

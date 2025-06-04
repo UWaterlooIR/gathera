@@ -359,13 +359,28 @@ SEARCH_ENGINE = "web.interfaces.SearchEngine.anserini.Anserini"
 # ------------------------------------------------------------------------------
 MAIN_JUDGING_CRITERIA_NAME = "Useful"  # Adjective of criteria
 ADDITIONAL_JUDGING_CRITERIA = [
+    # {
+    #     "name": "Credibility",
+    #     "stored_as": "credibility",
+    #     "description": "Whether the document is considered credible (relaible sources, trustworthy, etc).",
+    #     "options": [
+    #         "Credible",
+    #         "Non-credible"
+    #     ]
+    # },
     {
-        "name": "Credibility",
-        "stored_as": "credibility",
-        "description": "Whether the document is considered credible (relaible sources, trustworthy, etc).",
+        "name": "Overall Grade",
+        "stored_as": "overall_grade",
+        "description": " How would you grade the document overall?",
         "options": [
-            "Credible",
-            "Non-credible"
+            "Unclear",
+            "A+",
+            "A",
+            "B+",
+            "B",
+            "C",
+            "D",
+            "F"
         ]
     },
     {

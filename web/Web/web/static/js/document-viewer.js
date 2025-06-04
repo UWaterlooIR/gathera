@@ -17,6 +17,7 @@ var docView = function () {
     getDocumentsToJudgeURL: null, // required if caching enabled
     getDocumentIDsToJudgeURL: null, // required
     sendDocumentJudgmentURL: null, // required
+    sendDocumentForAutomaticJudgmentURL: null, // required for auto-judge
     getDocumentURL: null, // required
     getSCALInfoURL: null, // required for discovery page
     logDSInfoURL: null, // required for discovery page
@@ -62,6 +63,7 @@ var docView = function () {
     documentAdditionalJudgingCriterionSelector: ".additionalJudgingCriterion",
     previouslyReviewedListSelector: ".previouslyReviewedList",
     previouslyReviewedListSpinnerSelector: ".previouslyReviewedListSpinner",
+    autoJudgeSpinnerSelector: ".autoJudgeSpinner",
     nextBatchListSelector: ".nextBatchList",
     nextBatchListSpinnerSelector: ".nextBatchListSpinner",
     searchItemSelector: ".searchItemSelector",
@@ -252,6 +254,10 @@ docView.prototype = {
       _linkPreviousDocButton($(options.docViewPreviousDocButtonSelector));
       _linkSortByRelevanceButton($(options.sortReviewedDocumentsSelector));
 
+      $("#auto_judge_button").on("click", function () {
+        handleAutoJudge();
+      });
+
       $(options.documentModalSelector).on('hidden.bs.modal', function () {
         parent.afterDocumentClose(parent.currentDocID)
       });
@@ -434,6 +440,8 @@ docView.prototype = {
       updateSnippet("");
       updateBody("");
       showWrapperContent();
+      hideAutoJudgeSpinner();
+      updateAutoJudgeMessage("Click on the button to auto judge the document");
     }
 
     function showDocTab() {
@@ -549,6 +557,17 @@ docView.prototype = {
     }
     function showNextBatchListSpinner() {
       $(options.nextBatchListSpinnerSelector).removeClass("d-none");
+    }
+    
+    function hideAutoJudgeSpinner() {
+      $(options.autoJudgeSpinnerSelector).addClass("d-none");
+    }
+    function showAutoJudgeSpinner() {
+      $(options.autoJudgeSpinnerSelector).removeClass("d-none");
+    }
+    
+    function updateAutoJudgeMessage(content) {
+      $("#autoJudgeMessage").html(content);
     }
 
     function updateTitle(content, styles) {
@@ -1191,6 +1210,27 @@ docView.prototype = {
      * HELPERS *
      ***********/
 
+    function getCurrentDocTitle() {
+      if (parent.currentDocID !== null) {
+        return $(options.documentTitleSelector).text();
+      }
+      return null;
+    }
+
+    function getCurrentDocSnippet() {
+      if (parent.currentDocID !== null) {
+        return $(options.documentSnippetSelector).text();
+      }
+      return null;
+    }
+
+    function getCurrentDocBody() {
+      if (parent.currentDocID !== null) {
+        return $(options.documentBodySelector).text();
+      }
+      return null;
+    }
+
     /**
      * Updates the view stack from results returned by server
      */
@@ -1354,6 +1394,89 @@ docView.prototype = {
         "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
         "(\\#[-a-z\\d_]*)?$", "i"); // fragment locator
       return !!pattern.test(str);
+    }
+
+    function handleAutoJudge() {
+      const docid = parent.currentDocID;
+      if (docid === null) {
+        console.log("No document selected for auto judge");
+        return;
+      }
+      
+      console.log(`Auto Judge clicked for document: ${docid}`);
+      
+      // Clear previous message and show spinner
+      updateAutoJudgeMessage("");
+      showAutoJudgeSpinner();
+      
+      // Disable the button
+      $("#auto_judge_button").prop("disabled", true);
+      
+      // Get document information
+      const docTitle = getCurrentDocTitle();
+      const docSnippet = $(`#doc_${docid}_card`).data("snippet") || getCurrentDocSnippet();
+      
+      // Prepare data for auto judgment
+      const data = {
+        "doc_id": docid,
+        "doc_title": docTitle,
+        "doc_search_snippet": docSnippet,
+        "csrfmiddlewaretoken": options.csrfmiddlewaretoken
+      };
+
+      // Send auto judgment request
+      $.ajax({
+        url: options.sendDocumentForAutomaticJudgmentURL,
+        method: 'POST',
+        data: JSON.stringify(data),
+        contentType: 'application/json',
+        success: function(result) {
+          console.log("Auto judgment response:", result);
+          
+          // Hide spinner
+          hideAutoJudgeSpinner();
+          
+          // Re-enable button
+          $("#auto_judge_button").prop("disabled", false);
+          
+          // Display the LLM output in the message div
+          if (result.llm_output) {
+            // Format the output for display
+            let formattedOutput = `<div class="mb-2">`;
+            
+            if (result.judgment) {
+              formattedOutput += `<strong>Judgment:</strong> ${result.judgment}<br/>`;
+            }
+            if (result.confidence !== undefined && result.confidence !== -1) {
+              formattedOutput += `<strong>Confidence:</strong> ${result.confidence}<br/>`;
+            }
+            if (result.overall_grade) {
+              formattedOutput += `<strong>Overall Grade:</strong> ${result.overall_grade}<br/>`;
+            }
+            
+            formattedOutput += `</div>`;
+            formattedOutput += `<div class="mt-2"><strong>Reasoning:</strong><br/>${result.reasoning || result.llm_output}</div>`;
+            
+            updateAutoJudgeMessage(formattedOutput);
+          }
+          
+          if (result.llm_error) {
+            updateAutoJudgeMessage(`<div class="text-danger">Error: ${result.llm_error}</div>`);
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Auto judgment failed:", error);
+          
+          // Hide spinner
+          hideAutoJudgeSpinner();
+          
+          // Re-enable button
+          $("#auto_judge_button").prop("disabled", false);
+          
+          // Show error message
+          updateAutoJudgeMessage(`<div class="text-danger">Failed to get auto judgment: ${error}</div>`);
+        }
+      });
     }
 
     return this._init();
