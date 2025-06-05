@@ -35,6 +35,7 @@ class PromptManager:
         self,
         doc_title: str,
         doc_snippet: str,
+        doc_body: str,
         seed_query: str,
         topic_description: str,
         additional_context: Optional[Dict[str, Any]] = None,
@@ -46,6 +47,7 @@ class PromptManager:
         Args:
             doc_title: Document title
             doc_snippet: Document snippet/content
+            doc_body: Full document body/content
             seed_query: The search query/topic
             topic_description: Description of the topic
             additional_context: Optional additional context
@@ -59,6 +61,7 @@ class PromptManager:
         return template.render(
             doc_title=doc_title,
             doc_snippet=doc_snippet,
+            doc_body=doc_body,
             seed_query=seed_query,
             topic_description=topic_description,
             additional_context=additional_context or {}
@@ -85,45 +88,3 @@ class PromptManager:
         
         return templates
 
-
-# Convenience function for backward compatibility
-def get_judgment_prompt(
-    doc_title: str,
-    doc_snippet: str,
-    seed_query: str,
-    topic_description: str,
-    additional_context: Optional[Dict[str, Any]] = None,
-    prompt_style: str = "default"
-) -> str:
-    """
-    Get the formatted prompt for document judgment.
-    
-    Args:
-        doc_title: Document title
-        doc_snippet: Document snippet/content
-        seed_query: The search query/topic
-        topic_description: Description of the topic
-        additional_context: Optional additional context
-        prompt_style: Style of prompt to use ('default' or 'strict')
-        
-    Returns:
-        Formatted prompt string
-    """
-    manager = PromptManager()
-    
-    # Map prompt styles to template names
-    template_map = {
-        "default": "user_prompt.j2",
-        "strict": "user_prompt_strict.j2"
-    }
-    
-    template_name = template_map.get(prompt_style, "user_prompt.j2")
-    
-    return manager.get_user_prompt(
-        doc_title=doc_title,
-        doc_snippet=doc_snippet,
-        seed_query=seed_query,
-        topic_description=topic_description,
-        additional_context=additional_context,
-        template_name=template_name
-    )

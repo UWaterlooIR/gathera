@@ -30,9 +30,17 @@ Please provide a detailed relevance assessment including:
 
 2. **Confidence Score**: Provide a confidence score between 0 and 1 (where 1 is completely confident)
 
-3. **Reasoning**: Provide a clear explanation of your judgment, including:
+3. **Overall Grade**: One of the following options
+   - Unclear / A+ / A / B+ / B / C / D / F
+
+4. **Reasoning**: Provide a clear explanation of your judgment, including:
    - How the document relates (or doesn't relate) to the query
    - Key aspects that influenced your decision
    - Any limitations or caveats to your assessment
 
-Please structure your response clearly with these three elements.
+Please structure your response clearly with these three elements in the following structure:
+**Required Output:**
+1. Relevance: Highly Useful / Useful / Not Useful
+2. Confidence: A float between 0-1
+3. Overall grade: Unclear / A+ / A / B+ / B / C / D / F
+4. Reasoning: Brief justification using the strict criteria

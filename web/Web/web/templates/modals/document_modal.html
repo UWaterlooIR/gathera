@@ -73,6 +73,8 @@
 
                 {% include 'cards/auto_judge_card.html' %}
 
+                {% include 'cards/highlighted_words_card.html' %}
+
                 <div id="highlighted_words">
                   <h5 class="card-title text-secondary mt-4 unselectable" unselectable="on">Highlighted terms <span class="badge badge-secondary float-right">Beta</span></h5>
                   <div class="input-group mb-3">
@@ -82,7 +84,7 @@
                       <button class="btn btn-sm btn-light" data-search="next" id="searchNext"
                            type="button">&darr;</button>
                       <button class="btn btn-sm btn-light" data-search="prev" type="button">&uarr;</button>
-                      {%comment%}<button class="btn btn-sm btn-light" data-search="clear" type="button">&times;</button>{%endcomment%}
+                      <button class="btn btn-sm btn-light" data-search="clear" type="button">&times;</button>
                     </div>
                   </div>
                   <ul class="list-group" id="highlighted_terms_list"></ul>

@@ -3,6 +3,7 @@ LLM integration for auto-judging documents.
 """
 import os
 import logging
+import re
 from typing import Dict, Any, Optional
 from openai import OpenAI
 from .prompts import PromptManager
@@ -28,6 +29,7 @@ class LLMJudge:
         self,
         doc_title: str,
         doc_snippet: str,
+        doc_body: str,
         seed_query: str,
         topic_description: str,
         additional_context: Optional[Dict[str, Any]] = None
@@ -51,6 +53,7 @@ class LLMJudge:
             user_prompt = self.prompt_manager.get_user_prompt(
                 doc_title=doc_title,
                 doc_snippet=doc_snippet,
+                doc_body=doc_body,
                 seed_query=seed_query,
                 topic_description=topic_description,
                 additional_context=additional_context,
@@ -70,6 +73,11 @@ class LLMJudge:
             
             # Extract the response
             llm_output = response.choices[0].message.content
+            # Extract the total tokens used from the response
+            if not hasattr(response, 'usage') or not hasattr(response.usage, 'total_tokens'):
+                raise ValueError("Response does not contain usage information")
+            prompt_tokens = response.usage.prompt_tokens
+            output_tokens = response.usage.completion_tokens
             
             # Parse the judgment from the output
             judgment_result = self._parse_judgment(llm_output)
@@ -81,6 +89,8 @@ class LLMJudge:
                 "overall_grade": judgment_result['overall_grade'],
                 "reasoning": judgment_result['reasoning'],
                 "tokens_used": response.usage.total_tokens,
+                "prompt_tokens": prompt_tokens,
+                "output_tokens": output_tokens,
                 "model": self.config['model']
             }
             
@@ -103,7 +113,7 @@ class LLMJudge:
             "judgment": "Not Useful",
             "confidence": -1,  # Default confidence
             "reasoning": llm_output,
-            "overall_grade": "Unclear"  # Default overall grade
+            "overall_grade": ""  # Default overall grade
         }
         
         # Simple parsing logic - can be enhanced
@@ -117,8 +127,14 @@ class LLMJudge:
         elif "useful" in output_lower:
             result["judgment"] = "useful"
         
+        # parse overall grade if mentioned. 
+        overall_grade_match = re.search(r'overall grade[:\s]+([A-F][+-]?)', output_lower)
+        if overall_grade_match:
+            result["overall_grade"] = overall_grade_match.group(1).strip()
+        elif "unclear" in output_lower:
+            result["overall_grade"] = "Unclear"
+        
         # Extract confidence if mentioned
-        import re
         confidence_match = re.search(r'confidence[:\s]+(\d+(?:\.\d+)?)', output_lower)
         if confidence_match:
             result["confidence"] = float(confidence_match.group(1))
@@ -130,7 +146,8 @@ class LLMJudge:
 
 def execute_llm_judgment(
     doc_title: str,
-    doc_search_snippet: str,
+    doc_snippet: str,
+    doc_body: str,
     session: Any,
     seed_query: str,
     description: str
@@ -142,7 +159,7 @@ def execute_llm_judgment(
     
     Args:
         doc_title: Document title
-        doc_search_snippet: Document snippet
+        doc_snippet: Document snippet
         session: User session object
         seed_query: Seed query for the topic
         description: Topic description
@@ -160,7 +177,8 @@ def execute_llm_judgment(
     
     return judge.judge_document(
         doc_title=doc_title,
-        doc_snippet=doc_search_snippet,
+        doc_snippet=doc_snippet,
+        doc_body=doc_body,
         seed_query=seed_query,
         topic_description=description,
         additional_context=additional_context

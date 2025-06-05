@@ -1414,13 +1414,15 @@ docView.prototype = {
       
       // Get document information
       const docTitle = getCurrentDocTitle();
-      const docSnippet = $(`#doc_${docid}_card`).data("snippet") || getCurrentDocSnippet();
+      const docSnippet = getCurrentDocSnippet();
+      const docBody = getCurrentDocBody();
       
       // Prepare data for auto judgment
       const data = {
         "doc_id": docid,
         "doc_title": docTitle,
-        "doc_search_snippet": docSnippet,
+        "doc_snippet": docSnippet,
+        "doc_body": docBody,
         "csrfmiddlewaretoken": options.csrfmiddlewaretoken
       };
 

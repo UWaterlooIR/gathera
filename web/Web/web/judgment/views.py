@@ -33,7 +33,8 @@ class AutoJudgmentAJAXView(views.CsrfExemptMixin,
         try:
             doc_id = self.request_json[u"doc_id"]
             doc_title = self.request_json[u"doc_title"]
-            doc_search_snippet = self.request_json[u"doc_search_snippet"]
+            doc_snippet = self.request_json[u"doc_snippet"]
+            doc_body = self.request_json[u"doc_body"]
             current_session = self.request.user.current_session
             seed_query = current_session.topic.seed_query
             description = current_session.topic.description
@@ -46,14 +47,15 @@ class AutoJudgmentAJAXView(views.CsrfExemptMixin,
             }
         except KeyError:
             error_dict = {u"message": u"your input must include doc_id, doc_title, "
-                                      u"doc_search_snippet, etc.."}
+                                      u"doc_snippet, doc_body, etc.."}
             return self.render_bad_request_response(error_dict)
         
         # Execute LLM judgment
         try:
             llm_response = execute_llm_judgment(
                 doc_title=doc_title,
-                doc_search_snippet=doc_search_snippet,
+                doc_snippet=doc_snippet,
+                doc_body=doc_body,
                 session=current_session,
                 seed_query=seed_query,
                 description=description,
