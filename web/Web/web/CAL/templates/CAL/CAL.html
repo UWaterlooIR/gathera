@@ -80,7 +80,7 @@
               <div class="document-body mt-2" id="docViewDocWrapper">
                 <div class="card border-0 {% if not request.user.current_session.is_summary %}d-none{% endif %}">
                   <div class="card-body">
-                    <div class="d-flex w-50 justify-content-between font-sans text-primary mb-3 border-bottom highlight-exclude unselectable" unselectable="on">
+                    <div class="d-flex justify-content-between font-sans text-primary mb-3 border-bottom highlight-exclude unselectable" unselectable="on">
                       <small class="highlight-exclude">Summary</small>
                     </div>
                     <div id="docViewDocSnippet"></div>
@@ -99,7 +99,7 @@
 
                 <div class="card border-0">
                   <div class="card-body py-0">
-                    <div class="d-flex w-50 justify-content-between font-sans text-primary mb-3 border-bottom highlight-exclude unselectable" unselectable="on">
+                    <div class="d-flex justify-content-between font-sans text-primary mb-3 border-bottom highlight-exclude unselectable" unselectable="on">
                       <small class="highlight-exclude">Document content</small>
                     </div>
                     <div id="docViewDocBody"></div>
@@ -156,7 +156,7 @@
           <nav class="nav nav-pills small flex-row flex-sm-row unselectable" unselectable="on">
             <a class="flex-sm-fill text-sm-center nav-link active" data-toggle="pill" href="#reviewed-documents-tab" role="tab">Reviewed Documents</a>
             {% if "scal" in request.user.current_session.strategy %}<a class="flex-sm-fill text-sm-center nav-link" data-toggle="pill" href="#information-tab" role="tab">Information</a>{% endif %}
-            {% if request.user.current_session.show_debugging_content %}<a class="flex-sm-fill text-sm-center nav-link" data-toggle="pill" href="#debugging-tab" role="tab">Debugging</a>{% endif %}
+            {% if request.user.current_session.show_debugging_content %}<a class="flex-sm-fill text-sm-center nav-link" data-toggle="pill" href="#debugging-tab" role="tab">Debug</a>{% endif %}
           </nav>
 
           <div class="tab-content">
